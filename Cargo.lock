@@ -67,7 +67,7 @@ checksum = "94950e87ea550d6d68f1993f3e7bebc8cb7235157bff84337d46195c3aa0b3f0"
 dependencies = [
  "hax-lib",
  "pastey",
- "rand 0.9.1",
+ "rand 0.9.3",
 ]
 
 [[package]]
@@ -427,7 +427,7 @@ version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0cdbf9591a39f04d6da6b9bad51ac58378604a80708c2173dadf92029891b9e2"
 dependencies = [
- "rand 0.9.1",
+ "rand 0.9.3",
 ]
 
 [[package]]
@@ -683,9 +683,9 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.9.1"
+version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fbfd9d094a40bf3ae768db9361049ace4c0e04a4fd6b359518bd7b73a73dd97"
+checksum = "7ec095654a25171c2124e9e3393a930bddbffdc939556c914957a4c3e0a87166"
 dependencies = [
  "rand_chacha 0.9.0",
  "rand_core 0.9.3",
@@ -736,7 +736,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a8615d50dcf34fa31f7ab52692afec947c4dd0ab803cc87cb3b0b4570ff7463"
 dependencies = [
  "num-traits",
- "rand 0.9.1",
+ "rand 0.9.3",
 ]
 
 [[package]]
@@ -887,7 +887,7 @@ dependencies = [
  "prost",
  "prost-build",
  "rand 0.8.5",
- "rand 0.9.1",
+ "rand 0.9.3",
  "rand_core 0.9.3",
  "rand_distr",
  "sha2",
