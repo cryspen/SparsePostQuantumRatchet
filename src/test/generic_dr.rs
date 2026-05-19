@@ -83,6 +83,7 @@ pub fn dr_recv<SCKA: Scka>(
     })
 }
 
+#[cfg(test)]
 mod test {
     use rand::Rng;
     use rand::TryRngCore;

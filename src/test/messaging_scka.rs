@@ -169,7 +169,6 @@ impl<SCKA: Scka + SckaInitializer + Clone> MessagingScka for GenericMessagingSck
     }
 }
 
-#[cfg(test)]
 impl<SCKA: Scka + SckaVulnerability> MessagingCkaVulnerability for GenericMessagingScka<SCKA> {
     fn vulnerable_epochs(&self) -> Vec<Epoch> {
         let mut result = self.scka.vulnerable_epochs();

@@ -34,13 +34,13 @@ use rand::{CryptoRng, Rng};
 //             └─────┤ EkSentCt1Received │
 //                   └───────────────────┘
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 pub struct KeysUnsampled {
     pub epoch: Epoch,
     pub(super) auth: authenticator::Authenticator,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 #[hax_lib::attributes]
 pub struct HeaderSent {
     pub epoch: Epoch,
@@ -51,7 +51,7 @@ pub struct HeaderSent {
     dk: incremental_mlkem768::DecapsulationKey,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 #[hax_lib::attributes]
 pub struct EkSent {
     pub epoch: Epoch,
@@ -60,7 +60,7 @@ pub struct EkSent {
     dk: incremental_mlkem768::DecapsulationKey,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 #[hax_lib::attributes]
 pub struct EkSentCt1Received {
     pub epoch: Epoch,

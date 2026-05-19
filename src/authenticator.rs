@@ -23,7 +23,7 @@ pub enum Error {
     AuthenticatorMacKeyMissing,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 pub struct Authenticator {
     root_key: Mac,
     mac_key: Mac,

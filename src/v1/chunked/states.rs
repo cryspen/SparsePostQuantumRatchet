@@ -12,7 +12,7 @@ use std::cmp::Ordering;
 
 use crate::Epoch;
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 pub enum States {
     KeysUnsampled(send_ek::KeysUnsampled),
     KeysSampled(send_ek::KeysSampled),
@@ -63,7 +63,7 @@ impl States {
         Self::NoHeaderReceived(send_ct::NoHeaderReceived::new(auth_key))
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, feature = "test-utils"))]
     pub(crate) fn vulnerable_epochs(&self) -> Vec<Epoch> {
         match self {
             ////////////////////////////////////////////////////////////////////////////////
@@ -88,7 +88,7 @@ impl States {
     }
 
     #[allow(dead_code)]
-    #[cfg(test)]
+    #[cfg(any(test, feature = "test-utils"))]
     pub(crate) fn last_emitted_epoch(&self) -> Epoch {
         match self {
             ////////////////////////////////////////////////////////////////////////////////

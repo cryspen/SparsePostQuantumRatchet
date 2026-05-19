@@ -11,7 +11,7 @@ use crate::{authenticator, incremental_mlkem768};
 use crate::{Epoch, EpochSecret, Error};
 use rand::{CryptoRng, Rng};
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 #[hax_lib::attributes]
 pub struct NoHeaderReceived {
     pub(super) uc: unchunked::NoHeaderReceived,
@@ -20,7 +20,7 @@ pub struct NoHeaderReceived {
     pub(super) receiving_hdr: polynomial::PolyDecoder,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 #[hax_lib::attributes]
 pub struct HeaderReceived {
     uc: unchunked::HeaderReceived,
@@ -29,7 +29,7 @@ pub struct HeaderReceived {
     receiving_ek: polynomial::PolyDecoder,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 #[hax_lib::attributes]
 pub struct Ct1Sampled {
     uc: unchunked::Ct1Sent,
@@ -39,13 +39,13 @@ pub struct Ct1Sampled {
     receiving_ek: polynomial::PolyDecoder,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 pub struct EkReceivedCt1Sampled {
     uc: unchunked::Ct1SentEkReceived,
     sending_ct1: polynomial::PolyEncoder,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 #[hax_lib::attributes]
 pub struct Ct1Acknowledged {
     uc: unchunked::Ct1Sent,
@@ -54,13 +54,13 @@ pub struct Ct1Acknowledged {
     receiving_ek: polynomial::PolyDecoder,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 pub struct Ct2Sampled {
     uc: unchunked::Ct2Sent,
     sending_ct2: polynomial::PolyEncoder,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 pub enum NoHeaderReceivedRecvChunk {
     StillReceiving(NoHeaderReceived),
     Done(HeaderReceived),

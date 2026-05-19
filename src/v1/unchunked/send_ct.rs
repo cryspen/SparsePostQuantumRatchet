@@ -40,13 +40,13 @@ use rand::{CryptoRng, Rng};
 //                └─────┤ Ct2Sent           │
 //                      └───────────────────┘
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 pub struct NoHeaderReceived {
     pub epoch: Epoch,
     pub(super) auth: authenticator::Authenticator,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 #[hax_lib::attributes]
 pub struct HeaderReceived {
     pub epoch: Epoch,
@@ -55,7 +55,7 @@ pub struct HeaderReceived {
     hdr: incremental_mlkem768::Header,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 #[hax_lib::attributes]
 pub struct Ct1Sent {
     pub epoch: Epoch,
@@ -68,7 +68,7 @@ pub struct Ct1Sent {
     ct1: incremental_mlkem768::Ciphertext1,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 #[hax_lib::attributes]
 pub struct Ct1SentEkReceived {
     pub epoch: Epoch,
@@ -81,7 +81,7 @@ pub struct Ct1SentEkReceived {
     ct1: incremental_mlkem768::Ciphertext1,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 pub struct Ct2Sent {
     pub epoch: Epoch,
     auth: authenticator::Authenticator,

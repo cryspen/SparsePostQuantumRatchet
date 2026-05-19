@@ -13,7 +13,8 @@ pub(crate) mod encoding;
 pub(crate) mod incremental_mlkem768;
 pub(crate) mod kdf;
 pub(crate) mod serialize;
-pub(crate) mod test;
+#[cfg(any(test, feature = "test-utils"))]
+pub mod test;
 pub(crate) mod util;
 mod v1;
 

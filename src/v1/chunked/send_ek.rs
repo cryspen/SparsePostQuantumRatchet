@@ -12,18 +12,18 @@ use crate::v1::unchunked::send_ek as unchunked;
 use crate::{Epoch, EpochSecret, Error};
 use rand::{CryptoRng, Rng};
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 pub struct KeysUnsampled {
     pub(super) uc: unchunked::KeysUnsampled,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 pub struct KeysSampled {
     uc: unchunked::HeaderSent,
     sending_hdr: polynomial::PolyEncoder,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 #[hax_lib::attributes]
 pub struct HeaderSent {
     uc: unchunked::EkSent,
@@ -33,13 +33,13 @@ pub struct HeaderSent {
     receiving_ct1: polynomial::PolyDecoder,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 pub struct Ct1Received {
     uc: unchunked::EkSentCt1Received,
     sending_ek: polynomial::PolyEncoder,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 #[hax_lib::attributes]
 pub struct EkSentCt1Received {
     uc: unchunked::EkSentCt1Received,

@@ -512,7 +512,7 @@ pub struct Point {
     pub value: Vec<GF16>,
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 pub(crate) enum EncoderState {
     // For 32B chunks the outer vector has length 16.
     // Using MLKEM-768 the inner vector has length <= MAX_STORED_POLYNOMIAL_DEGREE_V1 + 1
@@ -521,7 +521,7 @@ pub(crate) enum EncoderState {
     Polys([Poly; NUM_POLYS]),
 }
 
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(any(test, feature = "test-utils"), derive(Clone))]
 pub struct PolyEncoder {
     idx: u32,
     s: EncoderState,
