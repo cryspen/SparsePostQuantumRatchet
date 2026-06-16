@@ -1,0 +1,22 @@
+(* SPQR extracted model — reachability queries.
+   Run: proverif -lib primitives.pvl -lib handwritten_lib.pvl \
+                 -lib lib.pvl -lib model.pvl reach.pv
+   Expect "false" for every `not event(...)` (each event IS reachable). *)
+
+(* Epoch 1 (always meaningful). *)
+query s: bitstring, hd: bitstring;
+    event(StartedA(A, B, 1, hd));
+    event(CompletedB(B, A, 1, s));
+    event(CompletedA(A, B, 1, s)).
+
+(* Epoch 2 — the role swap: at NEPOCHS=1 these are (correctly) UNREACHABLE
+   (`not event(...) is true`); they become reachable at `epochs=2`. *)
+query s: bitstring;
+    event(CompletedB(A, B, 2, s));
+    event(CompletedA(B, A, 2, s)).
+
+(* Key agreement is reachable: both roles derive the same epoch secret. *)
+query s: bitstring;
+    event(CompletedA(A, B, 1, s)) && event(CompletedB(B, A, 1, s)).
+
+process System()

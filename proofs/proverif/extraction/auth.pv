@@ -1,0 +1,20 @@
+(* SPQR extracted model — mutual authentication. Run:
+     proverif -lib primitives.pvl -lib handwritten_lib.pvl \
+              -lib lib.pvl -lib model.pvl auth.pv
+   Expect "true": a completed session implies the peer started it at the same
+   epoch, unless an authenticator key (at some epoch ep_ <= ep) was
+   compromised. *)
+
+query x: principal, y: principal, ep: nat, ep_: nat, sk: bitstring, hd: bitstring;
+    event(CompletedB(y, x, ep, sk)) ==>
+        ( event(StartedA(x, y, ep, hd))
+        || (ep_ <= ep && (event(CompromisedAuthA(x, y, ep_)) || event(CompromisedAuthA(y, x, ep_))
+            || event(CompromisedAuthB(y, x, ep_)) || event(CompromisedAuthB(x, y, ep_)))) ).
+
+query x: principal, y: principal, ep: nat, ep_: nat, sk: bitstring, hd: bitstring;
+    event(CompletedA(x, y, ep, sk)) ==>
+        ( event(StartedB(y, x, ep, hd))
+        || (ep_ <= ep && (event(CompromisedAuthA(x, y, ep_)) || event(CompromisedAuthA(y, x, ep_))
+            || event(CompromisedAuthB(y, x, ep_)) || event(CompromisedAuthB(x, y, ep_)))) ).
+
+process System()

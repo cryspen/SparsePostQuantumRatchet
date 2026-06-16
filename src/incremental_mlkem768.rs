@@ -25,11 +25,26 @@ pub struct Keys {
     pub hdr: Header,
 }
 
+// ProVerif: `ek` and `hdr` come from the same keypair iff they are
+// `dk2enckey(dk)` and `dk2seed(dk)` for some `dk` (see `handwritten_lib.pvl`).
+#[cfg_attr(
+    hax_backend_proverif,
+    hax_lib::proverif::replace_body("ek_matches(ek, hdr)")
+)]
 pub fn ek_matches_header(ek: &EncapsulationKey, hdr: &Header) -> bool {
     incremental::validate_pk_bytes(hdr, ek).is_ok()
 }
 
 /// Generate a new keypair and associated header.
+// ProVerif: a fresh decapsulation key `spqr_dk`; `ek = dk2enckey(dk)`,
+// `hdr = dk2seed(dk)`. Field order of `Keys` is `(ek, dk, hdr)`. The `&mut rng`
+// epilogue re-wraps the result as `(rng, _)`, so the body returns only `Keys`.
+#[cfg_attr(
+    hax_backend_proverif,
+    hax_lib::proverif::replace_body(
+        "new spqr_dk: bitstring; spqr__incremental_mlkem768__Keys__Keys(dk2enckey(spqr_dk), spqr_dk, dk2seed(spqr_dk))"
+    )
+)]
 #[hax_lib::ensures(|result| result.hdr.len() == HEADER_SIZE && result.ek.len() == ENCAPSULATION_KEY_SIZE && result.dk.len() == 2400)]
 pub fn generate<R: Rng + CryptoRng>(rng: &mut R) -> Keys {
     let mut randomness = [0u8; libcrux_ml_kem::KEY_GENERATION_SEED_SIZE];
@@ -43,6 +58,16 @@ pub fn generate<R: Rng + CryptoRng>(rng: &mut R) -> Keys {
 }
 
 /// Encapsulate with header to get initial ciphertext.
+// ProVerif: fresh encapsulation randomness `spqr_r` and shared secret
+// `spqr_ss`; `ct1 = pkenc1(r, hdr, ss)`, the encapsulation state carries `r`
+// (`spqr_es(r)`), and the shared secret is `ss`. The `&mut rng` epilogue
+// re-wraps the result as `(rng, _)`, so the body returns only `(ct1, es, ss)`.
+#[cfg_attr(
+    hax_backend_proverif,
+    hax_lib::proverif::replace_body(
+        "new spqr_r: bitstring; new spqr_ss: bitstring; rust_primitives__hax__Tuple3__Tuple3(pkenc1(spqr_r, hdr, spqr_ss), spqr_es(spqr_r), spqr_ss)"
+    )
+)]
 #[hax_lib::requires(hdr.len() == 64)]
 #[hax_lib::ensures(|(ct1,es,ss)| ct1.len() == 960 && es.len() == 2080 && ss.len() == 32)]
 pub fn encaps1<R: Rng + CryptoRng>(
@@ -66,6 +91,12 @@ pub fn encaps1<R: Rng + CryptoRng>(
 }
 
 /// Encapsulate with header and EK.
+// ProVerif: recover the encapsulation randomness `r` carried in the state and
+// produce `ct2 = pkenc2(r, ek)`.
+#[cfg_attr(
+    hax_backend_proverif,
+    hax_lib::proverif::replace_body("let spqr_es(spqr_r) = es in pkenc2(spqr_r, ek) else bitstring_err()")
+)]
 #[hax_lib::requires(es.len() == 2080 && ek.len() == 1152)]
 #[hax_lib::ensures(|result| result.len() == 128)]
 pub fn encaps2(ek: &EncapsulationKey, es: &EncapsulationState) -> Ciphertext2 {
@@ -151,6 +182,13 @@ fn flip_endianness_of_encapsulation_state(es: &EncapsulationState) -> Encapsulat
 }
 
 /// Decapsulate ciphertext to get shared secret.
+// ProVerif: `pkdec(dk, ct1, ct2)`; the correctness reduction in
+// `handwritten_lib.pvl` recovers the encapsulated secret when `ct1`/`ct2` were
+// produced against `dk`'s header and encapsulation key.
+#[cfg_attr(
+    hax_backend_proverif,
+    hax_lib::proverif::replace_body("pkdec(dk, ct1, ct2)")
+)]
 #[hax_lib::requires(ct1.len() == 960 && ct2.len() == 128 && dk.len() == 2400)]
 #[hax_lib::ensures(|result| result.len() == 32)]
 pub fn decaps(dk: &DecapsulationKey, ct1: &Ciphertext1, ct2: &Ciphertext2) -> Secret {

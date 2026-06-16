@@ -1,0 +1,215 @@
+(*****************************************************************)
+(*  hax — ProVerif primitives library                            *)
+(*****************************************************************)
+(* Anything that used to live in the per-extraction `lib.pvl`     *)
+(* preamble is here instead. Loading this file via `-lib` gives   *)
+(* the extracted file everything it needs to typecheck:           *)
+(*                                                                *)
+(*   - `channel c.` — the public attacker channel.                *)
+(*   - `construct_fail` / `empty` — fail/default helpers.         *)
+(*   - `Some`/`None` (`Option_err`) — `Option<T>` constructors.   *)
+(*   - `True`/`False` (`bool_default`/`bool_err`) — booleans.     *)
+(*   - `nat_lit` — encode `usize`/`uN`/`iN` literals.             *)
+(*   - `logical_and`/`logical_or` — opaque `&&`/`||`.            *)
+(*   - `rust_primitives::*`, `core::num`/`ops`/`cmp`/`slice`      *)
+(*     trait roots, `hax_lib::*` helpers, the tuple constructors. *)
+(*                                                                *)
+(* `core_models::*` symbols are out of scope here; they'll        *)
+(* migrate upstream as `#[proverif_replace]` annotations.         *)
+(*                                                                *)
+(* Use:                                                           *)
+(*   proverif -lib primitives.pvl lib.pvl                         *)
+(*****************************************************************)
+
+(*** Public attacker channel ***)
+channel c.
+
+(*** Fail / default helpers ***)
+fun construct_fail() : bitstring
+reduc construct_fail() = fail.
+
+const empty: bitstring.
+letfun bitstring_default() = empty.
+letfun bitstring_err() = let x = construct_fail() in bitstring_default().
+
+(*** Option<T> ***)
+fun Some(bitstring): bitstring [data].
+fun None(): bitstring [data].
+letfun Option_err() = let x = construct_fail() in None().
+
+(*** Boolean encoding ***)
+fun True(): bitstring [data].
+fun False(): bitstring [data].
+letfun bool_default() = False().
+letfun bool_err() = let x = construct_fail() in False().
+
+(*** Integer literal lifting ***)
+(* SPQR override: `[data]` so the wrapped `nat` can be projected, letting
+   epoch arithmetic (`machine_int__add` below) reduce concretely. Epochs in the
+   extracted model are then `nat_lit(1)`, `nat_lit(2)`, ... rather than opaque
+   nested `add(..)` terms, so the security queries can name and order them. *)
+fun nat_lit(nat): bitstring [data].
+
+(*** Opaque short-circuit operators ***)
+fun logical_and(bitstring, bitstring): bitstring.
+fun logical_or(bitstring, bitstring): bitstring.
+
+(*** rust_primitives::hax — tuple constructors, dropped bodies,    ***)
+(*** machine_int / int operators (output of the Specialize phase)  ***)
+
+const rust_primitives__hax__Tuple0__Tuple0: bitstring.
+fun rust_primitives__hax__Tuple1__Tuple1(bitstring): bitstring [data].
+fun rust_primitives__hax__Tuple2__Tuple2(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__Tuple3__Tuple3(bitstring, bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__Tuple4__Tuple4(bitstring, bitstring, bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__Tuple5__Tuple5(bitstring, bitstring, bitstring, bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__Tuple6__Tuple6(bitstring, bitstring, bitstring, bitstring, bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__Tuple7__Tuple7(bitstring, bitstring, bitstring, bitstring, bitstring, bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__Tuple8__Tuple8(bitstring, bitstring, bitstring, bitstring, bitstring, bitstring, bitstring, bitstring): bitstring [data].
+
+const rust_primitives__hax__dropped_body: bitstring.
+fun rust_primitives__hax__never_to_any(bitstring): bitstring [data].
+fun rust_primitives__hax__cast_op(bitstring): bitstring [data].
+fun rust_primitives__hax__logical_op_and(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__logical_op_or(bitstring, bitstring): bitstring [data].
+
+(* SPQR override: epoch arithmetic must reduce so multi-epoch states carry
+   `nat_lit(2)`, `nat_lit(3)`, ... (not opaque `add(nat_lit(1), nat_lit(1))`).
+   The protocol only ever computes `epoch + 1`, and ProVerif's `nat` only
+   supports `x + <constant>`, so we match the `+ 1` form specifically. *)
+letfun rust_primitives__hax__machine_int__add(a: bitstring, b: bitstring) =
+  let nat_lit(x) = a in let nat_lit(1) = b in nat_lit(x + 1).
+fun rust_primitives__hax__machine_int__sub(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__machine_int__mul(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__machine_int__div(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__machine_int__rem(bitstring, bitstring): bitstring [data].
+(* SPQR override (vs. shipped primitives.pvl): machine-integer `==`/`!=`
+   must be *decidable* in the symbolic model. Otherwise the generated
+   `assert_eq!(epoch, self.epoch)` panic guards compile to
+   `if !machine_int__eq(..) { panic }`, which can never be discharged when
+   `eq` is opaque, dead-ending every recv transition. Same symbolic-equality
+   shape as `core__cmp__PartialEq__eq` further down this file. *)
+letfun rust_primitives__hax__machine_int__eq(a: bitstring, b: bitstring) =
+  let (=a) = b in True() else False().
+letfun rust_primitives__hax__machine_int__ne(a: bitstring, b: bitstring) =
+  let (=a) = b in False() else True().
+fun rust_primitives__hax__machine_int__lt(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__machine_int__le(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__machine_int__gt(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__machine_int__ge(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__machine_int__shl(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__machine_int__shr(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__machine_int__bitxor(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__machine_int__bitand(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__machine_int__bitor(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__machine_int__not(bitstring): bitstring [data].
+
+fun rust_primitives__hax__int__add(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__int__sub(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__int__mul(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__int__div(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__int__rem(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__int__neg(bitstring): bitstring [data].
+fun rust_primitives__hax__int__eq(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__int__ne(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__int__lt(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__int__le(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__int__gt(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__int__ge(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__int__from_machine(bitstring): bitstring [data].
+fun rust_primitives__hax__int__into_machine(bitstring): bitstring [data].
+
+(*** rust_primitives::arithmetic / slice / sequence — non-auto-decl ***)
+(* The ~251 per-int-width arithmetic ops and most slice / sequence  *)
+(* primitives are opaque `fun NAME(...): bitstring [data].` shapes,  *)
+(* shape-identical to what the auto-decl pass synthesises, and have *)
+(* `#[cfg_attr(hax_backend_proverif, hax_lib::pv_constructor)]` on   *)
+(* their Rust source. They've been removed from this file.           *)
+(* What stays below is the small set that is *not* shape-equivalent  *)
+(* to auto-decl: identity letfuns that collapse otherwise-distinct  *)
+(* collection wrappers (so equality fires across `&v[..]` vs        *)
+(* `v.as_slice()`), the `*SIZE_*` consts, and synthesised names      *)
+(* (`neg`, `slice_index_range`, `hax::repeat`) with no Rust source. *)
+
+const rust_primitives__arithmetic__ISIZE_MAX: bitstring.
+const rust_primitives__arithmetic__ISIZE_MIN: bitstring.
+const rust_primitives__arithmetic__USIZE_MAX: bitstring.
+const rust_primitives__arithmetic__SIZE_BITS: bitstring.
+
+fun rust_primitives__arithmetic__neg(bitstring): bitstring [data].
+
+fun rust_primitives__slice__slice_index_range(bitstring, bitstring, bitstring): bitstring [data].
+letfun rust_primitives__slice__slice_to_array(x: bitstring) = x.
+letfun rust_primitives__slice__as_slice(x: bitstring) = x.
+fun rust_primitives__slice__len(bitstring): bitstring [data].
+
+letfun rust_primitives__sequence__seq_to_vec(x: bitstring) = x.
+letfun rust_primitives__sequence__vec_to_seq(x: bitstring) = x.
+fun rust_primitives__sequence__seq_len(bitstring): bitstring [data].
+
+letfun rust_primitives__unsize(x: bitstring) = x.
+
+fun rust_primitives__hax__repeat(bitstring, bitstring): bitstring [data].
+
+(*** core::cmp / ops — letfuns with non-opaque semantics            ***)
+(* These are *not* shape-equivalent to the auto-decl fallback: they  *)
+(* fire ProVerif rewrite rules. Plain opaque ops on the same         *)
+(* trait root (`PartialOrd::lt`, `Index::index`, `Fn::call`,         *)
+(* `slice::Impl::len`, `core::num::Impl_N::MAX/MIN`, etc.) are       *)
+(* equivalent to auto-decl and have been removed.                    *)
+
+(* Symbolic equality: `eq(x, x) = True()`, `eq(x, y) = False()` when
+   `x`, `y` are syntactically distinct ProVerif terms. Without this,
+   `PartialEq::eq` is opaque and a guard like
+     let (=True()) = eq(a, b) in ...
+   never fires even when `a` and `b` are *the same* constructor — which
+   silently makes large parts of protocol-state machinery unreachable. *)
+letfun core__cmp__PartialEq__eq(a: bitstring, b: bitstring) =
+  let (=a) = b in True() else False().
+letfun core__cmp__PartialEq__ne(a: bitstring, b: bitstring) =
+  let (=a) = b in False() else True().
+
+(* `core::ops::bit::Not::not` on `bool` — given as a real letfun so that
+   `let (=True()) = not_kw(b) in ...` actually fires under
+   `b = False()`. Without this, the `not` symbol is opaque and ProVerif
+   can't relate `not(False())` to `True()`, breaking every path that
+   uses `if !x { ... }` on a `bool`. *)
+letfun core__ops__bit__Not__not_kw(b: bitstring) =
+  let (=True()) = b in False()
+  else True().
+
+(*** core::convert — identity wrappers                              ***)
+(* `From::from`, `Into::into`, `AsRef::as_ref`, `TryInto::try_into`  *)
+(* are all "wrap/unwrap one bitstring as another bitstring" under   *)
+(* the uniform-bitstring model. Keeping them opaque made `let       *)
+(* (=Pattern()) = X::into(v) in ...` not match its corresponding   *)
+(* `v` constructor. *)
+
+letfun core__convert__From__from(x: bitstring) = x.
+letfun core__convert__Into__into(x: bitstring) = x.
+letfun core__convert__AsRef__as_ref(x: bitstring) = x.
+letfun core__convert__TryInto__try_into(x: bitstring) = x.
+letfun core__convert__TryFrom__try_from(x: bitstring) = x.
+
+(*** core::ops::deref — also identity                               ***)
+letfun core__ops__deref__Deref__deref(x: bitstring) = x.
+letfun core__ops__deref__DerefMut__deref_mut(x: bitstring) = x.
+
+(*** alloc::* — Vec / Box wrappers are identity at the symbolic     ***)
+(*** level. Real protocol semantics don't care which heap-          ***)
+(*** allocation flavour the bytes are in.                           ***)
+letfun alloc__slice__Impl__to_vec(x: bitstring) = x.
+letfun alloc__vec__Impl_1__as_slice(x: bitstring) = x.
+letfun alloc__borrow__ToOwned__to_owned(x: bitstring) = x.
+letfun alloc__boxed__Impl__new_kw(x: bitstring) = x.
+
+(*** rand_core — `RngCore::fill_bytes` returns fresh bytes         ***)
+(* The trait method mutates its `dest: &mut [u8]` to fresh randomness *)
+(* and returns the (state, dest) pair via the `&mut` mutation hax    *)
+(* phase rewrites. Symbolically this is a fresh `new` value. *)
+letfun rand_core__RngCore__fill_bytes(rng: bitstring, dest: bitstring) =
+  new b: bitstring;
+  rust_primitives__hax__Tuple2__Tuple2(rng, b).
+
+(* `hax_lib::assume` and `hax_lib::prop::constructors::from_bool` *)
+(* are opaque `fun ... [data]` — equivalent to auto-decl, dropped. *)

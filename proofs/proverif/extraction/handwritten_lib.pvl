@@ -1,0 +1,63 @@
+(*****************************************************************)
+(*  SPQR — handwritten symbolic crypto for the extracted model   *)
+(*                                                                *)
+(* The protocol state machine in `lib.pvl` is compiled from the   *)
+(* Rust `spqr::v1::unchunked` code by hax. The cryptographic      *)
+(* primitives it calls (ML-KEM, the chaining-MAC authenticator,   *)
+(* the SCKA KDF) are *abstracted* via `proverif::replace_body` /   *)
+(* `pv_extern` annotations in the Rust source and given symbolic   *)
+(* Dolev-Yao models here. These mirror the hand-written model in   *)
+(* `../cryptolib.pvl` / `../spqr-cka.pv`.                          *)
+(*                                                                *)
+(* Loaded as:  -lib primitives.pvl -lib handwritten_lib.pvl       *)
+(* (`primitives.pvl` ships with hax and provides `True/False`,     *)
+(*  `bitstring_err`, tuples, the public channel `c`, etc.)         *)
+(*****************************************************************)
+
+(* ============================================================= *)
+(* Symbolic incremental ML-KEM 768                                *)
+(*                                                                *)
+(* A decapsulation key `dk` determines the header (pk1) and the   *)
+(* encapsulation key (pk2):                                        *)
+(*    hdr = dk2seed(dk)      ek = dk2enckey(dk)                    *)
+(* Encapsulation is split: `pkenc1` uses the header and binds a    *)
+(* fresh shared secret `ss`; `pkenc2` uses the encapsulation key.  *)
+(* The encapsulation state carries the encapsulation randomness.   *)
+(* ============================================================= *)
+
+fun dk2seed(bitstring): bitstring.
+fun dk2enckey(bitstring): bitstring.
+
+(* Encapsulation state produced by `encaps1`, carrying randomness r. *)
+fun spqr_es(bitstring): bitstring [data].
+
+(* ct1 = pkenc1(r, hdr, ss);  ct2 = pkenc2(r, ek) *)
+fun pkenc1(bitstring, bitstring, bitstring): bitstring.
+fun pkenc2(bitstring, bitstring): bitstring.
+
+(* Decapsulation recovers the encapsulated secret only when ct1/ct2
+   were produced against this dk's header and encapsulation key. *)
+fun pkdec(bitstring, bitstring, bitstring): bitstring
+reduc forall dk: bitstring, ss: bitstring, r: bitstring;
+    pkdec(dk, pkenc1(r, dk2seed(dk), ss), pkenc2(r, dk2enckey(dk))) = ss.
+
+(* `ek_matches_header(ek, hdr)` — true iff ek and hdr come from the
+   same keypair. Total (returns True()/False()). *)
+fun ek_matches(bitstring, bitstring): bitstring
+reduc forall dk: bitstring;
+    ek_matches(dk2enckey(dk), dk2seed(dk)) = True()
+otherwise forall ek: bitstring, hdr: bitstring;
+    ek_matches(ek, hdr) = False().
+
+(* ============================================================= *)
+(* Symbolic authenticator (transcript-binding chaining MAC)       *)
+(*                                                                *)
+(* The authenticator is a single opaque state. `auth_new` derives  *)
+(* it from the shared initial key; `auth_update` ratchets it with  *)
+(* each epoch secret; `mac_*_f` are one-way tags keyed by state.   *)
+(* ============================================================= *)
+
+fun auth_new(bitstring, bitstring): bitstring.
+fun auth_update(bitstring, bitstring, bitstring): bitstring.
+fun mac_ct_f(bitstring, bitstring, bitstring): bitstring.
+fun mac_hdr_f(bitstring, bitstring, bitstring): bitstring.
