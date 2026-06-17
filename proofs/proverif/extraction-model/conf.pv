@@ -1,7 +1,6 @@
 (* SPQR extracted model — confidentiality (forward secrecy + post-compromise
-   security). Run:
-     proverif -lib primitives.pvl -lib handwritten_lib.pvl \
-              -lib lib.pvl -lib model.pvl conf.pv
+   security). Run (from the repo root):
+     python3 hax.py verify-proverif epochs=N conf.pv
    Expect "true": if the attacker learns an epoch secret, then either the
    ML-KEM keys at that epoch were compromised, or an authenticator key at some
    epoch ep_ <= ep was compromised before the secret was derived (j < i).

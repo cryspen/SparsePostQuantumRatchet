@@ -8,13 +8,13 @@
 (* NoHeaderReceived = epoch + authenticator) are tabled. This is   *)
 (* what keeps multi-epoch ProVerif tractable. Compromisable key    *)
 (* material is published into flat compromise tables that the      *)
-(* fixed compromise processes read (scenario mirrors ../spqr-cka). *)
+(* fixed compromise processes read (scenario mirrors ../handwritten/spqr-cka). *)
 (*                                                                *)
 (* Roles still run as separate concurrent processes communicating  *)
 (* over the public channel c, so the attacker has full network     *)
 (* control and authentication remains meaningful. Mirrors the      *)
-(* hand-written ../spqr-cka.pv; transcript binding comes from the  *)
-(* authenticator MAC chain (faithful to the spec; see ../README).  *)
+(* hand-written ../handwritten/spqr-cka.pv; transcript binding comes from the  *)
+(* authenticator MAC chain (faithful to the spec; see ../README.md).  *)
 (*****************************************************************)
 
 (* ===== Aliases for hax's mangled names (every type is bitstring) ===== *)
@@ -139,7 +139,7 @@ let Responder() =
 
 (* ===================== Compromise (fixed instances) =====================
    Compromise is a fixed set of concrete (a,b,epoch) instances, mirroring the
-   chosen scenario in ../spqr-cka.pv (see System() below). *)
+   chosen scenario in ../handwritten/spqr-cka.pv (see System() below). *)
 let CompromiseKeysA(a: principal, b: principal, e: nat) =
     get ReqKeys(=a, =b, =e, dk) in
     event CompromisedKeysA(a, b, e); out(c, dk).
@@ -163,7 +163,7 @@ let CompromiseAuthB(a: principal, b: principal, e: nat) =
    so ReqKeys/ReqAuth(X,Y,e) exists for the epoch-e requestor X (peer Y), and
    RespKeys/RespAuth(X,Y,e) for the epoch-e responder X (peer Y).
 
-   Compromise scenario, aligned with the hand-written ../spqr-cka.pv choice
+   Compromise scenario, aligned with the hand-written ../handwritten/spqr-cka.pv choice
    (KEM keys at alternating epochs + the responder authenticator at the last
    epoch), mapped to THIS model's 1-based epochs and role-swap table above:
      - KeysA(A,B,1): epoch-1 requestor A's KEM keys      (mirrors spqr-cka KeysA@first)

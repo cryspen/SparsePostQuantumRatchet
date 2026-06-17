@@ -4,24 +4,29 @@ This folder contains symbolic (Dolev–Yao) ProVerif models of the SPQR protocol
 
 ## Hand-written models
 
-- [`spqr-cka.pv`](spqr-cka.pv) — the ML-KEM Braid / continuous key agreement
-  (the public ratchet, implemented in [`src/v1`](../../src/v1)). Proves
-  reachability, confidentiality (forward secrecy + post-compromise security),
-  and mutual authentication.
-- [`spqr-dr.pv`](spqr-dr.pv) — the symmetric ratchet (implemented in
-  [`src/chain.rs`](../../src/chain.rs)).
-- [`cryptolib.pvl`](cryptolib.pvl) — shared symbolic crypto library.
+The [`handwritten/`](handwritten) folder holds the by-hand models:
 
-Run, e.g.: `proverif -lib cryptolib.pvl spqr-cka.pv`.
+- [`handwritten/spqr-cka.pv`](handwritten/spqr-cka.pv) — the ML-KEM Braid /
+  continuous key agreement (the public ratchet, implemented in
+  [`src/v1`](../../src/v1)). Proves reachability, confidentiality (forward
+  secrecy + post-compromise security), and mutual authentication.
+- [`handwritten/spqr-dr.pv`](handwritten/spqr-dr.pv) — the symmetric ratchet
+  (implemented in [`src/chain.rs`](../../src/chain.rs)).
+- [`handwritten/cryptolib.pvl`](handwritten/cryptolib.pvl) — shared symbolic crypto.
 
-## Extracted model (`extraction/`)
+Run, e.g. (from this folder): `proverif -lib handwritten/cryptolib.pvl handwritten/spqr-cka.pv`.
 
-[`extraction/`](extraction) holds a model whose protocol logic is **compiled
-directly from the Rust source** (`spqr::v1::unchunked`) by
-[hax](https://github.com/cryspen/hax)'s ProVerif backend, rather than written by
-hand. Only the cryptographic primitives are abstracted; the state machine is the
-real code. This keeps the analyzed model in lock-step with the implementation.
-See [`extraction/README.md`](extraction/README.md) for details.
+## Extracted model (`extraction/` + `extraction-model/`)
+
+The protocol logic is **compiled directly from the Rust source**
+(`spqr::v1::unchunked`) by [hax](https://github.com/cryspen/hax)'s ProVerif
+backend, rather than written by hand. The pure hax output is
+[`extraction/lib.pvl`](extraction/lib.pvl) (never hand-edited); the hand-written
+composition that wraps it — symbolic crypto, process/compromise model, queries —
+is in [`extraction-model/`](extraction-model). Only the cryptographic primitives
+are abstracted; the state machine is the real code, keeping the analyzed model in
+lock-step with the implementation. See
+[`extraction-model/README.md`](extraction-model/README.md) for details.
 
 From the repository root:
 

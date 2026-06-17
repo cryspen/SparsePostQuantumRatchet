@@ -7,7 +7,7 @@
 (* the SCKA KDF) are *abstracted* via `proverif::replace_body` /   *)
 (* `pv_extern` annotations in the Rust source and given symbolic   *)
 (* Dolev-Yao models here. These mirror the hand-written model in   *)
-(* `../cryptolib.pvl` / `../spqr-cka.pv`.                          *)
+(* `../handwritten/cryptolib.pvl` / `../handwritten/spqr-cka.pv`.                          *)
 (*                                                                *)
 (* Loaded as:  -lib primitives.pvl -lib handwritten_lib.pvl       *)
 (* (`primitives.pvl` ships with hax and provides `True/False`,     *)

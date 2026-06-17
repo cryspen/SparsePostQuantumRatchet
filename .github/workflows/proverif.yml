@@ -14,9 +14,14 @@ jobs:
       - run: opam init
       - run: opam install -y proverif
 
-      - name: proverif proofs
+      - name: hand-written proverif proofs
         run: |
           eval $(opam env)
-          proverif -lib cryptolib.pvl spqr-cka.pv
-          proverif -lib cryptolib.pvl spqr-dr.pv
+          proverif -lib handwritten/cryptolib.pvl handwritten/spqr-cka.pv
+          proverif -lib handwritten/cryptolib.pvl handwritten/spqr-dr.pv
         working-directory: ./proofs/proverif
+
+      - name: extracted-model proverif proofs (reach + auth + conf, FS/PCS)
+        run: |
+          eval $(opam env)
+          python3 hax.py verify-proverif epochs=2

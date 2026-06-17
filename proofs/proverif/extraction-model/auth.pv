@@ -1,6 +1,5 @@
-(* SPQR extracted model — mutual authentication. Run:
-     proverif -lib primitives.pvl -lib handwritten_lib.pvl \
-              -lib lib.pvl -lib model.pvl auth.pv
+(* SPQR extracted model — mutual authentication. Run (from the repo root):
+     python3 hax.py verify-proverif epochs=N auth.pv
    Expect "true": a completed session implies the peer started it at the same
    epoch, unless an authenticator key (at some epoch ep_ <= ep) was
    compromised. *)

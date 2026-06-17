@@ -1,18 +1,20 @@
 # Extracted ProVerif model of the unchunked v1 protocol
 
-The protocol state machine here is **compiled from the Rust source** by hax's
-ProVerif backend, so the analyzed model tracks the implementation rather than a
-hand-transcription of it. The query set mirrors the hand-written
-[`../spqr-cka.pv`](../spqr-cka.pv).
+This folder is the **hand-written composition layer** for the extracted proof:
+the symbolic crypto, the process/compromise model, and the queries. The protocol
+state machine itself is **compiled from the Rust source** by hax's ProVerif
+backend and lives, untouched, in [`../extraction/lib.pvl`](../extraction/lib.pvl)
+(pure hax output; never hand-edited). The query set mirrors the hand-written
+[`../handwritten/spqr-cka.pv`](../handwritten/spqr-cka.pv).
 
 ## Files
 
 | File | Origin | Contents |
 |---|---|---|
-| `lib.pvl` | **generated** by hax | the `spqr::v1::unchunked` state machine (send_ek / send_ct transitions, state structs) — never hand-edited |
+| `../extraction/lib.pvl` | **generated** by hax | the `spqr::v1::unchunked` state machine (send_ek / send_ct transitions, state structs) — never hand-edited |
 | `handwritten_lib.pvl` | hand-written | symbolic Dolev–Yao crypto (ML-KEM, chaining-MAC authenticator) the generated code calls |
 | `primitives.pvl` | vendored from hax | hax's ProVerif prelude, with local fixes: machine-integer `==`/`!=` decidable and `+1` epoch arithmetic reductive |
-| `model.pvl` | hand-written | process model: multi-epoch ping-pong (roles swap each epoch), fixed compromise mirroring `../spqr-cka.pv` |
+| `model.pvl` | hand-written | process model: multi-epoch ping-pong (roles swap each epoch), fixed compromise mirroring `../handwritten/spqr-cka.pv` |
 | `reach.pv` / `conf.pv` / `auth.pv` | hand-written | reachability / confidentiality / authentication queries (one per file; each carries the sound `nounif` block) |
 | `sanity.pv` | hand-written | negative controls: confirm the compromise is non-vacuous (compromised epochs leak, others stay secret) |
 
@@ -41,7 +43,7 @@ Each role runs a *full epoch* in one process (`Requestor` / `Responder` in
 tables — only the small hand-off states (epoch + authenticator) are tabled. This
 is what keeps the multi-epoch analysis tractable for ProVerif's saturation.
 Compromisable key material is published into flat compromise tables that the
-fixed `Compromise*` processes read (scenario mirrors `../spqr-cka.pv`). Roles
+fixed `Compromise*` processes read (scenario mirrors `../handwritten/spqr-cka.pv`). Roles
 remain separate concurrent processes over the public channel `c`, so the attacker
 keeps full network control and authentication stays meaningful.
 
@@ -73,7 +75,7 @@ and restores `Cargo.lock`, so normal builds and CI are unaffected.
 ## Properties proven
 
 Over the ping-pong (roles swap each epoch) with a fixed key/authenticator
-compromise (`model.pvl`, mirroring `../spqr-cka.pv`). The three properties:
+compromise (`model.pvl`, mirroring `../handwritten/spqr-cka.pv`). The three properties:
 
 - **reachability + key agreement** (`reach.pv`) — both roles complete each
   epoch and derive the *same* epoch secret (exercises the symbolic ML-KEM
@@ -86,7 +88,7 @@ compromise (`model.pvl`, mirroring `../spqr-cka.pv`). The three properties:
   that epoch were compromised, or an authenticator key at some `ep′ ≤ ep` was
   compromised before the secret was derived (`@i`/`@j`, `j < i`, `ep′ ≤ ep`).
 
-These are the same queries as the hand-written `../spqr-cka.pv` (no
+These are the same queries as the hand-written `../handwritten/spqr-cka.pv` (no
 simplification), and all three verify to NEPOCHS=6:
 
 | property | reach + agreement | mutual auth | conf (FS/PCS) |

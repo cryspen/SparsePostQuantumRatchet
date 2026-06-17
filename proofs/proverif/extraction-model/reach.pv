@@ -1,6 +1,5 @@
 (* SPQR extracted model — reachability queries.
-   Run: proverif -lib primitives.pvl -lib handwritten_lib.pvl \
-                 -lib lib.pvl -lib model.pvl reach.pv
+   Run (from the repo root): python3 hax.py verify-proverif epochs=N reach.pv
    Expect "false" for every `not event(...)` (each event IS reachable). *)
 
 (* Saturation control (sound: nounif only guides ProVerif's resolution order,
