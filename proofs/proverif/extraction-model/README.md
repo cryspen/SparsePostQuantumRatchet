@@ -56,8 +56,9 @@ spec and the Rust `kdf::derive_scka_secret`).
 From the repository root:
 
 ```
-python3 hax.py extract-proverif            # regenerate lib.pvl from Rust
-python3 hax.py verify-proverif epochs=6 reach.pv    # reachability + key agreement
+python3 hax.py extract-proverif            # regenerate ../extraction/lib.pvl from Rust
+python3 hax.py check-proverif epochs=4              # assert all verdicts vs the (* EXPECT: ... *) annotations
+python3 hax.py verify-proverif epochs=6 reach.pv    # reachability + key agreement (raw output)
 python3 hax.py verify-proverif epochs=6 conf.pv     # confidentiality (FS + PCS)
 python3 hax.py verify-proverif epochs=6 auth.pv     # mutual authentication
 python3 hax.py verify-proverif epochs=6 sanity.pv   # non-vacuity controls

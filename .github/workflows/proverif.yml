@@ -21,7 +21,7 @@ jobs:
           proverif -lib handwritten/cryptolib.pvl handwritten/spqr-dr.pv
         working-directory: ./proofs/proverif
 
-      - name: extracted-model proverif proofs (reach + auth + conf, FS/PCS)
+      - name: extracted-model proverif proofs (check verdicts vs EXPECT)
         run: |
           eval $(opam env)
-          python3 hax.py verify-proverif epochs=2
+          python3 hax.py check-proverif epochs=4

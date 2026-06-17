@@ -18,19 +18,20 @@ nounif a: bitstring, e: bitstring, ct: bitstring; attacker(mac_ct_f(a, e, ct)) /
 nounif a: bitstring, e: bitstring, h: bitstring; attacker(mac_hdr_f(a, e, h)) / 30000.
 nounif ss: bitstring, e: bitstring; attacker(extern__derive_scka_secret(ss, e)) / 30000.
 
-(* Epoch 1 (always meaningful). *)
+(* Epoch 1 (always meaningful). EXPECT: false false false  (all reachable) *)
 query s: bitstring, hd: bitstring;
     event(StartedA(A, B, 1, hd));
     event(CompletedB(B, A, 1, s));
     event(CompletedA(A, B, 1, s)).
 
-(* Epoch 2 — the role swap: at NEPOCHS=1 these are (correctly) UNREACHABLE
-   (`not event(...) is true`); they become reachable at `epochs=2`. *)
+(* Epoch 2 — the role swap: reachable at NEPOCHS>=2 (at NEPOCHS=1 they are
+   correctly UNREACHABLE). EXPECT: false false  (reachable; assumes NEPOCHS>=2) *)
 query s: bitstring;
     event(CompletedB(A, B, 2, s));
     event(CompletedA(B, A, 2, s)).
 
-(* Key agreement is reachable: both roles derive the same epoch secret. *)
+(* Key agreement is reachable: both roles derive the same epoch secret.
+   EXPECT: false  (reachable) *)
 query s: bitstring;
     event(CompletedA(A, B, 1, s)) && event(CompletedB(B, A, 1, s)).
 

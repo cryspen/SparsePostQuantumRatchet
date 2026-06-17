@@ -32,6 +32,7 @@ nounif ss: bitstring, e: bitstring; attacker(extern__derive_scka_secret(ss, e)) 
    costs the same hard stateful reasoning), so it is not kept. Only `nounif`
    above is retained: it is always sound (it only guides resolution order). *)
 
+(* EXPECT: true  (confidentiality with FS + PCS holds for the requestor) *)
 query i: time, j: time, x: principal, y: principal, ep: nat, ep_: nat, sk: bitstring;
     event(CompletedA(x, y, ep, sk))@i && attacker(sk) ==>
         ( event(CompromisedKeysA(x, y, ep))
@@ -41,6 +42,7 @@ query i: time, j: time, x: principal, y: principal, ep: nat, ep_: nat, sk: bitst
         || (ep_ <= ep && event(CompromisedAuthB(x, y, ep_))@j && j < i)
         || (ep_ <= ep && event(CompromisedAuthB(y, x, ep_))@j && j < i) ).
 
+(* EXPECT: true  (confidentiality with FS + PCS holds for the responder) *)
 query i: time, j: time, x: principal, y: principal, ep: nat, ep_: nat, sk: bitstring;
     event(CompletedB(x, y, ep, sk))@i && attacker(sk) ==>
         ( event(CompromisedKeysB(x, y, ep))

@@ -70,16 +70,24 @@ are clean; (3) is under discussion. Until then they live in the vendored copy.
 
 ### L1 — verify the proofs (ProVerif only; no hax build)
 
-Needs only ProVerif 2.05 and the committed `extraction/*.pvl` / `*.pv`:
+Needs only ProVerif 2.05 and the committed files.
 
 ```
+# Assert every ProVerif verdict against the documented expected results
+# (PASS/FAIL report; exits non-zero on any mismatch):
+python3 hax.py check-proverif epochs=4
+
+# Or run a single property and read ProVerif's raw output:
 python3 hax.py verify-proverif epochs=6 reach.pv    # reachability + key agreement
 python3 hax.py verify-proverif epochs=6 auth.pv     # mutual authentication
 python3 hax.py verify-proverif epochs=6 conf.pv     # confidentiality (FS + PCS)
 python3 hax.py verify-proverif epochs=6 sanity.pv   # non-vacuity controls
 ```
 
-`verify-proverif` takes `epochs=N` (the NEPOCHS bound) and any number of query
+`check-proverif` compares each verdict to the `(* EXPECT: ... *)` annotation in
+the query file and reports e.g. `14/14 verdicts match expected` (the EXPECT
+annotations assume NEPOCHS >= 4). `verify-proverif` just runs ProVerif and prints
+its output. Both take `epochs=N` (the NEPOCHS bound) and any number of query
 files. (Equivalently, by hand, from `proofs/proverif/`: `proverif -lib
 extraction-model/primitives.pvl -lib extraction-model/handwritten_lib.pvl -lib
 extraction/lib.pvl -lib extraction-model/nepochs.pvl -lib
