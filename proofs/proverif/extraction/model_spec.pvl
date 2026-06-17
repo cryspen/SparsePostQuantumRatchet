@@ -139,8 +139,8 @@ let Responder() =
 
 (* ===================== Compromise (FIXED instances, hand-written style) =====
    EXPERIMENT (Test 1): same generated protocol, but compromise is a fixed set of
-   concrete (a,b,epoch) instances rather than attacker-scheduled. Mirrors how
-   ../spqr-cka.pv composes specific compromises. *)
+   concrete (a,b,epoch) instances rather than attacker-scheduled. Mirrors the
+   chosen scenario in ../spqr-cka.pv (see System() below). *)
 let CompromiseKeysA(a: principal, b: principal, e: nat) =
     get ReqKeys(=a, =b, =e, dk) in
     event CompromisedKeysA(a, b, e); out(c, dk).
@@ -156,13 +156,30 @@ let CompromiseAuthB(a: principal, b: principal, e: nat) =
     event CompromisedAuthB(a, b, e); out(c, au).
 
 (* ===================== Top-level system ===================== *)
-(* Epoch 1: A requestor / B responder.  Epoch 2: B requestor / A responder. *)
+(* Roles swap each epoch (requestor -> responder -> requestor ...):
+     epoch 1: A requestor / B responder
+     epoch 2: B requestor / A responder
+     epoch 3: A requestor / B responder
+     epoch 4: B requestor / A responder
+   so ReqKeys/ReqAuth(X,Y,e) exists for the epoch-e requestor X (peer Y), and
+   RespKeys/RespAuth(X,Y,e) for the epoch-e responder X (peer Y).
+
+   Compromise scenario, aligned with the hand-written ../spqr-cka.pv choice
+   (KEM keys at alternating epochs + the responder authenticator at the last
+   epoch), mapped to THIS model's 1-based epochs and role-swap table above:
+     - KeysA(A,B,1): epoch-1 requestor A's KEM keys      (mirrors spqr-cka KeysA@first)
+     - KeysB(B,A,3): epoch-3 responder  B's KEM keys     (mirrors spqr-cka KeysB@mid)
+     - AuthB(A,B,4): epoch-4 responder  A's authenticator (mirrors spqr-cka AuthB@last)
+   Epochs 2 and 4 keep their KEM keys, so forward secrecy / PCS is tested
+   non-trivially: those epoch secrets must stay secret though epochs 1 and 3
+   leak, and the epoch-4 auth compromise must not break epoch-4 confidentiality.
+   Forward secrecy + PCS are expressed by conf.pv's `ep_ <= ep` / `@j, j < i`
+   ordering (no `phase` is used here, unlike spqr-cka.pv's phase-1 auth leak). *)
 let System() =
     new auth_key: bitstring;
     insert AStates(A, B, ek_new(auth_key));
     insert BStates(B, A, ct_new(auth_key), no_secret);
     ( !Requestor() | !Responder()
-    | CompromiseKeysA(A, B, 1) | CompromiseKeysB(B, A, 1)
-    | CompromiseAuthA(A, B, 1) | CompromiseAuthB(B, A, 1)
-    | CompromiseKeysA(B, A, 2) | CompromiseKeysB(A, B, 2)
-    | CompromiseAuthA(B, A, 2) | CompromiseAuthB(A, B, 2) ).
+    | CompromiseKeysA(A, B, 1)
+    | CompromiseKeysB(B, A, 3)
+    | CompromiseAuthB(A, B, 4) ).
