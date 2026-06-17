@@ -1,0 +1,39 @@
+(* SPQR extracted model — negative-control / sanity queries.
+
+   Purpose: confirm the security results from conf.pv are NOT vacuous, i.e. that
+   the compromise scenario in model_spec.pvl actually bites. A confidentiality
+   query "attacker(sk) ==> compromised..." is trivially true if the attacker can
+   never derive ANY secret; these queries check the contrapositive directly.
+
+   Run (with the FIXED, spqr-cka-aligned compromise model and NEPOCHS=4):
+     python3 hax.py verify-proverif epochs=4 model=model_spec.pvl sanity.pv
+
+   model_spec.pvl compromise: KeysA(A,B,1), KeysB(B,A,3), AuthB(A,B,4).
+   Roles per epoch (see model_spec.pvl):
+     ep1: req A / resp B    ep2: req B / resp A
+     ep3: req A / resp B    ep4: req B / resp A
+
+   Each query asks "is a completed session whose epoch secret the attacker also
+   knows reachable?". ProVerif reports it as `not (...) is false` when REACHABLE
+   (the secret leaked) and `... is true` when UNREACHABLE (the secret held). *)
+
+(* (1) epoch 1: KEM keys compromised -> secret MUST leak.   EXPECT: false (leaks) *)
+query sk: bitstring; event(CompletedA(A, B, 1, sk)) && attacker(sk).
+
+(* (2) epoch 3: KEM keys compromised -> secret MUST leak.   EXPECT: false (leaks) *)
+query sk: bitstring; event(CompletedB(B, A, 3, sk)) && attacker(sk).
+
+(* (3) epoch 2: nothing compromised -> secret MUST hold.    EXPECT: true (secret)
+   This is the non-vacuous secrecy witness: epoch 2 stays secret even though both
+   its neighbours (1 and 3) leak — forward secrecy and PCS are real here. *)
+query sk: bitstring; event(CompletedA(B, A, 2, sk)) && attacker(sk).
+
+(* (4) epoch 4: only the AUTHENTICATOR is compromised (not the KEM keys) -> the
+   secret STILL leaks, via active MITM: with the MAC key the attacker forges
+   mac_hdr_f/mac_ct_f on substituted KEM material it generated, so it decaps the
+   responder's ciphertext itself. A genuine attack (the authenticator functions
+   have no reduc, so the key is never extracted directly); conf.pv's
+   CompromisedAuth* disjunct is what accounts for it.   EXPECT: false (leaks) *)
+query sk: bitstring; event(CompletedB(A, B, 4, sk)) && attacker(sk).
+
+process System()
