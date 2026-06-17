@@ -1,15 +1,15 @@
 (* SPQR extracted model — negative-control / sanity queries.
 
    Purpose: confirm the security results from conf.pv are NOT vacuous, i.e. that
-   the compromise scenario in model_spec.pvl actually bites. A confidentiality
-   query "attacker(sk) ==> compromised..." is trivially true if the attacker can
-   never derive ANY secret; these queries check the contrapositive directly.
+   the compromise scenario in model.pvl actually bites. A confidentiality query
+   "attacker(sk) ==> compromised..." is trivially true if the attacker can never
+   derive ANY secret; these queries check the contrapositive directly.
 
-   Run (with the FIXED, spqr-cka-aligned compromise model and NEPOCHS=4):
-     python3 hax.py verify-proverif epochs=4 model=model_spec.pvl sanity.pv
+   Run (NEPOCHS=4):
+     python3 hax.py verify-proverif epochs=4 sanity.pv
 
-   model_spec.pvl compromise: KeysA(A,B,1), KeysB(B,A,3), AuthB(A,B,4).
-   Roles per epoch (see model_spec.pvl):
+   model.pvl compromise: KeysA(A,B,1), KeysB(B,A,3), AuthB(A,B,4).
+   Roles per epoch (see model.pvl):
      ep1: req A / resp B    ep2: req B / resp A
      ep3: req A / resp B    ep4: req B / resp A
 

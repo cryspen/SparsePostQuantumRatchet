@@ -8,7 +8,7 @@
 (* NoHeaderReceived = epoch + authenticator) are tabled. This is   *)
 (* what keeps multi-epoch ProVerif tractable. Compromisable key    *)
 (* material is published into flat compromise tables that the      *)
-(* (replicated) attacker-scheduled compromise processes read.      *)
+(* fixed compromise processes read (scenario mirrors ../spqr-cka). *)
 (*                                                                *)
 (* Roles still run as separate concurrent processes communicating  *)
 (* over the public channel c, so the attacker has full network     *)
@@ -137,26 +137,48 @@ let Responder() =
     let st5 = ct_recv_next_epoch(st4, epoch_succ(epoch_c2(st4))) in
     if ep < max_epoch() then insert AStates(b, a, st5).
 
-(* ===================== Compromise (attacker-scheduled, replicated) ===================== *)
-let CompromiseKeysA() =
-    get ReqKeys(a, b, e, dk) in
+(* ===================== Compromise (fixed instances) =====================
+   Compromise is a fixed set of concrete (a,b,epoch) instances, mirroring the
+   chosen scenario in ../spqr-cka.pv (see System() below). *)
+let CompromiseKeysA(a: principal, b: principal, e: nat) =
+    get ReqKeys(=a, =b, =e, dk) in
     event CompromisedKeysA(a, b, e); out(c, dk).
-let CompromiseAuthA() =
-    get ReqAuth(a, b, e, au) in
+let CompromiseAuthA(a: principal, b: principal, e: nat) =
+    get ReqAuth(=a, =b, =e, au) in
     event CompromisedAuthA(a, b, e); out(c, au).
-let CompromiseKeysB() =
-    get RespKeys(a, b, e, es, kb) in
+let CompromiseKeysB(a: principal, b: principal, e: nat) =
+    get RespKeys(=a, =b, =e, es, kb) in
     let spqr_es(r) = es in
     event CompromisedKeysB(a, b, e); out(c, (r, kb)).
-let CompromiseAuthB() =
-    get RespAuth(a, b, e, au) in
+let CompromiseAuthB(a: principal, b: principal, e: nat) =
+    get RespAuth(=a, =b, =e, au) in
     event CompromisedAuthB(a, b, e); out(c, au).
 
 (* ===================== Top-level system ===================== *)
+(* Roles swap each epoch (requestor -> responder -> requestor ...):
+     epoch 1: A requestor / B responder
+     epoch 2: B requestor / A responder
+     epoch 3: A requestor / B responder
+     epoch 4: B requestor / A responder
+   so ReqKeys/ReqAuth(X,Y,e) exists for the epoch-e requestor X (peer Y), and
+   RespKeys/RespAuth(X,Y,e) for the epoch-e responder X (peer Y).
+
+   Compromise scenario, aligned with the hand-written ../spqr-cka.pv choice
+   (KEM keys at alternating epochs + the responder authenticator at the last
+   epoch), mapped to THIS model's 1-based epochs and role-swap table above:
+     - KeysA(A,B,1): epoch-1 requestor A's KEM keys      (mirrors spqr-cka KeysA@first)
+     - KeysB(B,A,3): epoch-3 responder  B's KEM keys     (mirrors spqr-cka KeysB@mid)
+     - AuthB(A,B,4): epoch-4 responder  A's authenticator (mirrors spqr-cka AuthB@last)
+   Epochs 2 and 4 keep their KEM keys, so forward secrecy / PCS is tested
+   non-trivially: those epoch secrets must stay secret though epochs 1 and 3
+   leak, and the epoch-4 auth compromise must not break epoch-4 confidentiality.
+   Forward secrecy + PCS are expressed by conf.pv's `ep_ <= ep` / `@j, j < i`
+   ordering (no `phase` is used here, unlike spqr-cka.pv's phase-1 auth leak). *)
 let System() =
     new auth_key: bitstring;
     insert AStates(A, B, ek_new(auth_key));
     insert BStates(B, A, ct_new(auth_key), no_secret);
     ( !Requestor() | !Responder()
-    | !CompromiseKeysA() | !CompromiseKeysB()
-    | !CompromiseAuthA() | !CompromiseAuthB() ).
+    | CompromiseKeysA(A, B, 1)
+    | CompromiseKeysB(B, A, 3)
+    | CompromiseAuthB(A, B, 4) ).

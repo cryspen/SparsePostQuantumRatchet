@@ -72,11 +72,14 @@ are clean; (3) is under discussion. Until then they live in the vendored copy.
 Needs only ProVerif 2.05 and the committed `extraction/*.pvl` / `*.pv`:
 
 ```
-python3 hax.py verify-proverif                  # NEPOCHS=1: reach + conf(FS/PCS) + auth
-python3 hax.py verify-proverif epochs=2 reach.pv auth.pv   # multi-epoch reach + auth
+python3 hax.py verify-proverif epochs=6 reach.pv    # reachability + key agreement
+python3 hax.py verify-proverif epochs=6 auth.pv     # mutual authentication
+python3 hax.py verify-proverif epochs=6 conf.pv     # confidentiality (FS + PCS)
+python3 hax.py verify-proverif epochs=6 sanity.pv   # non-vacuity controls
 ```
 
-(Equivalently, by hand, from `proofs/proverif/extraction/`:
+`verify-proverif` takes `epochs=N` (the NEPOCHS bound) and any number of query
+files. (Equivalently, by hand, from `proofs/proverif/extraction/`:
 `proverif -lib primitives.pvl -lib handwritten_lib.pvl -lib lib.pvl -lib nepochs.pvl -lib model.pvl <q>.pv`.)
 
 ### L2 — re-derive `lib.pvl` from Rust (build hax)
@@ -104,26 +107,31 @@ cargo test --lib # 52 tests pass
 
 ## What is proven
 
-Same query set as `spqr-cka.pv` (no simplification). ProVerif's tractability on
-the verbose *extracted* terms is memory-bound and degrades with `NEPOCHS`:
+Same query set as `spqr-cka.pv` (no simplification): reachability + key
+agreement, mutual authentication (both directions), and confidentiality with
+**forward secrecy (FS)** and **post-compromise security (PCS)**.
 
-| NEPOCHS | reachability + agreement | mutual authentication | confidentiality (FS/PCS) |
+- **FS**: a compromise after a secret is derived does not reveal it (`@i/@j`,
+  `j < i`, `ep' <= ep`).
+- **PCS**: a KEM compromise at one epoch does not reveal another epoch's secret —
+  the KEM disjuncts are at the *same* epoch as the leaked secret, so the ratchet
+  heals. `sanity.pv` witnesses it (compromise epoch 1's KEM keys → epochs 2,3,4
+  stay secret). PCS does not hold for an *authenticator* compromise (`ep' <= ep`
+  admits forward MITM) — matching the protocol.
+
+Sound: every query file uses only `nounif` (resolution-order only — always
+sound), no `restriction`/`axiom`, no induction lemmas.
+
+| property | reach + agreement | mutual auth | conf (FS/PCS) |
 |---|---|---|---|
-| 1 | ✅ | ✅ (both directions) | ✅ (all forms) |
-| 2 | ✅ | ✅ (both directions) | open — saturation does not converge here |
-| 3 | ✅ | open — queue diverges | open |
+| verified to | NEPOCHS=6 | NEPOCHS=6 | NEPOCHS=6 |
 
-Notes:
-- The verdicts are sound: `conf.pv` uses only `nounif` (which only guides
-  ProVerif's resolution order — **always sound**) and **no `restriction`/`axiom`**
-  (which would be trust assumptions). The temporal queries use `@i/@j`, `j < i`,
-  `ep' ≤ ep` exactly as `spqr-cka.pv`.
-- The wall is **memory**: this artifact was produced on a 48 GB machine; even the
-  compact `spqr-cka.pv` is OOM-killed at `max_epoch=7` here, whereas the
-  Cheval–Jacomme–Richards Double-Ratchet analysis reached more epochs on a 378 GB
-  server. Pushing cross-epoch confidentiality further is the documented frontier
-  (their recipe: proven state-uniqueness lemmas + `[induction]` + the GSVerif
-  counter library).
+The compromise scenario (`model.pvl`) mirrors `spqr-cka.pv`'s: KEM keys
+compromised at alternating epochs + the responder authenticator at the last
+epoch, leaving other epochs' KEM keys intact so FS/PCS is tested non-trivially
+(48 GB machine). `sanity.pv` confirms non-vacuity: compromised epochs leak, an
+uncompromised epoch between two leaking neighbours stays secret, no cross-epoch
+leakage, and an authenticator-only compromise leaks via active MITM.
 
 ## Relationship with the hand-written model
 
@@ -133,26 +141,29 @@ queries. The points of difference:
 
 - **Queries.** `reach.pv` / `conf.pv` / `auth.pv` use the same query formulas as
   `spqr-cka.pv` (same events, same implications, same `ep' <= ep` and `@i,@j,j<i`
-  ordering), up to variable names and the split into one file per property.
+  ordering), up to variable names and the split into one file per property. One
+  structural difference: PCS is expressed by `spqr-cka.pv` via a **phase-1**
+  post-protocol authenticator leak (`attacker_p1`), and by the generated
+  `conf.pv` **single-phase**, via the `@j, j < i` ordering. Both establish FS and
+  PCS.
 - **Protocol process.** Here it is compiled from `src/v1/unchunked` (hax output,
   `lib.pvl`); in `spqr-cka.pv` it is written by hand. The compiled process is
   in-order (header → ek → ct1 → ct2), matching the Rust state machine;
   `spqr-cka.pv` additionally models ct1 arriving before the ek is sent. Message
   reordering in the implementation is handled by the chunked layer, which is not
   modelled here.
-- **Epoch-key KDF.** `cryptolib.pvl` mixes `h(ekseed, ek)` into the epoch-key KDF
-  (`spqr-cka.pv:76,100`); `kdf::derive_scka_secret` and this model derive the
-  epoch key from the shared secret and epoch only, with transcript binding coming
-  from the authenticator MAC chain. The KEM split, MAC, and ek/header check are
-  modelled the same way in both.
-- **Compromise.** Here compromise is attacker-scheduled per epoch (KEM keys and
-  authenticator, any epoch); `spqr-cka.pv` enables a fixed set of compromise
-  instances plus a phase-1 authenticator compromise. The set modelled here covers
-  the hand-written one.
-- **Scope.** On this hardware `spqr-cka.pv` completes at NEPOCHS=5 (OOM at 7);
-  this model completes at NEPOCHS=1 for all properties and NEPOCHS=2 for
-  reachability and authentication. The difference is ProVerif saturation
-  cost/memory on the larger compiled terms, not the queries.
+- **Epoch-key KDF.** Both models derive the epoch key from the shared secret +
+  epoch + label only (matching the spec's `KDF_OK` and Rust
+  `kdf::derive_scka_secret`); transcript binding comes from the authenticator MAC
+  chain, not the KDF. KEM split, MAC, and ek/header check are modelled the same in
+  both.
+- **Compromise.** `extraction/model.pvl` mirrors `spqr-cka.pv`'s fixed scenario
+  (KEM keys at alternating epochs + the last-epoch responder authenticator),
+  mapped to this model's role-swap — the apples-to-apples comparison.
+- **Scope.** With `nounif` in every query file, `spqr-cka.pv` (fixed compromise)
+  verifies all properties to NEPOCHS=7 (≈ 19 GB peak on 48 GB); the generated
+  model (`model.pvl`) to NEPOCHS=6. The gap is ProVerif saturation cost on the
+  larger compiled terms.
 
 ## Known deviations & upstreaming
 
@@ -190,8 +201,9 @@ extraction/
   lib.pvl.sha256        digest of the above for L2 byte-identity check
   handwritten_lib.pvl   symbolic crypto for the extracted model
   primitives.pvl        vendored hax prelude (+3 documented deviations)
-  model.pvl             process model: ping-pong, role swap, compromise
+  model.pvl             process model: ping-pong, role swap, fixed compromise (mirrors spqr-cka.pv)
   nepochs.pvl           NEPOCHS bound (generated by verify-proverif epochs=N)
-  reach.pv conf.pv auth.pv   per-property query files
+  reach.pv conf.pv auth.pv   per-property query files (each carries sound nounif)
+  sanity.pv             negative controls: confirm the compromise is non-vacuous
   README.md             extraction details
 ```

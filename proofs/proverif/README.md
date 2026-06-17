@@ -26,9 +26,13 @@ See [`extraction/README.md`](extraction/README.md) for details.
 From the repository root:
 
 ```
-python3 hax.py extract-proverif     # Rust -> proofs/proverif/extraction/lib.pvl
-python3 hax.py verify-proverif      # run ProVerif on the composed model
+python3 hax.py extract-proverif        # Rust -> proofs/proverif/extraction/lib.pvl
+python3 hax.py verify-proverif epochs=6 # run ProVerif on the composed model
 ```
+
+Both the hand-written `spqr-cka.pv` and the extracted model prove reachability,
+confidentiality (FS + PCS), and mutual authentication under a fixed compromise to
+6–7 epochs.
 
 `extract-proverif` needs the pinned hax ProVerif backend; build it with
 [`setup-hax.sh`](setup-hax.sh). For exact toolchain versions, the trust
