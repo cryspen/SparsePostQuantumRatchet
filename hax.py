@@ -150,13 +150,17 @@ class extractProverifAction(argparse.Action):
 class verifyProverifAction(argparse.Action):
 
     def __call__(self, parser, args, values, option_string=None) -> None:
-        # Args are a free-form list: an optional `epochs=N` (NEPOCHS bound) and
-        # any number of query files. Defaults: epochs=2, all three query files.
+        # Args are a free-form list: an optional `epochs=N` (NEPOCHS bound), an
+        # optional `model=FILE.pvl` (the process/compromise model; default
+        # model.pvl) and any number of query files. Defaults: all three queries.
         epochs = None
+        model = "model.pvl"
         targets = []
         for v in values or []:
             if v.startswith("epochs=") or v.startswith("nepochs="):
                 epochs = int(v.split("=", 1)[1])
+            elif v.startswith("model="):
+                model = v.split("=", 1)[1]
             else:
                 targets.append(v)
         if not targets:
@@ -185,7 +189,7 @@ class verifyProverifAction(argparse.Action):
             "-lib", "handwritten_lib.pvl",
             "-lib", "lib.pvl",
             "-lib", "nepochs.pvl",
-            "-lib", "model.pvl",
+            "-lib", model,
         ]
         for target in targets:
             shell(["proverif"] + libs + [target], cwd=PROVERIF_EXTRACTION_DIR)

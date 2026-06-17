@@ -125,6 +125,35 @@ Notes:
   (their recipe: proven state-uniqueness lemmas + `[induction]` + the GSVerif
   counter library).
 
+## Relationship with the hand-written model
+
+The hand-written model (`spqr-cka.pv` + `cryptolib.pvl`) and this generated model
+target the same protocol (the v1 ML-KEM Braid) and state the same security
+queries. The points of difference:
+
+- **Queries.** `reach.pv` / `conf.pv` / `auth.pv` use the same query formulas as
+  `spqr-cka.pv` (same events, same implications, same `ep' <= ep` and `@i,@j,j<i`
+  ordering), up to variable names and the split into one file per property.
+- **Protocol process.** Here it is compiled from `src/v1/unchunked` (hax output,
+  `lib.pvl`); in `spqr-cka.pv` it is written by hand. The compiled process is
+  in-order (header → ek → ct1 → ct2), matching the Rust state machine;
+  `spqr-cka.pv` additionally models ct1 arriving before the ek is sent. Message
+  reordering in the implementation is handled by the chunked layer, which is not
+  modelled here.
+- **Epoch-key KDF.** `cryptolib.pvl` mixes `h(ekseed, ek)` into the epoch-key KDF
+  (`spqr-cka.pv:76,100`); `kdf::derive_scka_secret` and this model derive the
+  epoch key from the shared secret and epoch only, with transcript binding coming
+  from the authenticator MAC chain. The KEM split, MAC, and ek/header check are
+  modelled the same way in both.
+- **Compromise.** Here compromise is attacker-scheduled per epoch (KEM keys and
+  authenticator, any epoch); `spqr-cka.pv` enables a fixed set of compromise
+  instances plus a phase-1 authenticator compromise. The set modelled here covers
+  the hand-written one.
+- **Scope.** On this hardware `spqr-cka.pv` completes at NEPOCHS=5 (OOM at 7);
+  this model completes at NEPOCHS=1 for all properties and NEPOCHS=2 for
+  reachability and authentication. The difference is ProVerif saturation
+  cost/memory on the larger compiled terms, not the queries.
+
 ## Known deviations & upstreaming
 
 **hax ProVerif backend (file as issues; SPQR keeps source-level workarounds until fixed):**
