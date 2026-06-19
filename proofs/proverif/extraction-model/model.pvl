@@ -172,8 +172,10 @@ let CompromiseAuthB(a: principal, b: principal, e: nat) =
    Epochs 2 and 4 keep their KEM keys, so forward secrecy / PCS is tested
    non-trivially: those epoch secrets must stay secret though epochs 1 and 3
    leak, and the epoch-4 auth compromise must not break epoch-4 confidentiality.
-   Forward secrecy + PCS are expressed by conf.pv's `ep_ <= ep` / `@j, j < i`
-   ordering (no `phase` is used here, unlike spqr-cka.pv's phase-1 auth leak). *)
+   Forward secrecy is expressed by conf.pv's `ep_ <= ep` bound; post-compromise
+   security by the `@j, j < i` ordering together with the phase-1 block below,
+   which leaks authenticators *after* every epoch has completed. This mirrors
+   spqr-cka.pv's phase-1 auth leak. *)
 let System() =
     new auth_key: bitstring;
     insert AStates(A, B, ek_new(auth_key));
@@ -181,4 +183,17 @@ let System() =
     ( !Requestor() | !Responder()
     | CompromiseKeysA(A, B, 1)
     | CompromiseKeysB(B, A, 3)
-    | CompromiseAuthB(A, B, 4) ).
+    | CompromiseAuthB(A, B, 4)
+    (* Post-compromise secrecy: once all epochs are done (phase 1), passively
+       leak the root authenticator key `auth_key` (from which the initial
+       authenticator `auth_new(auth_key, 1)` is derivable) AND let the attacker
+       compromise the authenticator of ANY (x, y, ep) it picks. Every such event
+       is timestamped in phase 1, hence AFTER any phase-0 `CompletedA/B(_)@i`, so
+       conf.pv's `@j, j < i` guard makes these leaks unable to excuse an
+       already-derived secret: the queries staying true means late authenticator
+       compromise does not retroactively break past epoch secrets (PCS).
+       Mirrors ../handwritten/spqr-cka.pv's phase-1 block. *)
+    | (phase 1;
+        ( out(c, auth_key)
+        | (in(c, (x: principal, y: principal, e: nat));
+            ( CompromiseAuthA(x, y, e) | CompromiseAuthB(x, y, e) )) )) ).
