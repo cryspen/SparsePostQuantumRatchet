@@ -17,7 +17,7 @@ eval "$(opam env --switch=hax-proverif 2>/dev/null)" 2>/dev/null || true
 if ! command -v cargo-hax >/dev/null 2>&1; then export PATH="$ENG/target/release:$PATH"; fi
 export HAX_RUST_ENGINE_BINARY="${HAX_RUST_ENGINE_BINARY:-$ENG/target/release/hax-rust-engine}"
 cargo hax into -i '-** +~spqr::v1::unchunked::**' proverif
-EPOCHS="${EPOCHS:-4}"; printf 'letfun max_epoch() = %s.\n' "$EPOCHS" > "$M/nepochs.pvl"
+EPOCHS="${EPOCHS:-6}"; printf '(* NEPOCHS bound. *)\nletfun max_epoch() = %s.\n' "$EPOCHS" > "$M/nepochs.pvl"
 python3 - "$PRIM" "$M/handwritten_lib.pvl" "$PVD/extraction/lib.pvl" "$M/model.pvl" "$PVD/extraction/missingdecl.pvl" > "$PVD/extraction/missingdecl.dedup.pvl" <<'PY'
 import re,sys
 defs=set()

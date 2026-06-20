@@ -9,27 +9,15 @@
   `True`/`False`/`nat_lit` constructors, `logical_and`/`or`, and
   every `rust_primitives::*` / `core::*` / `hax_lib::*` opaque
   function the extraction surface needs.
-*)
 
-(*****************************************)
-(* Auto-declared external symbols        *)
-(*****************************************)
-fun alloc__vec__Impl_1__len(bitstring): bitstring [data].
-fun alloc__vec__Impl_2__extend_from_slice(bitstring, bitstring): bitstring [data].
-fun core__clone__Clone__clone(bitstring): bitstring [data].
-const core__num__Impl_9__MAX: bitstring.
-fun core__option__Impl__as_ref(bitstring): bitstring [data].
-fun core__option__Impl__ok_or(bitstring, bitstring): bitstring [data].
-const core__option__Option__None: bitstring.
-fun core__option__Option__Some(bitstring): bitstring [data].
-const core__panicking__AssertKind__Eq: bitstring.
-fun core__panicking__assert_failed(bitstring, bitstring, bitstring, bitstring): bitstring [data].
-fun core__result__Result__Err(bitstring): bitstring [data].
-fun core__result__Result__Ok(bitstring): bitstring [data].
-fun hax_lib__assume(bitstring): bitstring [data].
-fun hax_lib__prop__constructors__from_bool(bitstring): bitstring [data].
-fun libcrux_ml_kem__ind_cca__incremental__types__Impl_6__len(bitstring): bitstring [data].
-fun libcrux_ml_kem__mlkem768__incremental__pk1_len(bitstring): bitstring [data].
+  Any symbol this file references but does NOT define, and that is
+  not in `primitives.pvl`, is listed in the companion
+  `missingdecl.pvl`. That file is a DIAGNOSTIC, not part of the
+  model: each entry must be supplied by hand or by another crate's
+  extraction (e.g. a separately-extracted dependency). The goal is
+  for `missingdecl.pvl` to be EMPTY — anything in it is a reachable
+  definition that was silently stubbed out.
+*)
 
 fun spqr__encoding__polynomial__PolynomialError__MessageLengthEven(): bitstring [data].
 fun spqr__encoding__polynomial__PolynomialError__MessageLengthTooLong(): bitstring [data].
