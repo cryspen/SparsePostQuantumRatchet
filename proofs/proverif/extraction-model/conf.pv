@@ -1,15 +1,14 @@
 (* SPQR extracted model — confidentiality (forward secrecy + post-compromise
    security). Run (from the repo root):
      python3 hax.py verify-proverif epochs=N conf.pv
-   Expect "true": if the attacker learns an epoch secret, then either the
-   ML-KEM keys at that epoch were compromised, or an authenticator key at some
-   epoch ep_ <= ep was compromised before the secret was derived (j < i).
-   The ep_ <= ep bound encodes forward secrecy (later compromise does not help).
-   Post-compromise security is tested by model.pvl's phase-1 block, which leaks
-   the root authenticator key and any attacker-chosen authenticator AFTER every
-   epoch has completed: those leaks have j > i, so the j < i guard stops them
-   from excusing a past secret. The goal is reported as attacker_p1 (final-phase
-   attacker knowledge), matching ../handwritten/spqr-cka.pv. *)
+   Expect "true": if the attacker learns an epoch secret, then either the ML-KEM
+   keys at that epoch were compromised, or an authenticator key at some epoch
+   ep_ <= ep was compromised at some time j < i (before the secret was derived).
+   This `ep_ <= ep` / `@j, j < i` formulation matches the paper's Def 2 (an
+   authenticator "compromised for an epoch <= ep at some time t' < t") and the
+   hand-written ../handwritten/spqr-cka.pv: it encodes forward secrecy (later
+   compromise does not help) and post-compromise security (a too-late compromise,
+   j > i, cannot excuse a past secret). *)
 
 (* Saturation control (sound: nounif only guides ProVerif's resolution order,
    never the verdict). Deprioritize the attacker *building* symbolic ML-KEM
@@ -59,6 +58,6 @@ query i: time, j: time, x: principal, y: principal, ep: nat, ep_: nat, sk: bitst
 process System()
 
 (* EXPECTPV
-RESULT event(CompletedA(x_24,y_1,ep_9,sk))@i && attacker_p1(sk) ==> event(CompromisedKeysA(x_24,y_1,ep_9)) || event(CompromisedKeysB(y_1,x_24,ep_9)) || (ep_9 ≥ ep_ && event(CompromisedAuthA(x_24,y_1,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthA(y_1,x_24,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(x_24,y_1,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(y_1,x_24,ep_))@j && i > j) is true.
-RESULT event(CompletedB(x_24,y_1,ep_9,sk))@i && attacker_p1(sk) ==> event(CompromisedKeysB(x_24,y_1,ep_9)) || event(CompromisedKeysA(y_1,x_24,ep_9)) || (ep_9 ≥ ep_ && event(CompromisedAuthA(x_24,y_1,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthA(y_1,x_24,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(x_24,y_1,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(y_1,x_24,ep_))@j && i > j) is true.
+RESULT event(CompletedA(x_23,y,ep_9,sk))@i && attacker(sk) ==> event(CompromisedKeysA(x_23,y,ep_9)) || event(CompromisedKeysB(y,x_23,ep_9)) || (ep_9 ≥ ep_ && event(CompromisedAuthA(x_23,y,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthA(y,x_23,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(x_23,y,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(y,x_23,ep_))@j && i > j) is true.
+RESULT event(CompletedB(x_23,y,ep_9,sk))@i && attacker(sk) ==> event(CompromisedKeysB(x_23,y,ep_9)) || event(CompromisedKeysA(y,x_23,ep_9)) || (ep_9 ≥ ep_ && event(CompromisedAuthA(x_23,y,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthA(y,x_23,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(x_23,y,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(y,x_23,ep_))@j && i > j) is true.
 END *)

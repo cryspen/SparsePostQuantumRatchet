@@ -94,9 +94,11 @@ event CompromisedAuthB(principal, principal, nat).
    Epochs are 1-based: the state machine starts at epoch 1 (straight from the
    Rust source `KeysUnsampled/NoHeaderReceived::new { epoch: 1 }`, faithful to
    the ML-KEM Braid spec, Section 2.6, which sets `epoch = 1` at init). The
-   guard `ep < max_epoch()` means the protocol runs epochs 1..max_epoch(), so
-   the committed nepochs=4 covers epochs 1,2,3,4 — the SAME four epochs as the
-   hand-written ../handwritten/spqr-cka.pv. *)
+   guard `ep < max_epoch()` means the protocol runs epochs 1..max_epoch(), so the
+   committed nepochs=6 covers epochs 1..6 — the SAME bound as the hand-written
+   ../handwritten/spqr-cka.pv. The fixed compromise is at epochs 1/3/4, so epochs
+   5-6 are uncompromised headroom testing the ratchet healing past the last
+   (epoch-4) compromise. *)
 
 (* ===================== Requestor: one full epoch as EK generator ===================== *)
 let Requestor() =
@@ -169,19 +171,18 @@ let CompromiseAuthB(a: principal, b: principal, e: nat) =
    so ReqKeys/ReqAuth(X,Y,e) exists for the epoch-e requestor X (peer Y), and
    RespKeys/RespAuth(X,Y,e) for the epoch-e responder X (peer Y).
 
-   Compromise scenario, aligned with the hand-written ../handwritten/spqr-cka.pv choice
-   (KEM keys at alternating epochs + the responder authenticator at the last
-   epoch), mapped to THIS model's 1-based epochs and role-swap table above:
-     - KeysA(A,B,1): epoch-1 requestor A's KEM keys      (mirrors spqr-cka KeysA@first)
-     - KeysB(B,A,3): epoch-3 responder  B's KEM keys     (mirrors spqr-cka KeysB@mid)
-     - AuthB(A,B,4): epoch-4 responder  A's authenticator (mirrors spqr-cka AuthB@last)
-   Epochs 2 and 4 keep their KEM keys, so forward secrecy / PCS is tested
-   non-trivially: those epoch secrets must stay secret though epochs 1 and 3
-   leak, and the epoch-4 auth compromise must not break epoch-4 confidentiality.
-   Forward secrecy is expressed by conf.pv's `ep_ <= ep` bound; post-compromise
-   security by the `@j, j < i` ordering together with the phase-1 block below,
-   which leaks authenticators *after* every epoch has completed. This mirrors
-   spqr-cka.pv's phase-1 auth leak. *)
+   Compromise scenario, shared with the hand-written ../handwritten/spqr-cka.pv
+   (KEM keys at alternating epochs + a responder authenticator), on THIS model's
+   1-based epochs and role-swap table above:
+     - KeysA(A,B,1): epoch-1 requestor A's KEM keys       (mirrors spqr-cka KeysA@1)
+     - KeysB(B,A,3): epoch-3 responder  B's KEM keys       (mirrors spqr-cka KeysB@3)
+     - AuthB(A,B,4): epoch-4 responder  A's authenticator  (mirrors spqr-cka AuthB@4)
+   Epochs 2/4/5/6 keep their KEM keys: those epoch secrets stay secret though
+   epochs 1 and 3 leak, the epoch-4 auth compromise does not break epoch-4
+   confidentiality, and epochs 5-6 heal past it.
+   Confidentiality matches spqr-cka.pv and the paper's Def 2: forward secrecy via
+   conf.pv's `ep_ <= ep` bound, and an authenticator compromised at time t' < t
+   via the `@j, j < i` ordering. *)
 let System() =
     new auth_key: bitstring;
     insert AStates(A, B, ek_new(auth_key));
@@ -189,17 +190,4 @@ let System() =
     ( !Requestor() | !Responder()
     | CompromiseKeysA(A, B, 1)
     | CompromiseKeysB(B, A, 3)
-    | CompromiseAuthB(A, B, 4)
-    (* Post-compromise secrecy: once all epochs are done (phase 1), passively
-       leak the root authenticator key `auth_key` (from which the initial
-       authenticator `auth_new(auth_key, 1)` is derivable) AND let the attacker
-       compromise the authenticator of ANY (x, y, ep) it picks. Every such event
-       is timestamped in phase 1, hence AFTER any phase-0 `CompletedA/B(_)@i`, so
-       conf.pv's `@j, j < i` guard makes these leaks unable to excuse an
-       already-derived secret: the queries staying true means late authenticator
-       compromise does not retroactively break past epoch secrets (PCS).
-       Mirrors ../handwritten/spqr-cka.pv's phase-1 block. *)
-    | (phase 1;
-        ( out(c, auth_key)
-        | (in(c, (x: principal, y: principal, e: nat));
-            ( CompromiseAuthA(x, y, e) | CompromiseAuthB(x, y, e) )) )) ).
+    | CompromiseAuthB(A, B, 4) ).

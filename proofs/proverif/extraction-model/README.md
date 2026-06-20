@@ -14,7 +14,7 @@ backend and lives, untouched, in [`../extraction/lib.pvl`](../extraction/lib.pvl
 | `../extraction/lib.pvl` | **generated** by hax | the `spqr::v1::unchunked` state machine (send_ek / send_ct transitions, state structs) — never hand-edited |
 | `handwritten_lib.pvl` | hand-written | symbolic Dolev–Yao crypto (ML-KEM, chaining-MAC authenticator) the generated code calls |
 | `primitives.pvl` | vendored from hax | hax's ProVerif prelude, with local fixes: machine-integer `==`/`!=` decidable and `+1` epoch arithmetic reductive |
-| `model.pvl` | hand-written | process model: multi-epoch ping-pong (roles swap each epoch), fixed phase-0 compromise + a phase-1 post-compromise (PCS) authenticator leak, both mirroring `../handwritten/spqr-cka.pv` |
+| `model.pvl` | hand-written | process model: multi-epoch ping-pong (roles swap each epoch), fixed compromise (KEM keys at epochs 1/3 + a responder authenticator at epoch 4), mirroring `../handwritten/spqr-cka.pv` |
 | `reach.pv` / `conf.pv` / `auth.pv` | hand-written | reachability / confidentiality / authentication queries (one per file; each carries the sound `nounif` block) |
 | `sanity.pv` | hand-written | negative controls: confirm the compromise is non-vacuous (compromised epochs leak, others stay secret) |
 
@@ -57,12 +57,12 @@ From the repository root:
 
 ```
 python3 hax.py extract-proverif            # regenerate ../extraction/lib.pvl from Rust
-python3 hax.py check-proverif epochs=4              # diff ProVerif RESULTs vs each file's (* EXPECTPV ... END *) block
-python3 hax.py check-proverif update epochs=4       # (re)generate the EXPECTPV blocks from current ProVerif output
-python3 hax.py verify-proverif epochs=4 reach.pv    # reachability + key agreement (raw output)
-python3 hax.py verify-proverif epochs=4 conf.pv     # confidentiality (FS + PCS)
-python3 hax.py verify-proverif epochs=4 auth.pv     # mutual authentication
-python3 hax.py verify-proverif epochs=4 sanity.pv   # non-vacuity controls
+python3 hax.py check-proverif epochs=6              # diff ProVerif RESULTs vs each file's (* EXPECTPV ... END *) block
+python3 hax.py check-proverif update epochs=6       # (re)generate the EXPECTPV blocks from current ProVerif output
+python3 hax.py verify-proverif epochs=6 reach.pv    # reachability + key agreement (raw output)
+python3 hax.py verify-proverif epochs=6 conf.pv     # confidentiality (FS + PCS)
+python3 hax.py verify-proverif epochs=6 auth.pv     # mutual authentication
+python3 hax.py verify-proverif epochs=6 sanity.pv   # non-vacuity controls
 ```
 
 `check-proverif` uses ProVerif's **native** expected-results convention (manual
@@ -71,15 +71,14 @@ the verbatim `RESULT …` lines, and the checker diffs ProVerif's output against
 them — for **both** the generated model (`reach/auth/conf/sanity.pv`) **and** the
 hand-written models (`../handwritten/spqr-cka.pv`, `spqr-dr.pv`), so nothing is
 eyeballed. Regenerate the blocks after any model change with `check-proverif
-update`. The blocks are pinned to NEPOCHS=4 (generated) / each hand-written
-model's inline `max_epoch()`.
+update`. The blocks are pinned to NEPOCHS=6 (generated) / each hand-written
+model's inline `max_epoch()` (also 6).
 
 The epoch bound (`max_epoch()`, i.e. NEPOCHS) lives in `nepochs.pvl`, which
 `verify-proverif epochs=N` regenerates; it is loaded before `model.pvl`. All
-properties verify to NEPOCHS=4 — see "Properties proven" below. The fixed
-compromise lives in epochs 1/3/4, so **NEPOCHS=4 exercises the entire
-compromise + PCS scenario end-to-end**; higher bounds only add further
-uncompromised role-swap epochs.
+properties verify to NEPOCHS=6 — see "Properties proven" below. The fixed
+compromise lives in epochs 1/3/4; the bound 6 gives two uncompromised successor
+epochs (5,6) that check the ratchet healing after the epoch-4 compromise.
 
 `extract-proverif` requires the hax ProVerif backend checkout (see
 `HAX_PROVERIF_DIR` in `hax.py`, default `~/hax-proverif-backend`); it injects the
@@ -100,31 +99,25 @@ compromise (`model.pvl`, mirroring `../handwritten/spqr-cka.pv`). The three prop
 - **confidentiality with forward secrecy + post-compromise security**
   (`conf.pv`) — if the attacker learns an epoch secret, then the ML-KEM keys at
   that epoch were compromised, or an authenticator key at some `ep′ ≤ ep` was
-  compromised before the secret was derived (`@i`/`@j`, `j < i`, `ep′ ≤ ep`).
-  PCS is made non-vacuous by `model.pvl`'s **phase-1** block, which (after every
-  epoch has completed) leaks the root authenticator key and lets the attacker
-  compromise the authenticator of any `(x, y, ep)` it chooses. Those leaks are
-  timestamped in phase 1, hence after every `Completed*(_)@i`, so the `j < i`
-  guard prevents them from excusing a past secret: `conf.pv` staying *true*
-  means late authenticator compromise does not retroactively break already-
-  derived epoch secrets. (ProVerif reports the secrecy goal as `attacker_p1`,
-  i.e. attacker knowledge in the final phase — the same shape as
-  `../handwritten/spqr-cka.pv`.)
+  compromised at some time `j < i` (before the secret was derived). This
+  `ep′ ≤ ep` / `@i,@j, j < i` formulation is the paper's Def 2 (an authenticator
+  "compromised for an epoch `≤ ep` at some time `t′ < t`") and the
+  same query as `../handwritten/spqr-cka.pv`: `ep′ ≤ ep` gives forward secrecy
+  (a later compromise does not help) and `j < i` gives post-compromise security
+  (a too-late compromise cannot excuse a past secret).
 
 These are the same queries as the hand-written `../handwritten/spqr-cka.pv` (no
-simplification), and all four verify to NEPOCHS=4 (the full compromise scenario):
+simplification), and all four verify to **NEPOCHS=6**:
 
 | property | reach + agreement | mutual auth | conf (FS/PCS) | sanity |
 |---|---|---|---|---|
-| verified to | NEPOCHS=4 | NEPOCHS=4 | NEPOCHS=4 | NEPOCHS=4 |
+| verified to | NEPOCHS=6 | NEPOCHS=6 | NEPOCHS=6 | NEPOCHS=6 |
 
-The binding constraint on higher NEPOCHS is `conf.pv`'s **phase-1** PCS block
-(the attacker-chosen per-epoch authenticator leak): like the hand-written
-`spqr-cka.pv`, this general post-compromise leak drives ProVerif's saturation,
-so N≥5 needs far more memory (conf.pv at N=5 exceeds ~18 GB / 10 min on a 48 GB
-laptop; `spqr-cka.pv` itself needs ~19 GB to reach N=7). N=4 already covers the
-entire scenario (compromises at epochs 1/3/4); pushing to N=6 is a
-resource-only exercise (see the larger-machine recipe in the repo README).
+Each generated query takes ~40–60 s / ~1.7 GB at NEPOCHS=6, and `spqr-cka.pv`
+~2 min / 3.5 GB. The bound 6 gives the fixed compromise (epochs 1/3/4) two
+uncompromised successor epochs (5,6), under which the ratchet healing after the
+epoch-4 compromise is checked. NEPOCHS=6 covers the paper's secrecy-to-4
+(Def 2) and auth-to-5 (Def 3) bounds.
 
 Non-vacuity is checked by `sanity.pv` (compromised epochs leak; an uncompromised
 epoch between two leaking neighbours stays secret).

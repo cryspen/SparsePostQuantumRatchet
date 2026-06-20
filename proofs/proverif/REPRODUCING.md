@@ -152,11 +152,8 @@ queries. The points of difference:
 
 - **Queries.** `reach.pv` / `conf.pv` / `auth.pv` use the same query formulas as
   `spqr-cka.pv` (same events, same implications, same `ep' <= ep` and `@i,@j,j<i`
-  ordering), up to variable names and the split into one file per property. One
-  structural difference: PCS is expressed by `spqr-cka.pv` via a **phase-1**
-  post-protocol authenticator leak (`attacker_p1`), and by the generated
-  `conf.pv` **single-phase**, via the `@j, j < i` ordering. Both establish FS and
-  PCS.
+  ordering), up to variable names and the split into one file per property — the
+  queries are otherwise identical.
 - **Protocol process.** Here it is compiled from `src/v1/unchunked` (hax output,
   `lib.pvl`); in `spqr-cka.pv` it is written by hand. The compiled process is
   in-order (header → ek → ct1 → ct2), matching the Rust state machine;
@@ -169,12 +166,12 @@ queries. The points of difference:
   chain, not the KDF. KEM split, MAC, and ek/header check are modelled the same in
   both.
 - **Compromise.** `extraction-model/model.pvl` mirrors `spqr-cka.pv`'s fixed scenario
-  (KEM keys at alternating epochs + the last-epoch responder authenticator),
-  mapped to this model's role-swap — the apples-to-apples comparison.
-- **Scope.** With `nounif` in every query file, `spqr-cka.pv` (fixed compromise)
-  verifies all properties to NEPOCHS=7 (≈ 19 GB peak on 48 GB); the generated
-  model (`model.pvl`) to NEPOCHS=6. The gap is ProVerif saturation cost on the
-  larger compiled terms.
+  (KEM keys at epochs 1/3 + a responder authenticator at epoch 4), mapped to this
+  model's role-swap — the apples-to-apples comparison. The bound 6 leaves epochs
+  5-6 uncompromised, exercising healing past the last (epoch-4) compromise.
+- **Scope.** With `nounif` in every query file, both models (fixed compromise)
+  verify all properties to NEPOCHS=6: each generated query in ~40-60 s / ~1.7 GB,
+  and `spqr-cka.pv` in ~2 min / 3.5 GB.
 
 ## Known deviations & upstreaming
 

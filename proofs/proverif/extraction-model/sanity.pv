@@ -54,8 +54,8 @@ query sk: bitstring; event(CompletedB(A, B, 4, sk)) && attacker(sk).
 process System()
 
 (* EXPECTPV
-RESULT not (event(CompletedA(A[],B[],1,sk)) && attacker_p1(sk)) is false.
-RESULT not (event(CompletedB(B[],A[],3,sk)) && attacker_p1(sk)) is false.
-RESULT not (event(CompletedA(B[],A[],2,sk)) && attacker_p1(sk)) is true.
-RESULT not (event(CompletedB(A[],B[],4,sk)) && attacker_p1(sk)) is false.
+RESULT not (event(CompletedA(A[],B[],1,sk)) && attacker(sk)) is false.
+RESULT not (event(CompletedB(B[],A[],3,sk)) && attacker(sk)) is false.
+RESULT not (event(CompletedA(B[],A[],2,sk)) && attacker(sk)) is true.
+RESULT not (event(CompletedB(A[],B[],4,sk)) && attacker(sk)) is false.
 END *)
