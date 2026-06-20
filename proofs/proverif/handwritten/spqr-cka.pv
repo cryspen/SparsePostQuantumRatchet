@@ -151,7 +151,13 @@ event CompletedA(principal, principal, nat, symkey).
 event StartedB(principal, principal, nat, seed).
 event CompletedB(principal, principal, nat, symkey).
 
-letfun max_epoch() = 5.
+(* NEPOCHS = 4, 1-based: the protocol runs epochs 1,2,3,4 (seeds at epoch 1,
+   guard `ep < max_epoch()` spawns ep+1, so the last epoch is max_epoch()). This
+   matches the published ML-KEM Braid spec (Section 2.6 InitAlice/InitBob set
+   `epoch = 1`) and the Rust source (`send_ek.rs`/`send_ct.rs`: `epoch: 1`), and
+   covers exactly the same epochs 1..4 as the extracted model in
+   ../extraction-model/ (nepochs.pvl). *)
+letfun max_epoch() = 4.
 
 let SendEk0() = 
     get AStates(a, b, req, auth) in
@@ -277,37 +283,42 @@ let CompromiseAuthB(a: principal, b: principal, ep: nat) =
 
 (* Reachability Queries *)
 
+(* Epoch 4 (1-based) is requestor B / responder A; epoch 3 is requestor A /
+   responder B (roles swap each epoch). *)
 query ep:nat, ek:seed;
-    event(StartedA(A,B,4,ek));
-    event(StartedB(B,A,4,ek))
+    event(StartedA(B,A,4,ek));
+    event(StartedB(A,B,4,ek))
 .
 
 query ep:nat, sk:symkey;
-    event(CompletedA(A,B,4,sk));
-    event(CompletedB(B,A,4,sk))
+    event(CompletedA(B,A,4,sk));
+    event(CompletedB(A,B,4,sk))
 .
 
 query ep:nat, ek:seed;
-    event(StartedA(B,A,3,ek));
-    event(StartedB(A,B,3,ek))
+    event(StartedA(A,B,3,ek));
+    event(StartedB(B,A,3,ek))
 .
 
 query ep:nat, sk:symkey;
-    event(CompletedA(B,A,3,sk));
-    event(CompletedB(A,B,3,sk))
+    event(CompletedA(A,B,3,sk));
+    event(CompletedB(B,A,3,sk))
 .
 
 (* Confidentiality Queries *)
 
 query i: time, j: time, ep:nat, sk:symkey, ep_:nat, x:principal, y:principal;
-    event(CompletedA(A,B,0,sk)) && attacker(sk);
-    event(CompletedB(B,A,0,sk)) && attacker(sk);
-    event(CompletedA(B,A,1,sk)) && attacker(sk);
-    event(CompletedB(A,B,1,sk)) && attacker(sk);
-    event(CompletedA(A,B,2,sk)) && attacker(sk);
-    event(CompletedB(B,A,2,sk)) && attacker(sk);
-    event(CompletedA(B,A,3,sk)) && attacker(sk);
-    event(CompletedB(A,B,3,sk)) && attacker(sk);
+    (* Concrete per-epoch secrecy probes (epochs 1..4, roles as above).
+       Expected with the fixed compromise KeysA@1 / KeysB@3 / AuthB@4:
+       epoch 1 leaks, epoch 2 holds, epoch 3 leaks, epoch 4 leaks. *)
+    event(CompletedA(A,B,1,sk)) && attacker(sk);
+    event(CompletedB(B,A,1,sk)) && attacker(sk);
+    event(CompletedA(B,A,2,sk)) && attacker(sk);
+    event(CompletedB(A,B,2,sk)) && attacker(sk);
+    event(CompletedA(A,B,3,sk)) && attacker(sk);
+    event(CompletedB(B,A,3,sk)) && attacker(sk);
+    event(CompletedA(B,A,4,sk)) && attacker(sk);
+    event(CompletedB(A,B,4,sk)) && attacker(sk);
 
     event(CompletedA(x,y,ep,sk)) && attacker(sk) ==> 
           event(CompromisedKeysB(y,x,ep));
@@ -365,28 +376,37 @@ query x: principal, y: principal, ep, ep_:nat, ek:seed, sk:symkey;
 
 process
     new authAB: authenticator;
-    insert AStates(A, B, NeedToSample(0), authAB);
-    insert BStates(B, A, Waiting(0), authAB);
+    (* 1-based epochs 1,2,3,4 (matches the ML-KEM Braid spec `epoch = 1` at init
+       and the extracted ../extraction-model/model.pvl). Roles swap each epoch:
+         epoch 1: A requestor / B responder
+         epoch 2: B requestor / A responder
+         epoch 3: A requestor / B responder
+         epoch 4: B requestor / A responder
+       Fixed compromise (mirrors ../extraction-model/model.pvl exactly):
+         KeysA(A,B,1) : epoch-1 requestor A's KEM keys
+         KeysB(B,A,3) : epoch-3 responder  B's KEM keys
+         AuthB(A,B,4) : epoch-4 responder  A's authenticator (last epoch)
+       Epochs 2 and 4 keep their KEM keys, so FS + PCS are tested non-trivially. *)
+    insert AStates(A, B, NeedToSample(1), authAB);
+    insert BStates(B, A, Waiting(1), authAB);
     (!SendEkProc() | !SendCtProc() |
-   (* Compromise Scenarios: comment out different options below to experiment *)
+   (* Compromise Scenarios: comment out different options below to experiment.
+      For a per-epoch option, (a,b) must be the (requestor,peer) for KeysA/AuthA
+      and (responder,peer) for KeysB/AuthB at that epoch (see role swap above). *)
 
    (* Compromise Private Keys *)
-   
-     CompromiseKeysA(A,B,0)  | (* CompromiseKeysB(B,A,0) | 
-     CompromiseKeysA(B,A,1)  | CompromiseKeysB(A,B,1) | 
-     CompromiseKeysA(A,B,2)  | *) CompromiseKeysB(B,A,2) | 
-     (* CompromiseKeysA(B,A,3)  | CompromiseKeysB(A,B,3) |
-     CompromiseKeysA(B,A,4)  | CompromiseKeysB(A,B,4) | *)
-   
-     
+
+     CompromiseKeysA(A,B,1)  | (* CompromiseKeysA(A,B,3) | CompromiseKeysA(B,A,2) | CompromiseKeysA(B,A,4) |
+     CompromiseKeysB(B,A,1)  | CompromiseKeysB(A,B,2) | CompromiseKeysB(A,B,4) | *)
+     CompromiseKeysB(B,A,3)  |
+
+
    (* Compromise MAC Keys *)
-   
-     (* CompromiseAuthA(A,B,0)  | CompromiseAuthB(B,A,0) | 
-     CompromiseAuthA(B,A,1)  | CompromiseAuthB(A,B,1) |
-     CompromiseAuthA(A,B,2)  | CompromiseAuthB(B,A,2) |
-     CompromiseAuthA(B,A,3)  | CompromiseAuthB(A,B,3) |
-     CompromiseAuthA(B,A,4)  |*) CompromiseAuthB(A,B,4) |
- 
+
+     (* CompromiseAuthA(A,B,1)  | CompromiseAuthA(A,B,3) | CompromiseAuthA(B,A,2) | CompromiseAuthA(B,A,4) |
+     CompromiseAuthB(B,A,1)  | CompromiseAuthB(A,B,2) | CompromiseAuthB(B,A,3) | *)
+     CompromiseAuthB(A,B,4)  |
+
    (* Post-Compromise Secrecy: Passively Compromise MAC Keys *after* all epochs are done *)
      (phase 1; (out(c,authAB) |
                 (in (c,(x:principal, y:principal, ep:nat));
