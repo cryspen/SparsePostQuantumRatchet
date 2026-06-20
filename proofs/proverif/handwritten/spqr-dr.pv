@@ -160,3 +160,14 @@ process
    !CompromiseState(B) *)
 
    
+
+(* EXPECTPV
+RESULT not event(MsgKey(a_8,b_8,a2b[],0,0,k_8)) is false.
+RESULT not event(MsgKey(a_8,b_8,b2a[],0,0,k_8)) is false.
+RESULT not event(MsgKey(a_8,b_8,a2b[],2,2,k_8)) is false.
+RESULT not event(MsgKey(a_8,b_8,b2a[],2,2,k_8)) is false.
+RESULT not (event(MsgKey(a_8,b_8,a2b[],0,0,k_8)) && attacker(k_8)) is false.
+RESULT not (event(MsgKey(a_8,b_8,b2a[],0,0,k_8)) && attacker(k_8)) is false.
+RESULT event(MsgKey(a_8,b_8,a2b[],0,0,k_8)) && attacker(k_8) ==> event(CompromisedSharedKey(a_8,b_8,a2b[],0)) || event(CompromisedSharedKey(b_8,a_8,a2b[],0)) is true.
+RESULT event(MsgKey(a_8,b_8,a2b[],ep_7 + 1,0,k_8)) && attacker(k_8) ==> event(CompromisedSharedKey(a_8,b_8,a2b[],ep_7 + 1)) || event(CompromisedSharedKey(b_8,a_8,a2b[],ep_7 + 1)) is true.
+END *)

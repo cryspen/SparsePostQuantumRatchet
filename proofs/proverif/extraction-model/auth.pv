@@ -20,14 +20,14 @@ nounif a: bitstring, e: bitstring, ct: bitstring; attacker(mac_ct_f(a, e, ct)) /
 nounif a: bitstring, e: bitstring, h: bitstring; attacker(mac_hdr_f(a, e, h)) / 30000.
 nounif ss: bitstring, e: bitstring; attacker(extern__derive_scka_secret(ss, e)) / 30000.
 
-(* EXPECT: true  (B completing implies A started, unless an auth key was compromised) *)
+(* B completing implies A started, unless an auth key was compromised. *)
 query x: principal, y: principal, ep: nat, ep_: nat, sk: bitstring, hd: bitstring;
     event(CompletedB(y, x, ep, sk)) ==>
         ( event(StartedA(x, y, ep, hd))
         || (ep_ <= ep && (event(CompromisedAuthA(x, y, ep_)) || event(CompromisedAuthA(y, x, ep_))
             || event(CompromisedAuthB(y, x, ep_)) || event(CompromisedAuthB(x, y, ep_)))) ).
 
-(* EXPECT: true  (A completing implies B started, unless an auth key was compromised) *)
+(* A completing implies B started, unless an auth key was compromised. *)
 query x: principal, y: principal, ep: nat, ep_: nat, sk: bitstring, hd: bitstring;
     event(CompletedA(x, y, ep, sk)) ==>
         ( event(StartedB(y, x, ep, hd))
@@ -35,3 +35,8 @@ query x: principal, y: principal, ep: nat, ep_: nat, sk: bitstring, hd: bitstrin
             || event(CompromisedAuthB(y, x, ep_)) || event(CompromisedAuthB(x, y, ep_)))) ).
 
 process System()
+
+(* EXPECTPV
+RESULT event(CompletedB(y_1,x_24,ep_9,sk)) ==> event(StartedA(x_24,y_1,ep_9,hd)) || (ep_9 ≥ ep_ && (event(CompromisedAuthA(x_24,y_1,ep_)) || event(CompromisedAuthA(y_1,x_24,ep_)) || event(CompromisedAuthB(y_1,x_24,ep_)) || event(CompromisedAuthB(x_24,y_1,ep_)))) is true.
+RESULT event(CompletedA(x_24,y_1,ep_9,sk)) ==> event(StartedB(y_1,x_24,ep_9,hd)) || (ep_9 ≥ ep_ && (event(CompromisedAuthA(x_24,y_1,ep_)) || event(CompromisedAuthA(y_1,x_24,ep_)) || event(CompromisedAuthB(y_1,x_24,ep_)) || event(CompromisedAuthB(x_24,y_1,ep_)))) is true.
+END *)

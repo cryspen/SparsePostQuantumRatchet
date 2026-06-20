@@ -203,29 +203,87 @@ class verifyProverifAction(argparse.Action):
         return None
 
 
+# ProVerif check targets: name -> (path under proofs/proverif, ProVerif libs).
+# The generated model loads the extraction libs (its NEPOCHS bound lives in
+# nepochs.pvl); the hand-written models load only cryptolib.pvl and carry their
+# own `max_epoch()` inline.
+_EXTRACTION_LIBS = [
+    "-lib", "extraction-model/primitives.pvl",
+    "-lib", "extraction-model/handwritten_lib.pvl",
+    "-lib", "extraction/lib.pvl",
+    "-lib", "extraction-model/nepochs.pvl",
+    "-lib", "extraction-model/model.pvl",
+]
+_HANDWRITTEN_LIBS = ["-lib", "handwritten/cryptolib.pvl"]
+PROVERIF_CHECK_TARGETS = {
+    "reach.pv":    ("extraction-model/reach.pv",  _EXTRACTION_LIBS),
+    "auth.pv":     ("extraction-model/auth.pv",   _EXTRACTION_LIBS),
+    "conf.pv":     ("extraction-model/conf.pv",   _EXTRACTION_LIBS),
+    "sanity.pv":   ("extraction-model/sanity.pv", _EXTRACTION_LIBS),
+    "spqr-cka.pv": ("handwritten/spqr-cka.pv",    _HANDWRITTEN_LIBS),
+    "spqr-dr.pv":  ("handwritten/spqr-dr.pv",     _HANDWRITTEN_LIBS),
+}
+# Native ProVerif expected-results block: `(* EXPECTPV <RESULT lines> END *)`
+# (ProVerif manual, section 6.9). The runtime line the manual mentions is
+# machine-dependent, so we keep only the RESULT lines and diff those.
+_EXPECTPV_RE = re.compile(r"\(\*\s*EXPECTPV\b.*?\bEND\s*\*\)", re.DOTALL)
+
+
+def _proverif_result_lines(libs, relpath):
+    """Run ProVerif on `relpath` (relative to proofs/proverif) with `libs` and
+    return its verbatim `RESULT ...` lines."""
+    ret = subprocess.run(
+        ["proverif"] + libs + [relpath],
+        cwd=PROVERIF_DIR, capture_output=True, text=True, encoding="utf-8",
+    )
+    out = (ret.stdout or "") + (ret.stderr or "")
+    return [ln.strip() for ln in out.splitlines() if ln.strip().startswith("RESULT")]
+
+
+def _expectpv_result_lines(text):
+    """The `RESULT ...` lines inside a file's `(* EXPECTPV ... END *)` block, or
+    None when the file has no such block."""
+    m = _EXPECTPV_RE.search(text)
+    if not m:
+        return None
+    return [ln.strip() for ln in m.group(0).splitlines() if ln.strip().startswith("RESULT")]
+
+
+def _write_expectpv(path, text, result_lines):
+    """Insert or replace the `(* EXPECTPV ... END *)` block in `text`."""
+    block = "(* EXPECTPV\n" + "\n".join(result_lines) + "\nEND *)\n"
+    if _EXPECTPV_RE.search(text):
+        new = _EXPECTPV_RE.sub(lambda _m: block.rstrip("\n"), text, count=1)
+    else:
+        new = text.rstrip("\n") + "\n\n" + block
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(new)
+
+
 class checkProverifAction(argparse.Action):
-    """Run ProVerif and compare each verdict to the `(* EXPECT: ... *)`
-    annotations in the query files. Prints a PASS/FAIL report and exits non-zero
-    on any mismatch, so the artifact (and CI) can assert *what was proved* rather
-    than eyeballing raw output. The EXPECT annotations assume NEPOCHS >= 4."""
+    """Run ProVerif and diff its `RESULT` lines against the native
+    `(* EXPECTPV ... END *)` expected-results block embedded in each query file
+    (ProVerif manual, section 6.9), so the artifact asserts *what was proved*
+    rather than eyeballing output. Pass `update` to (re)generate those blocks
+    from the current ProVerif output instead of checking. Exits non-zero on any
+    mismatch. The generated-model bound is set via `epochs=N` (default 4, written
+    to nepochs.pvl); the hand-written models carry `max_epoch()` inline."""
 
     def __call__(self, parser, args, values, option_string=None) -> None:
+        update = False
         epochs = None
         targets = []
         for v in values or []:
-            if v.startswith("epochs=") or v.startswith("nepochs="):
+            if v == "update":
+                update = True
+            elif v.startswith("epochs=") or v.startswith("nepochs="):
                 epochs = int(v.split("=", 1)[1])
             else:
                 targets.append(v)
         if not targets:
-            targets = ["reach.pv", "auth.pv", "conf.pv", "sanity.pv"]
+            targets = list(PROVERIF_CHECK_TARGETS.keys())
         if epochs is None:
             epochs = 4
-        if epochs < 4:
-            print(
-                "warning: EXPECT annotations assume NEPOCHS >= 4; lower bounds "
-                "may report spurious mismatches.\n"
-            )
 
         nepochs = os.path.join(PROVERIF_MODEL_DIR, "nepochs.pvl")
         with open(nepochs, "w") as f:
@@ -234,87 +292,64 @@ class checkProverifAction(argparse.Action):
                 "letfun max_epoch() = {}.\n".format(epochs)
             )
 
-        libs = [
-            "-lib", "extraction-model/primitives.pvl",
-            "-lib", "extraction-model/handwritten_lib.pvl",
-            "-lib", "extraction/lib.pvl",
-            "-lib", "extraction-model/nepochs.pvl",
-            "-lib", "extraction-model/model.pvl",
-        ]
-        verdict_re = re.compile(r"\bis (true|false)\.")
-        expect_re = re.compile(r"EXPECT:\s*([^*]+)")
-
         print(
-            "Checking ProVerif verdicts vs EXPECT annotations "
-            "(NEPOCHS={}):\n".format(epochs)
+            "{} ProVerif EXPECTPV blocks (generated-model NEPOCHS={}):\n".format(
+                "Updating" if update else "Checking", epochs
+            )
         )
         grand_ok = 0
         grand_total = 0
         failed = False
         for target in targets:
-            path = os.path.join(PROVERIF_MODEL_DIR, target)
-            with open(path) as f:
+            if target not in PROVERIF_CHECK_TARGETS:
+                raise Exception("unknown proverif target: {}".format(target))
+            relpath, libs = PROVERIF_CHECK_TARGETS[target]
+            path = os.path.join(PROVERIF_DIR, relpath)
+            actual = _proverif_result_lines(libs, relpath)
+            with open(path, encoding="utf-8") as f:
                 text = f.read()
-            expected = []
-            for m in expect_re.finditer(text):
-                for tok in m.group(1).split():
-                    t = tok.strip().lower()
-                    if t in ("true", "false"):
-                        expected.append(t)
-            if not expected:
-                print("  {:<10}  no EXPECT annotations — skipped".format(target))
+
+            if update:
+                _write_expectpv(path, text, actual)
+                print("  {:<12}  wrote {} RESULT line(s)".format(target, len(actual)))
                 continue
-            ret = subprocess.run(
-                ["proverif"] + libs + [os.path.join("extraction-model", target)],
-                cwd=PROVERIF_DIR,
-                capture_output=True,
-                text=True,
-            )
-            out = ret.stdout + ret.stderr
-            actual = []
-            for line in out.splitlines():
-                s = line.strip()
-                if not s.startswith("RESULT"):
-                    continue
-                if "cannot be proved" in s:
-                    actual.append("cannot")
-                else:
-                    matches = verdict_re.findall(s)
-                    if matches:
-                        actual.append(matches[-1])
+
+            expected = _expectpv_result_lines(text)
+            if expected is None:
+                print("  {:<12}  no EXPECTPV block — skipped".format(target))
+                continue
             n = min(len(expected), len(actual))
             ok = sum(1 for i in range(n) if expected[i] == actual[i])
             grand_ok += ok
             grand_total += len(expected)
             file_ok = len(expected) == len(actual) and ok == len(expected)
-            if not file_ok:
-                failed = True
+            failed = failed or not file_ok
             print(
-                "  {:<10}  {}/{} match   [{}]".format(
+                "  {:<12}  {}/{} match   [{}]".format(
                     target, ok, len(expected), "OK" if file_ok else "FAIL"
                 )
             )
             if not file_ok:
                 if len(expected) != len(actual):
                     print(
-                        "      count mismatch: expected {} verdicts, "
-                        "ProVerif produced {}".format(len(expected), len(actual))
+                        "      count mismatch: EXPECTPV has {}, ProVerif "
+                        "produced {}".format(len(expected), len(actual))
                     )
                 for i in range(max(len(expected), len(actual))):
                     e = expected[i] if i < len(expected) else "(none)"
                     a = actual[i] if i < len(actual) else "(none)"
                     if e != a:
-                        print(
-                            "      query #{}: EXPECT {:<6} got {}".format(
-                                i + 1, e, a
-                            )
-                        )
+                        print("      #{} EXPECTPV: {}".format(i + 1, e))
+                        print("              got: {}".format(a))
 
-        print("\n{}/{} verdicts match expected.".format(grand_ok, grand_total))
+        if update:
+            print("\nEXPECTPV blocks updated. Re-run `check-proverif` to verify.")
+            return None
+        print("\n{}/{} RESULT lines match EXPECTPV.".format(grand_ok, grand_total))
         if failed:
             print("CHECK FAILED — see mismatches above.")
             sys.exit(1)
-        print("CHECK PASSED — all ProVerif verdicts match the expected results.")
+        print("CHECK PASSED — all ProVerif RESULT lines match the EXPECTPV blocks.")
         return None
 
 
@@ -385,10 +420,13 @@ def parse_arguments():
 
     check_pv_parser = subparsers.add_parser(
         "check-proverif",
-        help="Run ProVerif and compare each verdict against the "
-        "`(* EXPECT: ... *)` annotations in the query files; print a PASS/FAIL "
-        "report and exit non-zero on mismatch. Optionally set epochs=N "
-        "(default 4) and/or pass specific query files.",
+        help="Run ProVerif and diff its RESULT lines against the native "
+        "`(* EXPECTPV ... END *)` expected-results block in each query file "
+        "(ProVerif manual sec. 6.9); print PASS/FAIL and exit non-zero on "
+        "mismatch. Covers the generated model (reach/auth/conf/sanity.pv) and "
+        "the hand-written models (spqr-cka.pv, spqr-dr.pv). Pass `update` to "
+        "(re)generate the EXPECTPV blocks, `epochs=N` (default 4) to set the "
+        "generated-model bound, and/or specific target names.",
     )
     check_pv_parser.add_argument(
         "check-proverif", nargs="*", action=checkProverifAction

@@ -32,13 +32,13 @@ nounif a: bitstring, e: bitstring, ct: bitstring; attacker(mac_ct_f(a, e, ct)) /
 nounif a: bitstring, e: bitstring, h: bitstring; attacker(mac_hdr_f(a, e, h)) / 30000.
 nounif ss: bitstring, e: bitstring; attacker(extern__derive_scka_secret(ss, e)) / 30000.
 
-(* (1) epoch 1: KEM keys compromised -> secret MUST leak.   EXPECT: false (leaks) *)
+(* (1) epoch 1: KEM keys compromised -> secret MUST leak. *)
 query sk: bitstring; event(CompletedA(A, B, 1, sk)) && attacker(sk).
 
-(* (2) epoch 3: KEM keys compromised -> secret MUST leak.   EXPECT: false (leaks) *)
+(* (2) epoch 3: KEM keys compromised -> secret MUST leak. *)
 query sk: bitstring; event(CompletedB(B, A, 3, sk)) && attacker(sk).
 
-(* (3) epoch 2: nothing compromised -> secret MUST hold.    EXPECT: true (secret)
+(* (3) epoch 2: nothing compromised -> secret MUST hold.
    This is the non-vacuous secrecy witness: epoch 2 stays secret even though both
    its neighbours (1 and 3) leak — forward secrecy and PCS are real here. *)
 query sk: bitstring; event(CompletedA(B, A, 2, sk)) && attacker(sk).
@@ -48,7 +48,14 @@ query sk: bitstring; event(CompletedA(B, A, 2, sk)) && attacker(sk).
    mac_hdr_f/mac_ct_f on substituted KEM material it generated, so it decaps the
    responder's ciphertext itself. A genuine attack (the authenticator functions
    have no reduc, so the key is never extracted directly); conf.pv's
-   CompromisedAuth* disjunct is what accounts for it.   EXPECT: false (leaks) *)
+   CompromisedAuth* disjunct is what accounts for it. *)
 query sk: bitstring; event(CompletedB(A, B, 4, sk)) && attacker(sk).
 
 process System()
+
+(* EXPECTPV
+RESULT not (event(CompletedA(A[],B[],1,sk)) && attacker_p1(sk)) is false.
+RESULT not (event(CompletedB(B[],A[],3,sk)) && attacker_p1(sk)) is false.
+RESULT not (event(CompletedA(B[],A[],2,sk)) && attacker_p1(sk)) is true.
+RESULT not (event(CompletedB(A[],B[],4,sk)) && attacker_p1(sk)) is false.
+END *)

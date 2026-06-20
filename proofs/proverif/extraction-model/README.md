@@ -57,12 +57,22 @@ From the repository root:
 
 ```
 python3 hax.py extract-proverif            # regenerate ../extraction/lib.pvl from Rust
-python3 hax.py check-proverif epochs=4              # assert all verdicts vs the (* EXPECT: ... *) annotations
+python3 hax.py check-proverif epochs=4              # diff ProVerif RESULTs vs each file's (* EXPECTPV ... END *) block
+python3 hax.py check-proverif update epochs=4       # (re)generate the EXPECTPV blocks from current ProVerif output
 python3 hax.py verify-proverif epochs=4 reach.pv    # reachability + key agreement (raw output)
 python3 hax.py verify-proverif epochs=4 conf.pv     # confidentiality (FS + PCS)
 python3 hax.py verify-proverif epochs=4 auth.pv     # mutual authentication
 python3 hax.py verify-proverif epochs=4 sanity.pv   # non-vacuity controls
 ```
+
+`check-proverif` uses ProVerif's **native** expected-results convention (manual
+sec. 6.9): each query file ends with a `(* EXPECTPV` … `END *)` comment holding
+the verbatim `RESULT …` lines, and the checker diffs ProVerif's output against
+them — for **both** the generated model (`reach/auth/conf/sanity.pv`) **and** the
+hand-written models (`../handwritten/spqr-cka.pv`, `spqr-dr.pv`), so nothing is
+eyeballed. Regenerate the blocks after any model change with `check-proverif
+update`. The blocks are pinned to NEPOCHS=4 (generated) / each hand-written
+model's inline `max_epoch()`.
 
 The epoch bound (`max_epoch()`, i.e. NEPOCHS) lives in `nepochs.pvl`, which
 `verify-proverif epochs=N` regenerates; it is loaded before `model.pvl`. All

@@ -411,3 +411,34 @@ process
      (phase 1; (out(c,authAB) |
                 (in (c,(x:principal, y:principal, ep:nat));
 		    (CompromiseAuthA(x,y,ep) | CompromiseAuthB(x,y,ep))))))
+
+(* EXPECTPV
+RESULT not event(StartedA(B[],A[],4,ek_14)) is false.
+RESULT not event(StartedB(A[],B[],4,ek_14)) is false.
+RESULT not event(CompletedA(B[],A[],4,sk_1)) is false.
+RESULT not event(CompletedB(A[],B[],4,sk_1)) is false.
+RESULT not event(StartedA(A[],B[],3,ek_14)) is false.
+RESULT not event(StartedB(B[],A[],3,ek_14)) is false.
+RESULT not event(CompletedA(A[],B[],3,sk_1)) is false.
+RESULT not event(CompletedB(B[],A[],3,sk_1)) is false.
+RESULT not (event(CompletedA(A[],B[],1,sk_1)) && attacker_p1(sk_1)) is false.
+RESULT not (event(CompletedB(B[],A[],1,sk_1)) && attacker_p1(sk_1)) is false.
+RESULT not (event(CompletedA(B[],A[],2,sk_1)) && attacker_p1(sk_1)) is true.
+RESULT not (event(CompletedB(A[],B[],2,sk_1)) && attacker_p1(sk_1)) is true.
+RESULT not (event(CompletedA(A[],B[],3,sk_1)) && attacker_p1(sk_1)) is false.
+RESULT not (event(CompletedB(B[],A[],3,sk_1)) && attacker_p1(sk_1)) is false.
+RESULT not (event(CompletedA(B[],A[],4,sk_1)) && attacker_p1(sk_1)) is false.
+RESULT not (event(CompletedB(A[],B[],4,sk_1)) && attacker_p1(sk_1)) is false.
+RESULT event(CompletedA(x_1,y_1,ep_19,sk_1)) && attacker_p1(sk_1) ==> event(CompromisedKeysB(y_1,x_1,ep_19)) is false.
+RESULT event(CompletedA(x_1,y_1,ep_19,sk_1)) && attacker_p1(sk_1) ==> event(CompromisedKeysA(x_1,y_1,ep_19)) is false.
+RESULT event(CompletedB(x_1,y_1,ep_19,sk_1)) && attacker_p1(sk_1) ==> event(CompromisedKeysB(x_1,y_1,ep_19)) is false.
+RESULT event(CompletedB(x_1,y_1,ep_19,sk_1)) && attacker_p1(sk_1) ==> event(CompromisedKeysA(y_1,x_1,ep_19)) is false.
+RESULT event(CompletedA(x_1,y_1,ep_19,sk_1)) && attacker_p1(sk_1) ==> event(CompromisedKeysA(x_1,y_1,ep_19)) || event(CompromisedKeysB(y_1,x_1,ep_19)) is false.
+RESULT event(CompletedB(x_1,y_1,ep_19,sk_1)) && attacker_p1(sk_1) ==> event(CompromisedKeysB(x_1,y_1,ep_19)) || event(CompromisedKeysA(y_1,x_1,ep_19)) is false.
+RESULT event(CompletedA(x_1,y_1,ep_19,sk_1))@i && attacker_p1(sk_1) ==> event(CompromisedKeysA(x_1,y_1,ep_19)) || event(CompromisedKeysB(y_1,x_1,ep_19)) || (ep_19 ≥ ep_ && event(CompromisedAuthA(y_1,x_1,ep_))@j && i > j) || (ep_19 ≥ ep_ && event(CompromisedAuthA(x_1,y_1,ep_))@j && i > j) || (ep_19 ≥ ep_ && event(CompromisedAuthB(x_1,y_1,ep_))@j && i > j) || (ep_19 ≥ ep_ && event(CompromisedAuthB(y_1,x_1,ep_))@j && i > j) is true.
+RESULT event(CompletedB(x_1,y_1,ep_19,sk_1))@i && attacker_p1(sk_1) ==> event(CompromisedKeysB(x_1,y_1,ep_19)) || event(CompromisedKeysA(y_1,x_1,ep_19)) || (ep_19 ≥ ep_ && event(CompromisedAuthA(x_1,y_1,ep_))@j && i > j) || (ep_19 ≥ ep_ && event(CompromisedAuthA(y_1,x_1,ep_))@j && i > j) || (ep_19 ≥ ep_ && event(CompromisedAuthB(x_1,y_1,ep_))@j && i > j) || (ep_19 ≥ ep_ && event(CompromisedAuthB(y_1,x_1,ep_))@j && i > j) is true.
+RESULT event(CompletedB(y_1,x_1,ep_19,sk_1)) ==> event(StartedA(x_1,y_1,ep_19,ek_14)) is false.
+RESULT event(CompletedB(y_1,x_1,ep_19,sk_1)) ==> event(StartedA(x_1,y_1,ep_19,ek_14)) || (ep_19 ≥ ep_ && (event(CompromisedAuthA(x_1,y_1,ep_)) || event(CompromisedAuthA(y_1,x_1,ep_)) || event(CompromisedAuthB(y_1,x_1,ep_)) || event(CompromisedAuthB(x_1,y_1,ep_)))) is true.
+RESULT event(CompletedA(x_1,y_1,ep_19,sk_1)) ==> event(StartedB(y_1,x_1,ep_19,ek_14)) is false.
+RESULT event(CompletedA(x_1,y_1,ep_19,sk_1)) ==> event(StartedB(y_1,x_1,ep_19,ek_14)) || (ep_19 ≥ ep_ && (event(CompromisedAuthA(x_1,y_1,ep_)) || event(CompromisedAuthA(y_1,x_1,ep_)) || event(CompromisedAuthB(y_1,x_1,ep_)) || event(CompromisedAuthB(x_1,y_1,ep_)))) is true.
+END *)
