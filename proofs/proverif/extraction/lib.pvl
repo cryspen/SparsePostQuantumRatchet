@@ -26,7 +26,11 @@ fun spqr__serialize__Error__Deserialization(): bitstring [data].
 fun spqr__serialize__Error__EncodingDecoding(): bitstring [data].
 fun spqr__encoding__EncodingError__PolynomialError(bitstring): bitstring [data].
 reduc forall spqr__encoding__EncodingError__PolynomialError__0_v: bitstring;
-  spqr__encoding__EncodingError__PolynomialError__0(spqr__encoding__EncodingError__PolynomialError(spqr__encoding__EncodingError__PolynomialError__0_v)) = spqr__encoding__EncodingError__PolynomialError__0_v.
+  spqr__encoding__EncodingError__PolynomialError__0(
+    spqr__encoding__EncodingError__PolynomialError(
+      spqr__encoding__EncodingError__PolynomialError__0_v
+    )
+  ) = spqr__encoding__EncodingError__PolynomialError__0_v.
 fun spqr__encoding__EncodingError__ChunkIndexDecodingError(): bitstring [data].
 fun spqr__encoding__EncodingError__ChunkDataDecodingError(): bitstring [data].
 fun spqr__authenticator__Error__InvalidCtMac(): bitstring [data].
@@ -35,816 +39,1189 @@ fun spqr__authenticator__Error__AuthenticatorRootKeyPresent(): bitstring [data].
 fun spqr__authenticator__Error__AuthenticatorRootKeyMissing(): bitstring [data].
 fun spqr__authenticator__Error__AuthenticatorMacKeyPresent(): bitstring [data].
 fun spqr__authenticator__Error__AuthenticatorMacKeyMissing(): bitstring [data].
-fun spqr__authenticator__Authenticator__Authenticator(bitstring,
-bitstring): bitstring [data].
+fun spqr__authenticator__Authenticator__Authenticator(bitstring, bitstring): bitstring [data].
 reduc forall spqr__authenticator__Authenticator__Authenticator__root_key_v: bitstring,
-spqr__authenticator__Authenticator__Authenticator__mac_key_v: bitstring;
-  spqr__authenticator__Authenticator__Authenticator__root_key(spqr__authenticator__Authenticator__Authenticator(spqr__authenticator__Authenticator__Authenticator__root_key_v,
-  spqr__authenticator__Authenticator__Authenticator__mac_key_v)) = spqr__authenticator__Authenticator__Authenticator__root_key_v.
+  spqr__authenticator__Authenticator__Authenticator__mac_key_v: bitstring;
+  spqr__authenticator__Authenticator__Authenticator__root_key(
+    spqr__authenticator__Authenticator__Authenticator(
+      spqr__authenticator__Authenticator__Authenticator__root_key_v,
+      spqr__authenticator__Authenticator__Authenticator__mac_key_v
+    )
+  ) = spqr__authenticator__Authenticator__Authenticator__root_key_v.
 reduc forall spqr__authenticator__Authenticator__Authenticator__root_key_v: bitstring,
-spqr__authenticator__Authenticator__Authenticator__mac_key_v: bitstring;
-  spqr__authenticator__Authenticator__Authenticator__mac_key(spqr__authenticator__Authenticator__Authenticator(spqr__authenticator__Authenticator__Authenticator__root_key_v,
-  spqr__authenticator__Authenticator__Authenticator__mac_key_v)) = spqr__authenticator__Authenticator__Authenticator__mac_key_v.
+  spqr__authenticator__Authenticator__Authenticator__mac_key_v: bitstring;
+  spqr__authenticator__Authenticator__Authenticator__mac_key(
+    spqr__authenticator__Authenticator__Authenticator(
+      spqr__authenticator__Authenticator__Authenticator__root_key_v,
+      spqr__authenticator__Authenticator__Authenticator__mac_key_v
+    )
+  ) = spqr__authenticator__Authenticator__Authenticator__mac_key_v.
 const spqr__authenticator__Impl_3__MACSIZE: bitstring.
-letfun spqr__authenticator__Impl_3__new_kw(root_key: bitstring,
-ep: bitstring) =
-auth_new(root_key, ep).
-letfun spqr__authenticator__Impl_3__update(self: bitstring,
-ep: bitstring,
-k: bitstring) =
-auth_update(self, ep, k).
-letfun spqr__authenticator__Impl_3__verify_ct(self: bitstring,
-ep: bitstring,
-ct: bitstring,
-expected_mac: bitstring) =
-let (=expected_mac) = mac_ct_f(self, ep, ct) in rust_primitives__hax__Tuple0__Tuple0 else bitstring_err().
-letfun spqr__authenticator__Impl_3__mac_ct(self: bitstring,
-ep: bitstring,
-ct: bitstring) =
-mac_ct_f(self, ep, ct).
-letfun spqr__authenticator__Impl_3__verify_hdr(self: bitstring,
-ep: bitstring,
-hdr: bitstring,
-expected_mac: bitstring) =
-let (=expected_mac) = mac_hdr_f(self, ep, hdr) in rust_primitives__hax__Tuple0__Tuple0 else bitstring_err().
-letfun spqr__authenticator__Impl_3__mac_hdr(self: bitstring,
-ep: bitstring,
-hdr: bitstring) =
-mac_hdr_f(self, ep, hdr).
-fun spqr__proto__pq_ratchet__Authenticator__Authenticator(bitstring,
-bitstring): bitstring [data].
+letfun spqr__authenticator__Impl_3__new_kw(root_key: bitstring, ep: bitstring) =
+  auth_new(root_key, ep).
+letfun spqr__authenticator__Impl_3__update(self: bitstring, ep: bitstring, k: bitstring) =
+  auth_update(self, ep, k).
+letfun spqr__authenticator__Impl_3__verify_ct(
+  self: bitstring,
+  ep: bitstring,
+  ct: bitstring,
+  expected_mac: bitstring
+) =
+  let (=expected_mac) = mac_ct_f(self, ep, ct) in rust_primitives__hax__Tuple0__Tuple0 else bitstring_err().
+letfun spqr__authenticator__Impl_3__mac_ct(self: bitstring, ep: bitstring, ct: bitstring) =
+  mac_ct_f(self, ep, ct).
+letfun spqr__authenticator__Impl_3__verify_hdr(
+  self: bitstring,
+  ep: bitstring,
+  hdr: bitstring,
+  expected_mac: bitstring
+) =
+  let (=expected_mac) = mac_hdr_f(self, ep, hdr) in rust_primitives__hax__Tuple0__Tuple0 else bitstring_err().
+letfun spqr__authenticator__Impl_3__mac_hdr(self: bitstring, ep: bitstring, hdr: bitstring) =
+  mac_hdr_f(self, ep, hdr).
+fun spqr__proto__pq_ratchet__Authenticator__Authenticator(bitstring, bitstring): bitstring [data].
 reduc forall spqr__proto__pq_ratchet__Authenticator__Authenticator__root_key_v: bitstring,
-spqr__proto__pq_ratchet__Authenticator__Authenticator__mac_key_v: bitstring;
-  spqr__proto__pq_ratchet__Authenticator__Authenticator__root_key(spqr__proto__pq_ratchet__Authenticator__Authenticator(spqr__proto__pq_ratchet__Authenticator__Authenticator__root_key_v,
-  spqr__proto__pq_ratchet__Authenticator__Authenticator__mac_key_v)) = spqr__proto__pq_ratchet__Authenticator__Authenticator__root_key_v.
+  spqr__proto__pq_ratchet__Authenticator__Authenticator__mac_key_v: bitstring;
+  spqr__proto__pq_ratchet__Authenticator__Authenticator__root_key(
+    spqr__proto__pq_ratchet__Authenticator__Authenticator(
+      spqr__proto__pq_ratchet__Authenticator__Authenticator__root_key_v,
+      spqr__proto__pq_ratchet__Authenticator__Authenticator__mac_key_v
+    )
+  ) = spqr__proto__pq_ratchet__Authenticator__Authenticator__root_key_v.
 reduc forall spqr__proto__pq_ratchet__Authenticator__Authenticator__root_key_v: bitstring,
-spqr__proto__pq_ratchet__Authenticator__Authenticator__mac_key_v: bitstring;
-  spqr__proto__pq_ratchet__Authenticator__Authenticator__mac_key(spqr__proto__pq_ratchet__Authenticator__Authenticator(spqr__proto__pq_ratchet__Authenticator__Authenticator__root_key_v,
-  spqr__proto__pq_ratchet__Authenticator__Authenticator__mac_key_v)) = spqr__proto__pq_ratchet__Authenticator__Authenticator__mac_key_v.
+  spqr__proto__pq_ratchet__Authenticator__Authenticator__mac_key_v: bitstring;
+  spqr__proto__pq_ratchet__Authenticator__Authenticator__mac_key(
+    spqr__proto__pq_ratchet__Authenticator__Authenticator(
+      spqr__proto__pq_ratchet__Authenticator__Authenticator__root_key_v,
+      spqr__proto__pq_ratchet__Authenticator__Authenticator__mac_key_v
+    )
+  ) = spqr__proto__pq_ratchet__Authenticator__Authenticator__mac_key_v.
 fun extern__derive_scka_secret(bitstring, bitstring): bitstring.
-letfun spqr__kdf__derive_scka_secret(kem_ss: bitstring,
-epoch: bitstring) =
-extern__derive_scka_secret(kem_ss, epoch).
+letfun spqr__kdf__derive_scka_secret(kem_ss: bitstring, epoch: bitstring) =
+  extern__derive_scka_secret(kem_ss, epoch).
 const spqr__incremental_mlkem768__CIPHERTEXT2_SIZE: bitstring.
 const spqr__incremental_mlkem768__HEADER_SIZE: bitstring.
-fun spqr__incremental_mlkem768__Keys__Keys(bitstring,
-bitstring,
-bitstring): bitstring [data].
+fun spqr__incremental_mlkem768__Keys__Keys(bitstring, bitstring, bitstring): bitstring [data].
 reduc forall spqr__incremental_mlkem768__Keys__Keys__ek_v: bitstring,
-spqr__incremental_mlkem768__Keys__Keys__dk_v: bitstring,
-spqr__incremental_mlkem768__Keys__Keys__hdr_v: bitstring;
-  spqr__incremental_mlkem768__Keys__Keys__ek(spqr__incremental_mlkem768__Keys__Keys(spqr__incremental_mlkem768__Keys__Keys__ek_v,
-  spqr__incremental_mlkem768__Keys__Keys__dk_v,
-  spqr__incremental_mlkem768__Keys__Keys__hdr_v)) = spqr__incremental_mlkem768__Keys__Keys__ek_v.
+  spqr__incremental_mlkem768__Keys__Keys__dk_v: bitstring,
+  spqr__incremental_mlkem768__Keys__Keys__hdr_v: bitstring;
+  spqr__incremental_mlkem768__Keys__Keys__ek(
+    spqr__incremental_mlkem768__Keys__Keys(
+      spqr__incremental_mlkem768__Keys__Keys__ek_v,
+      spqr__incremental_mlkem768__Keys__Keys__dk_v,
+      spqr__incremental_mlkem768__Keys__Keys__hdr_v
+    )
+  ) = spqr__incremental_mlkem768__Keys__Keys__ek_v.
 reduc forall spqr__incremental_mlkem768__Keys__Keys__ek_v: bitstring,
-spqr__incremental_mlkem768__Keys__Keys__dk_v: bitstring,
-spqr__incremental_mlkem768__Keys__Keys__hdr_v: bitstring;
-  spqr__incremental_mlkem768__Keys__Keys__dk(spqr__incremental_mlkem768__Keys__Keys(spqr__incremental_mlkem768__Keys__Keys__ek_v,
-  spqr__incremental_mlkem768__Keys__Keys__dk_v,
-  spqr__incremental_mlkem768__Keys__Keys__hdr_v)) = spqr__incremental_mlkem768__Keys__Keys__dk_v.
+  spqr__incremental_mlkem768__Keys__Keys__dk_v: bitstring,
+  spqr__incremental_mlkem768__Keys__Keys__hdr_v: bitstring;
+  spqr__incremental_mlkem768__Keys__Keys__dk(
+    spqr__incremental_mlkem768__Keys__Keys(
+      spqr__incremental_mlkem768__Keys__Keys__ek_v,
+      spqr__incremental_mlkem768__Keys__Keys__dk_v,
+      spqr__incremental_mlkem768__Keys__Keys__hdr_v
+    )
+  ) = spqr__incremental_mlkem768__Keys__Keys__dk_v.
 reduc forall spqr__incremental_mlkem768__Keys__Keys__ek_v: bitstring,
-spqr__incremental_mlkem768__Keys__Keys__dk_v: bitstring,
-spqr__incremental_mlkem768__Keys__Keys__hdr_v: bitstring;
-  spqr__incremental_mlkem768__Keys__Keys__hdr(spqr__incremental_mlkem768__Keys__Keys(spqr__incremental_mlkem768__Keys__Keys__ek_v,
-  spqr__incremental_mlkem768__Keys__Keys__dk_v,
-  spqr__incremental_mlkem768__Keys__Keys__hdr_v)) = spqr__incremental_mlkem768__Keys__Keys__hdr_v.
-letfun spqr__incremental_mlkem768__ek_matches_header(ek: bitstring,
-hdr: bitstring) =
-ek_matches(ek, hdr).
+  spqr__incremental_mlkem768__Keys__Keys__dk_v: bitstring,
+  spqr__incremental_mlkem768__Keys__Keys__hdr_v: bitstring;
+  spqr__incremental_mlkem768__Keys__Keys__hdr(
+    spqr__incremental_mlkem768__Keys__Keys(
+      spqr__incremental_mlkem768__Keys__Keys__ek_v,
+      spqr__incremental_mlkem768__Keys__Keys__dk_v,
+      spqr__incremental_mlkem768__Keys__Keys__hdr_v
+    )
+  ) = spqr__incremental_mlkem768__Keys__Keys__hdr_v.
+letfun spqr__incremental_mlkem768__ek_matches_header(ek: bitstring, hdr: bitstring) =
+  ek_matches(ek, hdr).
 letfun spqr__incremental_mlkem768__generate(rng: bitstring) =
-let hax_temp_output = (new spqr_dk: bitstring; spqr__incremental_mlkem768__Keys__Keys(dk2enckey(spqr_dk), spqr_dk, dk2seed(spqr_dk))) in
-  rust_primitives__hax__Tuple2__Tuple2(rng,
-  hax_temp_output).
-letfun spqr__incremental_mlkem768__encaps1(hdr: bitstring,
-rng: bitstring) =
-let hax_temp_output = (new spqr_r: bitstring; new spqr_ss: bitstring; rust_primitives__hax__Tuple3__Tuple3(pkenc1(spqr_r, hdr, spqr_ss), spqr_es(spqr_r), spqr_ss)) in
-  rust_primitives__hax__Tuple2__Tuple2(rng,
-  hax_temp_output).
-letfun spqr__incremental_mlkem768__encaps2(ek: bitstring,
-es: bitstring) =
-let spqr_es(spqr_r) = es in pkenc2(spqr_r, ek) else bitstring_err().
-letfun spqr__incremental_mlkem768__decaps(dk: bitstring,
-ct1: bitstring,
-ct2: bitstring) =
-pkdec(dk, ct1, ct2).
-fun spqr__EpochSecret__EpochSecret(bitstring,
-bitstring): bitstring [data].
+  let hax_temp_output = (new spqr_dk: bitstring; spqr__incremental_mlkem768__Keys__Keys(dk2enckey(spqr_dk), spqr_dk, dk2seed(spqr_dk))) in
+  rust_primitives__hax__Tuple2__Tuple2(rng, hax_temp_output).
+letfun spqr__incremental_mlkem768__encaps1(hdr: bitstring, rng: bitstring) =
+  let hax_temp_output = (new spqr_r: bitstring; new spqr_ss: bitstring; rust_primitives__hax__Tuple3__Tuple3(pkenc1(spqr_r, hdr, spqr_ss), spqr_es(spqr_r), spqr_ss)) in
+  rust_primitives__hax__Tuple2__Tuple2(rng, hax_temp_output).
+letfun spqr__incremental_mlkem768__encaps2(ek: bitstring, es: bitstring) =
+  let spqr_es(spqr_r) = es in pkenc2(spqr_r, ek) else bitstring_err().
+letfun spqr__incremental_mlkem768__decaps(dk: bitstring, ct1: bitstring, ct2: bitstring) =
+  pkdec(dk, ct1, ct2).
+fun spqr__EpochSecret__EpochSecret(bitstring, bitstring): bitstring [data].
 reduc forall spqr__EpochSecret__EpochSecret__epoch_v: bitstring,
-spqr__EpochSecret__EpochSecret__secret_kw_v: bitstring;
-  spqr__EpochSecret__EpochSecret__epoch(spqr__EpochSecret__EpochSecret(spqr__EpochSecret__EpochSecret__epoch_v,
-  spqr__EpochSecret__EpochSecret__secret_kw_v)) = spqr__EpochSecret__EpochSecret__epoch_v.
+  spqr__EpochSecret__EpochSecret__secret_kw_v: bitstring;
+  spqr__EpochSecret__EpochSecret__epoch(
+    spqr__EpochSecret__EpochSecret(
+      spqr__EpochSecret__EpochSecret__epoch_v,
+      spqr__EpochSecret__EpochSecret__secret_kw_v
+    )
+  ) = spqr__EpochSecret__EpochSecret__epoch_v.
 reduc forall spqr__EpochSecret__EpochSecret__epoch_v: bitstring,
-spqr__EpochSecret__EpochSecret__secret_kw_v: bitstring;
-  spqr__EpochSecret__EpochSecret__secret_kw(spqr__EpochSecret__EpochSecret(spqr__EpochSecret__EpochSecret__epoch_v,
-  spqr__EpochSecret__EpochSecret__secret_kw_v)) = spqr__EpochSecret__EpochSecret__secret_kw_v.
+  spqr__EpochSecret__EpochSecret__secret_kw_v: bitstring;
+  spqr__EpochSecret__EpochSecret__secret_kw(
+    spqr__EpochSecret__EpochSecret(
+      spqr__EpochSecret__EpochSecret__epoch_v,
+      spqr__EpochSecret__EpochSecret__secret_kw_v
+    )
+  ) = spqr__EpochSecret__EpochSecret__secret_kw_v.
 fun spqr__Error__StateDecode(): bitstring [data].
 fun spqr__Error__NotImplemented(): bitstring [data].
 fun spqr__Error__MsgDecode(): bitstring [data].
 fun spqr__Error__MacVerifyFailed(): bitstring [data].
 fun spqr__Error__EpochOutOfRange(bitstring): bitstring [data].
 reduc forall spqr__Error__EpochOutOfRange__0_v: bitstring;
-  spqr__Error__EpochOutOfRange__0(spqr__Error__EpochOutOfRange(spqr__Error__EpochOutOfRange__0_v)) = spqr__Error__EpochOutOfRange__0_v.
+  spqr__Error__EpochOutOfRange__0(
+    spqr__Error__EpochOutOfRange(spqr__Error__EpochOutOfRange__0_v)
+  ) = spqr__Error__EpochOutOfRange__0_v.
 fun spqr__Error__EncodingDecoding(bitstring): bitstring [data].
 reduc forall spqr__Error__EncodingDecoding__0_v: bitstring;
-  spqr__Error__EncodingDecoding__0(spqr__Error__EncodingDecoding(spqr__Error__EncodingDecoding__0_v)) = spqr__Error__EncodingDecoding__0_v.
+  spqr__Error__EncodingDecoding__0(
+    spqr__Error__EncodingDecoding(spqr__Error__EncodingDecoding__0_v)
+  ) = spqr__Error__EncodingDecoding__0_v.
 fun spqr__Error__Serialization(bitstring): bitstring [data].
 reduc forall spqr__Error__Serialization__0_v: bitstring;
-  spqr__Error__Serialization__0(spqr__Error__Serialization(spqr__Error__Serialization__0_v)) = spqr__Error__Serialization__0_v.
+  spqr__Error__Serialization__0(
+    spqr__Error__Serialization(spqr__Error__Serialization__0_v)
+  ) = spqr__Error__Serialization__0_v.
 fun spqr__Error__VersionMismatch(): bitstring [data].
 fun spqr__Error__MinimumVersion(): bitstring [data].
-fun spqr__Error__KeyJump(bitstring,
-bitstring): bitstring [data].
-reduc forall spqr__Error__KeyJump__0_v: bitstring,
-spqr__Error__KeyJump__1_v: bitstring;
-  spqr__Error__KeyJump__0(spqr__Error__KeyJump(spqr__Error__KeyJump__0_v,
-  spqr__Error__KeyJump__1_v)) = spqr__Error__KeyJump__0_v.
-reduc forall spqr__Error__KeyJump__0_v: bitstring,
-spqr__Error__KeyJump__1_v: bitstring;
-  spqr__Error__KeyJump__1(spqr__Error__KeyJump(spqr__Error__KeyJump__0_v,
-  spqr__Error__KeyJump__1_v)) = spqr__Error__KeyJump__1_v.
+fun spqr__Error__KeyJump(bitstring, bitstring): bitstring [data].
+reduc forall spqr__Error__KeyJump__0_v: bitstring, spqr__Error__KeyJump__1_v: bitstring;
+  spqr__Error__KeyJump__0(
+    spqr__Error__KeyJump(spqr__Error__KeyJump__0_v, spqr__Error__KeyJump__1_v)
+  ) = spqr__Error__KeyJump__0_v.
+reduc forall spqr__Error__KeyJump__0_v: bitstring, spqr__Error__KeyJump__1_v: bitstring;
+  spqr__Error__KeyJump__1(
+    spqr__Error__KeyJump(spqr__Error__KeyJump__0_v, spqr__Error__KeyJump__1_v)
+  ) = spqr__Error__KeyJump__1_v.
 fun spqr__Error__KeyTrimmed(bitstring): bitstring [data].
 reduc forall spqr__Error__KeyTrimmed__0_v: bitstring;
-  spqr__Error__KeyTrimmed__0(spqr__Error__KeyTrimmed(spqr__Error__KeyTrimmed__0_v)) = spqr__Error__KeyTrimmed__0_v.
+  spqr__Error__KeyTrimmed__0(
+    spqr__Error__KeyTrimmed(spqr__Error__KeyTrimmed__0_v)
+  ) = spqr__Error__KeyTrimmed__0_v.
 fun spqr__Error__KeyAlreadyRequested(bitstring): bitstring [data].
 reduc forall spqr__Error__KeyAlreadyRequested__0_v: bitstring;
-  spqr__Error__KeyAlreadyRequested__0(spqr__Error__KeyAlreadyRequested(spqr__Error__KeyAlreadyRequested__0_v)) = spqr__Error__KeyAlreadyRequested__0_v.
+  spqr__Error__KeyAlreadyRequested__0(
+    spqr__Error__KeyAlreadyRequested(spqr__Error__KeyAlreadyRequested__0_v)
+  ) = spqr__Error__KeyAlreadyRequested__0_v.
 fun spqr__Error__ErroneousDataReceived(): bitstring [data].
-fun spqr__Error__SendKeyEpochDecreased(bitstring,
-bitstring): bitstring [data].
+fun spqr__Error__SendKeyEpochDecreased(bitstring, bitstring): bitstring [data].
 reduc forall spqr__Error__SendKeyEpochDecreased__0_v: bitstring,
-spqr__Error__SendKeyEpochDecreased__1_v: bitstring;
-  spqr__Error__SendKeyEpochDecreased__0(spqr__Error__SendKeyEpochDecreased(spqr__Error__SendKeyEpochDecreased__0_v,
-  spqr__Error__SendKeyEpochDecreased__1_v)) = spqr__Error__SendKeyEpochDecreased__0_v.
+  spqr__Error__SendKeyEpochDecreased__1_v: bitstring;
+  spqr__Error__SendKeyEpochDecreased__0(
+    spqr__Error__SendKeyEpochDecreased(
+      spqr__Error__SendKeyEpochDecreased__0_v,
+      spqr__Error__SendKeyEpochDecreased__1_v
+    )
+  ) = spqr__Error__SendKeyEpochDecreased__0_v.
 reduc forall spqr__Error__SendKeyEpochDecreased__0_v: bitstring,
-spqr__Error__SendKeyEpochDecreased__1_v: bitstring;
-  spqr__Error__SendKeyEpochDecreased__1(spqr__Error__SendKeyEpochDecreased(spqr__Error__SendKeyEpochDecreased__0_v,
-  spqr__Error__SendKeyEpochDecreased__1_v)) = spqr__Error__SendKeyEpochDecreased__1_v.
+  spqr__Error__SendKeyEpochDecreased__1_v: bitstring;
+  spqr__Error__SendKeyEpochDecreased__1(
+    spqr__Error__SendKeyEpochDecreased(
+      spqr__Error__SendKeyEpochDecreased__0_v,
+      spqr__Error__SendKeyEpochDecreased__1_v
+    )
+  ) = spqr__Error__SendKeyEpochDecreased__1_v.
 fun spqr__Error__InvalidParams(bitstring): bitstring [data].
 reduc forall spqr__Error__InvalidParams__0_v: bitstring;
-  spqr__Error__InvalidParams__0(spqr__Error__InvalidParams(spqr__Error__InvalidParams__0_v)) = spqr__Error__InvalidParams__0_v.
+  spqr__Error__InvalidParams__0(
+    spqr__Error__InvalidParams(spqr__Error__InvalidParams__0_v)
+  ) = spqr__Error__InvalidParams__0_v.
 fun spqr__Error__ChainNotAvailable(): bitstring [data].
-letfun spqr__Impl_3__from(u_v: bitstring) =
-spqr__Error__MacVerifyFailed().
-fun spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(bitstring,
-bitstring): bitstring [data].
+letfun spqr__Impl_3__from(u_v: bitstring) = spqr__Error__MacVerifyFailed().
+fun spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth_v: bitstring;
-  spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch(spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch_v,
-  spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth_v)) = spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch_v.
+  spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth_v: bitstring;
+  spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch(
+    spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(
+      spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch_v,
+      spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth_v
+    )
+  ) = spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch_v.
 reduc forall spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth_v: bitstring;
-  spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth(spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch_v,
-  spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth_v)) = spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth_v.
-fun spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(bitstring,
-bitstring,
-bitstring): bitstring [data].
+  spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth_v: bitstring;
+  spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth(
+    spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(
+      spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch_v,
+      spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth_v
+    )
+  ) = spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth_v.
+fun spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(
+  bitstring,
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth_v: bitstring,
-spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr_v: bitstring;
-  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch(spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch_v,
-  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth_v,
-  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr_v)) = spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch_v.
+  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth_v: bitstring,
+  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr_v: bitstring;
+  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch(
+    spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(
+      spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch_v,
+      spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth_v,
+      spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr_v
+    )
+  ) = spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch_v.
 reduc forall spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth_v: bitstring,
-spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr_v: bitstring;
-  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth(spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch_v,
-  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth_v,
-  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr_v)) = spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth_v.
+  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth_v: bitstring,
+  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr_v: bitstring;
+  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth(
+    spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(
+      spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch_v,
+      spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth_v,
+      spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr_v
+    )
+  ) = spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth_v.
 reduc forall spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth_v: bitstring,
-spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr_v: bitstring;
-  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr(spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch_v,
-  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth_v,
-  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr_v)) = spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr_v.
-fun spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(bitstring,
-bitstring,
-bitstring,
-bitstring,
-bitstring): bitstring [data].
+  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth_v: bitstring,
+  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr_v: bitstring;
+  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr(
+    spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(
+      spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch_v,
+      spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth_v,
+      spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr_v
+    )
+  ) = spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr_v.
+fun spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(
+  bitstring,
+  bitstring,
+  bitstring,
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v: bitstring;
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v)) = spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v.
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v: bitstring;
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch(
+    spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v
+    )
+  ) = spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v.
 reduc forall spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v: bitstring;
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v)) = spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v.
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v: bitstring;
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth(
+    spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v
+    )
+  ) = spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v.
 reduc forall spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v: bitstring;
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v)) = spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v.
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v: bitstring;
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr(
+    spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v
+    )
+  ) = spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v.
 reduc forall spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v: bitstring;
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v)) = spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v.
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v: bitstring;
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es(
+    spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v
+    )
+  ) = spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v.
 reduc forall spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v: bitstring;
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v)) = spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v.
-fun spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(bitstring,
-bitstring,
-bitstring,
-bitstring,
-bitstring): bitstring [data].
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v: bitstring;
+  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1(
+    spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es_v,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v
+    )
+  ) = spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1_v.
+fun spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(
+  bitstring,
+  bitstring,
+  bitstring,
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch(spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v)) = spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v.
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch(
+    spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v
+    )
+  ) = spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v.
 reduc forall spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth(spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v)) = spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v.
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth(
+    spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v
+    )
+  ) = spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v.
 reduc forall spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es(spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v)) = spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v.
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es(
+    spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v
+    )
+  ) = spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v.
 reduc forall spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek(spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v)) = spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v.
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek(
+    spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v
+    )
+  ) = spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v.
 reduc forall spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1(spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v)) = spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v.
-fun spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent(bitstring,
-bitstring): bitstring [data].
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
+  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1(
+    spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v
+    )
+  ) = spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v.
+fun spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent(bitstring, bitstring): bitstring [data].
 reduc forall spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth_v: bitstring;
-  spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__epoch(spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent(spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__epoch_v,
-  spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth_v)) = spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__epoch_v.
+  spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth_v: bitstring;
+  spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__epoch(
+    spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent(
+      spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__epoch_v,
+      spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth_v
+    )
+  ) = spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__epoch_v.
 reduc forall spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__epoch_v: bitstring,
-spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth_v: bitstring;
-  spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth(spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent(spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__epoch_v,
-  spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth_v)) = spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth_v.
+  spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth_v: bitstring;
+  spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth(
+    spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent(
+      spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__epoch_v,
+      spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth_v
+    )
+  ) = spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth_v.
 letfun spqr__v1__unchunked__send_ct__Impl__new_kw(auth_key: bitstring) =
-spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(nat_lit(1),
-  spqr__authenticator__Impl_3__new_kw(alloc__slice__Impl__to_vec(auth_key),
-  nat_lit(1))).
-letfun spqr__v1__unchunked__send_ct__Impl__recv_header(self: bitstring,
-epoch: bitstring,
-hdr: bitstring,
-mac: bitstring) =
-let wildcard: bitstring = (let rust_primitives__hax__Tuple2__Tuple2(left_val: bitstring,
-  right_val: bitstring) = rust_primitives__hax__Tuple2__Tuple2(epoch,
-  spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch(self)) in (let (=True()) = core__ops__bit__Not__not_kw(rust_primitives__hax__machine_int__eq(left_val,
-  right_val)) in (let kind = (core__panicking__AssertKind__Eq()) in
-  bitstring_err()) else (rust_primitives__hax__Tuple0__Tuple0))
+  spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(
+    nat_lit(1),
+    spqr__authenticator__Impl_3__new_kw(alloc__slice__Impl__to_vec(auth_key), nat_lit(1))
+  ).
+letfun spqr__v1__unchunked__send_ct__Impl__recv_header(
+  self: bitstring,
+  epoch: bitstring,
+  hdr: bitstring,
+  mac: bitstring
+) =
+  let wildcard: bitstring = (let rust_primitives__hax__Tuple2__Tuple2(
+    left_val: bitstring,
+    right_val: bitstring
+  ) = rust_primitives__hax__Tuple2__Tuple2(
+    epoch,
+    spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch(self)
+  ) in
+    (let (=True()) = core__ops__bit__Not__not_kw(
+        rust_primitives__hax__machine_int__eq(left_val, right_val)
+      )
+      in (let kind = (core__panicking__AssertKind__Eq()) in
+      bitstring_err())
+      else (rust_primitives__hax__Tuple0__Tuple0))
   else bitstring_err()) in
-  let wildcard: bitstring = spqr__authenticator__Impl_3__verify_hdr(spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth(self),
-  spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch(self),
-  hdr,
-  mac) in spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch(self),
-  spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth(self),
-  hdr).
-letfun spqr__v1__unchunked__send_ct__Impl_1__send_ct1(self: bitstring,
-rng: bitstring) =
-let spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(epoch: bitstring,
-  auth: bitstring,
-  hdr: bitstring) = (self) in (let rust_primitives__hax__Tuple2__Tuple2(tmp0: bitstring,
-  out_kw: bitstring) = (spqr__incremental_mlkem768__encaps1(hdr,
-  rng)) in (let rng = (tmp0) in
-  let rust_primitives__hax__Tuple3__Tuple3(ct1: bitstring,
-  es: bitstring,
-  secret_kw: bitstring) = (out_kw) in (let secret_kw = (spqr__kdf__derive_scka_secret(secret_kw,
-  epoch)) in
-  let auth = (spqr__authenticator__Impl_3__update(auth,
-  epoch,
-  secret_kw)) in
-  let hax_temp_output = (rust_primitives__hax__Tuple3__Tuple3(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(epoch,
-  auth,
-  hdr,
-  es,
-  ct1),
-  ct1,
-  spqr__EpochSecret__EpochSecret(epoch,
-  secret_kw))) in
-  rust_primitives__hax__Tuple2__Tuple2(rng,
-  hax_temp_output)) else bitstring_err()) else bitstring_err()) else bitstring_err().
-letfun spqr__v1__unchunked__send_ct__Impl_2__recv_ek(self: bitstring,
-epoch: bitstring,
-ek: bitstring) =
-let wildcard: bitstring = (let rust_primitives__hax__Tuple2__Tuple2(left_val: bitstring,
-  right_val: bitstring) = rust_primitives__hax__Tuple2__Tuple2(epoch,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch(self)) in (let (=True()) = core__ops__bit__Not__not_kw(rust_primitives__hax__machine_int__eq(left_val,
-  right_val)) in (let kind = (core__panicking__AssertKind__Eq()) in
-  bitstring_err()) else (rust_primitives__hax__Tuple0__Tuple0))
+  let wildcard: bitstring = spqr__authenticator__Impl_3__verify_hdr(
+    spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth(self),
+    spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch(self),
+    hdr,
+    mac
+  ) in
+    spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(
+      spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch(self),
+      spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth(self),
+      hdr
+    ).
+letfun spqr__v1__unchunked__send_ct__Impl_1__send_ct1(self: bitstring, rng: bitstring) =
+  let spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(
+    epoch: bitstring,
+    auth: bitstring,
+    hdr: bitstring
+  ) = (self) in (let rust_primitives__hax__Tuple2__Tuple2(
+    tmp0: bitstring,
+    out_kw: bitstring
+  ) = (spqr__incremental_mlkem768__encaps1(hdr, rng)) in (let rng = (tmp0) in
+  let rust_primitives__hax__Tuple3__Tuple3(
+    ct1: bitstring,
+    es: bitstring,
+    secret_kw: bitstring
+  ) = (out_kw) in (let secret_kw = (spqr__kdf__derive_scka_secret(secret_kw, epoch)) in
+  let auth = (spqr__authenticator__Impl_3__update(auth, epoch, secret_kw)) in
+  let hax_temp_output = (rust_primitives__hax__Tuple3__Tuple3(
+    spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(epoch, auth, hdr, es, ct1),
+    ct1,
+    spqr__EpochSecret__EpochSecret(epoch, secret_kw)
+  )) in
+  rust_primitives__hax__Tuple2__Tuple2(
+    rng,
+    hax_temp_output
+  )) else bitstring_err()) else bitstring_err()) else bitstring_err().
+letfun spqr__v1__unchunked__send_ct__Impl_2__recv_ek(
+  self: bitstring,
+  epoch: bitstring,
+  ek: bitstring
+) =
+  let wildcard: bitstring = (let rust_primitives__hax__Tuple2__Tuple2(
+    left_val: bitstring,
+    right_val: bitstring
+  ) = rust_primitives__hax__Tuple2__Tuple2(
+    epoch,
+    spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch(self)
+  ) in
+    (let (=True()) = core__ops__bit__Not__not_kw(
+        rust_primitives__hax__machine_int__eq(left_val, right_val)
+      )
+      in (let kind = (core__panicking__AssertKind__Eq()) in
+      bitstring_err())
+      else (rust_primitives__hax__Tuple0__Tuple0))
   else bitstring_err()) in
-  let (=True()) = spqr__incremental_mlkem768__ek_matches_header(ek,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr(self)) in (spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch(self),
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth(self),
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es(self),
-  ek,
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1(self))) else (bitstring_err()).
+  let (=True()) = spqr__incremental_mlkem768__ek_matches_header(
+      ek,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr(self)
+    )
+    in (spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch(self),
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth(self),
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es(self),
+      ek,
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1(self)
+    ))
+    else (bitstring_err()).
 letfun spqr__v1__unchunked__send_ct__Impl_3__send_ct2(self: bitstring) =
-let spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(epoch: bitstring,
-  auth: bitstring,
-  es: bitstring,
-  ek: bitstring,
-  ct1: bitstring) = (self) in (let ct2 = (spqr__incremental_mlkem768__encaps2(ek,
-  es)) in
-  let ct1 = (alloc__vec__Impl_2__extend_from_slice(ct1,
-  ct2)) in
-  let mac = (spqr__authenticator__Impl_3__mac_ct(auth,
-  epoch,
-  ct1)) in
-  rust_primitives__hax__Tuple3__Tuple3(spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent(epoch,
-  auth),
-  ct2,
-  mac)) else bitstring_err().
-fun spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(bitstring,
-bitstring): bitstring [data].
+  let spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(
+    epoch: bitstring,
+    auth: bitstring,
+    es: bitstring,
+    ek: bitstring,
+    ct1: bitstring
+  ) = (self) in (let ct2 = (spqr__incremental_mlkem768__encaps2(ek, es)) in
+  let ct1 = (alloc__vec__Impl_2__extend_from_slice(ct1, ct2)) in
+  let mac = (spqr__authenticator__Impl_3__mac_ct(auth, epoch, ct1)) in
+  rust_primitives__hax__Tuple3__Tuple3(
+    spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent(epoch, auth),
+    ct2,
+    mac
+  )) else bitstring_err().
+fun spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch_v: bitstring,
-spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth_v: bitstring;
-  spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch(spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch_v,
-  spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth_v)) = spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch_v.
+  spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth_v: bitstring;
+  spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch(
+    spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(
+      spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch_v,
+      spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth_v
+    )
+  ) = spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch_v.
 reduc forall spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch_v: bitstring,
-spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth_v: bitstring;
-  spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth(spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch_v,
-  spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth_v)) = spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth_v.
-letfun spqr__v1__unchunked__send_ct__Impl_4__recv_next_epoch(self: bitstring,
-next_epoch: bitstring) =
-let spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent(epoch: bitstring,
-  auth: bitstring) = (self) in (let wildcard: bitstring = (let rust_primitives__hax__Tuple2__Tuple2(left_val: bitstring,
-  right_val: bitstring) = rust_primitives__hax__Tuple2__Tuple2(rust_primitives__hax__machine_int__add(epoch,
-  nat_lit(1)),
-  next_epoch) in (let (=True()) = core__ops__bit__Not__not_kw(rust_primitives__hax__machine_int__eq(left_val,
-  right_val)) in (let kind = (core__panicking__AssertKind__Eq()) in
-  bitstring_err()) else (rust_primitives__hax__Tuple0__Tuple0))
+  spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth_v: bitstring;
+  spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth(
+    spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(
+      spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch_v,
+      spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth_v
+    )
+  ) = spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth_v.
+letfun spqr__v1__unchunked__send_ct__Impl_4__recv_next_epoch(
+  self: bitstring,
+  next_epoch: bitstring
+) =
+  let spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent(
+    epoch: bitstring,
+    auth: bitstring
+  ) = (self) in (let wildcard: bitstring = (let rust_primitives__hax__Tuple2__Tuple2(
+    left_val: bitstring,
+    right_val: bitstring
+  ) = rust_primitives__hax__Tuple2__Tuple2(
+    rust_primitives__hax__machine_int__add(epoch, nat_lit(1)),
+    next_epoch
+  ) in
+    (let (=True()) = core__ops__bit__Not__not_kw(
+        rust_primitives__hax__machine_int__eq(left_val, right_val)
+      )
+      in (let kind = (core__panicking__AssertKind__Eq()) in
+      bitstring_err())
+      else (rust_primitives__hax__Tuple0__Tuple0))
   else bitstring_err()) in
-  spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(rust_primitives__hax__machine_int__add(epoch,
-  nat_lit(1)),
-  auth)) else bitstring_err().
-fun spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(bitstring,
-bitstring,
-bitstring,
-bitstring): bitstring [data].
+  spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(
+    rust_primitives__hax__machine_int__add(epoch, nat_lit(1)),
+    auth
+  )) else bitstring_err().
+fun spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(
+  bitstring,
+  bitstring,
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch_v: bitstring,
-spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v: bitstring,
-spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v: bitstring,
-spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v: bitstring;
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch(spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch_v,
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v,
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v,
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v)) = spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch_v.
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v: bitstring,
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v: bitstring,
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v: bitstring;
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch(
+    spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch_v,
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v,
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v,
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v
+    )
+  ) = spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch_v.
 reduc forall spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch_v: bitstring,
-spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v: bitstring,
-spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v: bitstring,
-spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v: bitstring;
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth(spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch_v,
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v,
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v,
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v)) = spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v.
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v: bitstring,
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v: bitstring,
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v: bitstring;
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth(
+    spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch_v,
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v,
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v,
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v
+    )
+  ) = spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v.
 reduc forall spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch_v: bitstring,
-spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v: bitstring,
-spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v: bitstring,
-spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v: bitstring;
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek(spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch_v,
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v,
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v,
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v)) = spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v.
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v: bitstring,
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v: bitstring,
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v: bitstring;
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek(
+    spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch_v,
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v,
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v,
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v
+    )
+  ) = spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v.
 reduc forall spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch_v: bitstring,
-spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v: bitstring,
-spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v: bitstring,
-spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v: bitstring;
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk(spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch_v,
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v,
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v,
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v)) = spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v.
-fun spqr__v1__unchunked__send_ek__EkSent__EkSent(bitstring,
-bitstring,
-bitstring): bitstring [data].
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v: bitstring,
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v: bitstring,
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v: bitstring;
+  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk(
+    spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch_v,
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth_v,
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek_v,
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v
+    )
+  ) = spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk_v.
+fun spqr__v1__unchunked__send_ek__EkSent__EkSent(bitstring, bitstring, bitstring): bitstring [data].
 reduc forall spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSent__EkSent__auth_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSent__EkSent__dk_v: bitstring;
-  spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch(spqr__v1__unchunked__send_ek__EkSent__EkSent(spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch_v,
-  spqr__v1__unchunked__send_ek__EkSent__EkSent__auth_v,
-  spqr__v1__unchunked__send_ek__EkSent__EkSent__dk_v)) = spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch_v.
+  spqr__v1__unchunked__send_ek__EkSent__EkSent__auth_v: bitstring,
+  spqr__v1__unchunked__send_ek__EkSent__EkSent__dk_v: bitstring;
+  spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch(
+    spqr__v1__unchunked__send_ek__EkSent__EkSent(
+      spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch_v,
+      spqr__v1__unchunked__send_ek__EkSent__EkSent__auth_v,
+      spqr__v1__unchunked__send_ek__EkSent__EkSent__dk_v
+    )
+  ) = spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch_v.
 reduc forall spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSent__EkSent__auth_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSent__EkSent__dk_v: bitstring;
-  spqr__v1__unchunked__send_ek__EkSent__EkSent__auth(spqr__v1__unchunked__send_ek__EkSent__EkSent(spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch_v,
-  spqr__v1__unchunked__send_ek__EkSent__EkSent__auth_v,
-  spqr__v1__unchunked__send_ek__EkSent__EkSent__dk_v)) = spqr__v1__unchunked__send_ek__EkSent__EkSent__auth_v.
+  spqr__v1__unchunked__send_ek__EkSent__EkSent__auth_v: bitstring,
+  spqr__v1__unchunked__send_ek__EkSent__EkSent__dk_v: bitstring;
+  spqr__v1__unchunked__send_ek__EkSent__EkSent__auth(
+    spqr__v1__unchunked__send_ek__EkSent__EkSent(
+      spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch_v,
+      spqr__v1__unchunked__send_ek__EkSent__EkSent__auth_v,
+      spqr__v1__unchunked__send_ek__EkSent__EkSent__dk_v
+    )
+  ) = spqr__v1__unchunked__send_ek__EkSent__EkSent__auth_v.
 reduc forall spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSent__EkSent__auth_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSent__EkSent__dk_v: bitstring;
-  spqr__v1__unchunked__send_ek__EkSent__EkSent__dk(spqr__v1__unchunked__send_ek__EkSent__EkSent(spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch_v,
-  spqr__v1__unchunked__send_ek__EkSent__EkSent__auth_v,
-  spqr__v1__unchunked__send_ek__EkSent__EkSent__dk_v)) = spqr__v1__unchunked__send_ek__EkSent__EkSent__dk_v.
-fun spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(bitstring,
-bitstring,
-bitstring,
-bitstring): bitstring [data].
+  spqr__v1__unchunked__send_ek__EkSent__EkSent__auth_v: bitstring,
+  spqr__v1__unchunked__send_ek__EkSent__EkSent__dk_v: bitstring;
+  spqr__v1__unchunked__send_ek__EkSent__EkSent__dk(
+    spqr__v1__unchunked__send_ek__EkSent__EkSent(
+      spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch_v,
+      spqr__v1__unchunked__send_ek__EkSent__EkSent__auth_v,
+      spqr__v1__unchunked__send_ek__EkSent__EkSent__dk_v
+    )
+  ) = spqr__v1__unchunked__send_ek__EkSent__EkSent__dk_v.
+fun spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(
+  bitstring,
+  bitstring,
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch(spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch_v,
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v,
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v,
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v)) = spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch_v.
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch(
+    spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch_v,
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v,
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v,
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v
+    )
+  ) = spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch_v.
 reduc forall spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth(spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch_v,
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v,
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v,
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v)) = spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v.
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth(
+    spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch_v,
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v,
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v,
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v
+    )
+  ) = spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v.
 reduc forall spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk(spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch_v,
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v,
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v,
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v)) = spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v.
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk(
+    spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch_v,
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v,
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v,
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v
+    )
+  ) = spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v.
 reduc forall spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
-spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1(spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch_v,
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v,
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v,
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v)) = spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v.
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1(
+    spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch_v,
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth_v,
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk_v,
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v
+    )
+  ) = spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1_v.
 letfun spqr__v1__unchunked__send_ek__Impl__new_kw(auth_key: bitstring) =
-spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(nat_lit(1),
-  spqr__authenticator__Impl_3__new_kw(alloc__slice__Impl__to_vec(auth_key),
-  nat_lit(1))).
-letfun spqr__v1__unchunked__send_ek__Impl__send_header(self: bitstring,
-rng: bitstring) =
-let rust_primitives__hax__Tuple2__Tuple2(tmp0: bitstring,
-  out_kw: bitstring) = (spqr__incremental_mlkem768__generate(rng)) in (let rng = (tmp0) in
+  spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(
+    nat_lit(1),
+    spqr__authenticator__Impl_3__new_kw(alloc__slice__Impl__to_vec(auth_key), nat_lit(1))
+  ).
+letfun spqr__v1__unchunked__send_ek__Impl__send_header(self: bitstring, rng: bitstring) =
+  let rust_primitives__hax__Tuple2__Tuple2(
+    tmp0: bitstring,
+    out_kw: bitstring
+  ) = (spqr__incremental_mlkem768__generate(rng)) in (let rng = (tmp0) in
   let keys = (out_kw) in
-  let mac = (spqr__authenticator__Impl_3__mac_hdr(spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth(self),
-  spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch(self),
-  spqr__incremental_mlkem768__Keys__Keys__hdr(keys))) in
-  let hax_temp_output = (rust_primitives__hax__Tuple3__Tuple3(spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch(self),
-  spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth(self),
-  spqr__incremental_mlkem768__Keys__Keys__ek(keys),
-  spqr__incremental_mlkem768__Keys__Keys__dk(keys)),
-  spqr__incremental_mlkem768__Keys__Keys__hdr(keys),
-  mac)) in
-  rust_primitives__hax__Tuple2__Tuple2(rng,
-  hax_temp_output)) else bitstring_err().
+  let mac = (spqr__authenticator__Impl_3__mac_hdr(
+    spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth(self),
+    spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch(self),
+    spqr__incremental_mlkem768__Keys__Keys__hdr(keys)
+  )) in
+  let hax_temp_output = (rust_primitives__hax__Tuple3__Tuple3(
+    spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(
+      spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch(self),
+      spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth(self),
+      spqr__incremental_mlkem768__Keys__Keys__ek(keys),
+      spqr__incremental_mlkem768__Keys__Keys__dk(keys)
+    ),
+    spqr__incremental_mlkem768__Keys__Keys__hdr(keys),
+    mac
+  )) in
+  rust_primitives__hax__Tuple2__Tuple2(rng, hax_temp_output)) else bitstring_err().
 letfun spqr__v1__unchunked__send_ek__Impl_1__send_ek(self: bitstring) =
-rust_primitives__hax__Tuple2__Tuple2(spqr__v1__unchunked__send_ek__EkSent__EkSent(spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch(self),
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth(self),
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk(self)),
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek(self)).
-letfun spqr__v1__unchunked__send_ek__Impl_2__recv_ct1(self: bitstring,
-epoch: bitstring,
-ct1: bitstring) =
-let wildcard: bitstring = (let rust_primitives__hax__Tuple2__Tuple2(left_val: bitstring,
-  right_val: bitstring) = rust_primitives__hax__Tuple2__Tuple2(epoch,
-  spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch(self)) in (let (=True()) = core__ops__bit__Not__not_kw(rust_primitives__hax__machine_int__eq(left_val,
-  right_val)) in (let kind = (core__panicking__AssertKind__Eq()) in
-  bitstring_err()) else (rust_primitives__hax__Tuple0__Tuple0))
+  rust_primitives__hax__Tuple2__Tuple2(
+    spqr__v1__unchunked__send_ek__EkSent__EkSent(
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch(self),
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth(self),
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk(self)
+    ),
+    spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek(self)
+  ).
+letfun spqr__v1__unchunked__send_ek__Impl_2__recv_ct1(
+  self: bitstring,
+  epoch: bitstring,
+  ct1: bitstring
+) =
+  let wildcard: bitstring = (let rust_primitives__hax__Tuple2__Tuple2(
+    left_val: bitstring,
+    right_val: bitstring
+  ) = rust_primitives__hax__Tuple2__Tuple2(
+    epoch,
+    spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch(self)
+  ) in
+    (let (=True()) = core__ops__bit__Not__not_kw(
+        rust_primitives__hax__machine_int__eq(left_val, right_val)
+      )
+      in (let kind = (core__panicking__AssertKind__Eq()) in
+      bitstring_err())
+      else (rust_primitives__hax__Tuple0__Tuple0))
   else bitstring_err()) in
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch(self),
-  spqr__v1__unchunked__send_ek__EkSent__EkSent__auth(self),
-  spqr__v1__unchunked__send_ek__EkSent__EkSent__dk(self),
-  ct1).
-letfun spqr__v1__unchunked__send_ek__Impl_3__recv_ct2(self: bitstring,
-ct2: bitstring,
-mac: bitstring) =
-let spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(epoch: bitstring,
-  auth: bitstring,
-  dk: bitstring,
-  ct1: bitstring) = (self) in (let ss = (spqr__incremental_mlkem768__decaps(dk,
-  ct1,
-  ct2)) in
-  let ss = (spqr__kdf__derive_scka_secret(ss,
-  epoch)) in
-  let auth = (spqr__authenticator__Impl_3__update(auth,
-  epoch,
-  ss)) in
-  let ct1 = (alloc__vec__Impl_2__extend_from_slice(ct1,
-  ct2)) in
-  let wildcard: bitstring = spqr__authenticator__Impl_3__verify_ct(auth,
-  epoch,
-  ct1,
-  mac) in let wildcard: bitstring = (hax_lib__assume(hax_lib__prop__constructors__from_bool(rust_primitives__hax__machine_int__lt(epoch,
-  core__num__Impl_9__MAX)))) in
-  rust_primitives__hax__Tuple2__Tuple2(spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(rust_primitives__hax__machine_int__add(epoch,
-  nat_lit(1)),
-  auth),
-  spqr__EpochSecret__EpochSecret(epoch,
-  alloc__slice__Impl__to_vec(ss)))) else bitstring_err().
-fun spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled(bitstring,
-bitstring): bitstring [data].
+  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(
+    spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch(self),
+    spqr__v1__unchunked__send_ek__EkSent__EkSent__auth(self),
+    spqr__v1__unchunked__send_ek__EkSent__EkSent__dk(self),
+    ct1
+  ).
+letfun spqr__v1__unchunked__send_ek__Impl_3__recv_ct2(
+  self: bitstring,
+  ct2: bitstring,
+  mac: bitstring
+) =
+  let spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(
+    epoch: bitstring,
+    auth: bitstring,
+    dk: bitstring,
+    ct1: bitstring
+  ) = (self) in (let ss = (spqr__incremental_mlkem768__decaps(dk, ct1, ct2)) in
+  let ss = (spqr__kdf__derive_scka_secret(ss, epoch)) in
+  let auth = (spqr__authenticator__Impl_3__update(auth, epoch, ss)) in
+  let ct1 = (alloc__vec__Impl_2__extend_from_slice(ct1, ct2)) in
+  let wildcard: bitstring = spqr__authenticator__Impl_3__verify_ct(auth, epoch, ct1, mac) in
+    let wildcard: bitstring = (hax_lib__assume(
+      hax_lib__prop__constructors__from_bool(
+        rust_primitives__hax__machine_int__lt(epoch, core__num__Impl_9__MAX)
+      )
+    )) in
+    rust_primitives__hax__Tuple2__Tuple2(
+      spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(
+        rust_primitives__hax__machine_int__add(epoch, nat_lit(1)),
+        auth
+      ),
+      spqr__EpochSecret__EpochSecret(epoch, alloc__slice__Impl__to_vec(ss))
+    )) else bitstring_err().
+fun spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled(
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__auth_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__epoch(spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled(spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__auth_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__epoch_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__auth_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__epoch(
+    spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled(
+      spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__auth_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__epoch_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__auth_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__auth(spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled(spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__auth_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__auth_v.
-fun spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent(bitstring,
-bitstring,
-bitstring,
-bitstring): bitstring [data].
+  spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__auth_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__auth(
+    spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled(
+      spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__auth_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__auth_v.
+fun spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent(
+  bitstring,
+  bitstring,
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch(
+    spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth(
+    spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek(
+    spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v.
-fun spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent(bitstring,
-bitstring,
-bitstring): bitstring [data].
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk(
+    spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk_v.
+fun spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent(
+  bitstring,
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch(spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent(spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch(
+    spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth(spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent(spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth(
+    spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk(spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent(spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk_v.
-fun spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received(bitstring,
-bitstring,
-bitstring,
-bitstring): bitstring [data].
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk(
+    spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk_v.
+fun spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received(
+  bitstring,
+  bitstring,
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch(spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received(spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch(
+    spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received(
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth(spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received(spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth(
+    spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received(
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk(spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received(spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk(
+    spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received(
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1(spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received(spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v.
-fun spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived(bitstring,
-bitstring): bitstring [data].
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1(
+    spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received(
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1_v.
+fun spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived(
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__auth_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__epoch(spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived(spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__auth_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__epoch_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__auth_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__epoch(
+    spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived(
+      spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__auth_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__epoch_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__auth_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__auth(spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived(spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__auth_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__auth_v.
-fun spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived(bitstring,
-bitstring,
-bitstring): bitstring [data].
+  spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__auth_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__auth(
+    spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived(
+      spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__auth_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__auth_v.
+fun spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived(
+  bitstring,
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch(
+    spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived(
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth(
+    spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived(
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr_v.
-fun spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent(bitstring,
-bitstring,
-bitstring,
-bitstring,
-bitstring): bitstring [data].
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr(
+    spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived(
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr_v.
+fun spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent(
+  bitstring,
+  bitstring,
+  bitstring,
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch(
+    spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth(
+    spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr(
+    spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es(
+    spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v.
-fun spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived(bitstring,
-bitstring,
-bitstring,
-bitstring,
-bitstring): bitstring [data].
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1(
+    spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1_v.
+fun spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived(
+  bitstring,
+  bitstring,
+  bitstring,
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch(
+    spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived(
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth(
+    spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived(
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es(
+    spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived(
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek(
+    spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived(
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v.
-fun spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent(bitstring,
-bitstring): bitstring [data].
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v: bitstring,
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1(
+    spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived(
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1_v.
+fun spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent(
+  bitstring,
+  bitstring
+): bitstring [data].
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__epoch(spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent(spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__epoch_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__epoch(
+    spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__epoch_v.
 reduc forall spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__epoch_v: bitstring,
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth_v: bitstring;
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth(spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent(spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__epoch_v,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth_v)) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth_v.
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth_v: bitstring;
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth(
+    spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__epoch_v,
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth_v
+    )
+  ) = spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth_v.
 
 
 
@@ -855,64 +1232,144 @@ spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth_v: bitstrin
 
 
 letfun spqr__authenticator__serialize__Impl__into_pb(self: bitstring) =
-spqr__proto__pq_ratchet__Authenticator__Authenticator(spqr__authenticator__Authenticator__Authenticator__root_key(self),
-  spqr__authenticator__Authenticator__Authenticator__mac_key(self)).
+  spqr__proto__pq_ratchet__Authenticator__Authenticator(
+    spqr__authenticator__Authenticator__Authenticator__root_key(self),
+    spqr__authenticator__Authenticator__Authenticator__mac_key(self)
+  ).
 letfun spqr__authenticator__serialize__Impl__from_pb(pb: bitstring) =
-spqr__authenticator__Authenticator__Authenticator(spqr__proto__pq_ratchet__Authenticator__Authenticator__root_key(pb),
-  spqr__proto__pq_ratchet__Authenticator__Authenticator__mac_key(pb)).
+  spqr__authenticator__Authenticator__Authenticator(
+    spqr__proto__pq_ratchet__Authenticator__Authenticator__root_key(pb),
+    spqr__proto__pq_ratchet__Authenticator__Authenticator__mac_key(pb)
+  ).
 letfun spqr__v1__unchunked__send_ek__serialize__Impl__into_pb(self: bitstring) =
-spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled(spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch(self),
-  Some(spqr__authenticator__serialize__Impl__into_pb(spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth(self)))).
+  spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled(
+    spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch(self),
+    Some(spqr__authenticator__serialize__Impl__into_pb(
+      spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth(self)
+    ))
+  ).
 letfun spqr__v1__unchunked__send_ek__serialize__Impl__from_pb(pb: bitstring) =
-let hoist16 = core__option__Impl__ok_or(core__option__Impl__as_ref(spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__auth(pb)),
-  spqr__Error__StateDecode()) in let hoist17 = (spqr__authenticator__serialize__Impl__from_pb(hoist16)) in
-  let hoist18 = (spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__epoch(pb),
-  hoist17)) in
-  hoist18.
+  let hoist16 = core__option__Impl__ok_or(
+    core__option__Impl__as_ref(
+      spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__auth(pb)
+    ),
+    spqr__Error__StateDecode()
+  ) in
+    let hoist17 = (spqr__authenticator__serialize__Impl__from_pb(hoist16)) in
+    let hoist18 = (spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(
+      spqr__proto__pq_ratchet__v1_state__unchunked__KeysUnsampled__KeysUnsampled__epoch(pb),
+      hoist17
+    )) in
+    hoist18.
 letfun spqr__v1__unchunked__send_ek__serialize__Impl_1__into_pb(self: bitstring) =
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent(spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch(self),
-  Some(spqr__authenticator__serialize__Impl__into_pb(spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth(self))),
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek(self),
-  spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk(self)).
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent(
+    spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__epoch(self),
+    Some(spqr__authenticator__serialize__Impl__into_pb(
+      spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth(self)
+    )),
+    spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek(self),
+    spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk(self)
+  ).
 letfun spqr__v1__unchunked__send_ek__serialize__Impl_1__from_pb(pb: bitstring) =
-let (=True()) = logical_and(rust_primitives__hax__machine_int__eq(alloc__vec__Impl_1__len(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk(pb)),
-  nat_lit(2400)),
-  rust_primitives__hax__machine_int__eq(alloc__vec__Impl_1__len(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek(pb)),
-  nat_lit(1152))) in (let hoist19 = core__option__Impl__ok_or(core__option__Impl__as_ref(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth(pb)),
-  spqr__Error__StateDecode()) in let hoist20 = (spqr__authenticator__serialize__Impl__from_pb(hoist19)) in
-  let hoist21 = (spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch(pb),
-  hoist20,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek(pb),
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk(pb))) in
-  hoist21) else (bitstring_err()).
+  let (=True()) = logical_and(
+      rust_primitives__hax__machine_int__eq(
+        alloc__vec__Impl_1__len(
+          spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk(pb)
+        ),
+        nat_lit(2400)
+      ),
+      rust_primitives__hax__machine_int__eq(
+        alloc__vec__Impl_1__len(
+          spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek(pb)
+        ),
+        nat_lit(1152)
+      )
+    )
+    in (let hoist19 = core__option__Impl__ok_or(
+      core__option__Impl__as_ref(
+        spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__auth(pb)
+      ),
+      spqr__Error__StateDecode()
+    ) in
+      let hoist20 = (spqr__authenticator__serialize__Impl__from_pb(hoist19)) in
+      let hoist21 = (spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(
+        spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__epoch(pb),
+        hoist20,
+        spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__ek(pb),
+        spqr__proto__pq_ratchet__v1_state__unchunked__HeaderSent__HeaderSent__dk(pb)
+      )) in
+      hoist21)
+    else (bitstring_err()).
 letfun spqr__v1__unchunked__send_ek__serialize__Impl_2__into_pb(self: bitstring) =
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent(spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch(self),
-  Some(spqr__authenticator__serialize__Impl__into_pb(spqr__v1__unchunked__send_ek__EkSent__EkSent__auth(self))),
-  spqr__v1__unchunked__send_ek__EkSent__EkSent__dk(self)).
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent(
+    spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch(self),
+    Some(spqr__authenticator__serialize__Impl__into_pb(
+      spqr__v1__unchunked__send_ek__EkSent__EkSent__auth(self)
+    )),
+    spqr__v1__unchunked__send_ek__EkSent__EkSent__dk(self)
+  ).
 letfun spqr__v1__unchunked__send_ek__serialize__Impl_2__from_pb(pb: bitstring) =
-let (=True()) = rust_primitives__hax__machine_int__eq(alloc__vec__Impl_1__len(spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk(pb)),
-  nat_lit(2400)) in (let hoist22 = core__option__Impl__ok_or(core__option__Impl__as_ref(spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth(pb)),
-  spqr__Error__StateDecode()) in let hoist23 = (spqr__authenticator__serialize__Impl__from_pb(hoist22)) in
-  let hoist24 = (spqr__v1__unchunked__send_ek__EkSent__EkSent(spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch(pb),
-  hoist23,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk(pb))) in
-  hoist24) else (bitstring_err()).
+  let (=True()) = rust_primitives__hax__machine_int__eq(
+      alloc__vec__Impl_1__len(spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk(pb)),
+      nat_lit(2400)
+    )
+    in (let hoist22 = core__option__Impl__ok_or(
+      core__option__Impl__as_ref(
+        spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__auth(pb)
+      ),
+      spqr__Error__StateDecode()
+    ) in
+      let hoist23 = (spqr__authenticator__serialize__Impl__from_pb(hoist22)) in
+      let hoist24 = (spqr__v1__unchunked__send_ek__EkSent__EkSent(
+        spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__epoch(pb),
+        hoist23,
+        spqr__proto__pq_ratchet__v1_state__unchunked__EkSent__EkSent__dk(pb)
+      )) in
+      hoist24)
+    else (bitstring_err()).
 letfun spqr__v1__unchunked__send_ek__serialize__Impl_3__into_pb(self: bitstring) =
-spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received(spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch(self),
-  Some(spqr__authenticator__serialize__Impl__into_pb(spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth(self))),
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk(self),
-  spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1(self)).
+  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received(
+    spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__epoch(self),
+    Some(spqr__authenticator__serialize__Impl__into_pb(
+      spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__auth(self)
+    )),
+    spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__dk(self),
+    spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1(self)
+  ).
 letfun spqr__v1__unchunked__send_ek__serialize__Impl_3__from_pb(pb: bitstring) =
-let (=True()) = logical_and(rust_primitives__hax__machine_int__eq(alloc__vec__Impl_1__len(spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk(pb)),
-  nat_lit(2400)),
-  rust_primitives__hax__machine_int__eq(alloc__vec__Impl_1__len(spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1(pb)),
-  nat_lit(960))) in (let hoist25 = core__option__Impl__ok_or(core__option__Impl__as_ref(spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth(pb)),
-  spqr__Error__StateDecode()) in let hoist26 = (spqr__authenticator__serialize__Impl__from_pb(hoist25)) in
-  let hoist27 = (spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch(pb),
-  hoist26,
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk(pb),
-  spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1(pb))) in
-  hoist27) else (bitstring_err()).
+  let (=True()) = logical_and(
+      rust_primitives__hax__machine_int__eq(
+        alloc__vec__Impl_1__len(
+          spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk(pb)
+        ),
+        nat_lit(2400)
+      ),
+      rust_primitives__hax__machine_int__eq(
+        alloc__vec__Impl_1__len(
+          spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1(
+            pb
+          )
+        ),
+        nat_lit(960)
+      )
+    )
+    in (let hoist25 = core__option__Impl__ok_or(
+      core__option__Impl__as_ref(
+        spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__auth(pb)
+      ),
+      spqr__Error__StateDecode()
+    ) in
+      let hoist26 = (spqr__authenticator__serialize__Impl__from_pb(hoist25)) in
+      let hoist27 = (spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(
+        spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__epoch(
+          pb
+        ),
+        hoist26,
+        spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__dk(pb),
+        spqr__proto__pq_ratchet__v1_state__unchunked__EkSentCt1Received__EkSentCt1Received__ct1(pb)
+      )) in
+      hoist27)
+    else (bitstring_err()).
 
 
 
@@ -925,72 +1382,177 @@ let (=True()) = logical_and(rust_primitives__hax__machine_int__eq(alloc__vec__Im
 
 
 letfun spqr__v1__unchunked__send_ct__serialize__Impl__into_pb(self: bitstring) =
-spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived(spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch(self),
-  Some(spqr__authenticator__serialize__Impl__into_pb(spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth(self)))).
+  spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived(
+    spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch(self),
+    Some(spqr__authenticator__serialize__Impl__into_pb(
+      spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth(self)
+    ))
+  ).
 letfun spqr__v1__unchunked__send_ct__serialize__Impl__from_pb(pb: bitstring) =
-let hoist1 = core__option__Impl__ok_or(core__option__Impl__as_ref(spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__auth(pb)),
-  spqr__Error__StateDecode()) in let hoist2 = (spqr__authenticator__serialize__Impl__from_pb(hoist1)) in
-  let hoist3 = (spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__epoch(pb),
-  hoist2)) in
-  hoist3.
+  let hoist1 = core__option__Impl__ok_or(
+    core__option__Impl__as_ref(
+      spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__auth(pb)
+    ),
+    spqr__Error__StateDecode()
+  ) in
+    let hoist2 = (spqr__authenticator__serialize__Impl__from_pb(hoist1)) in
+    let hoist3 = (spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(
+      spqr__proto__pq_ratchet__v1_state__unchunked__NoHeaderReceived__NoHeaderReceived__epoch(pb),
+      hoist2
+    )) in
+    hoist3.
 letfun spqr__v1__unchunked__send_ct__serialize__Impl_1__into_pb(self: bitstring) =
-spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived(spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch(self),
-  Some(spqr__authenticator__serialize__Impl__into_pb(spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth(self))),
-  spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr(self)).
+  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived(
+    spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__epoch(self),
+    Some(spqr__authenticator__serialize__Impl__into_pb(
+      spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__auth(self)
+    )),
+    spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr(self)
+  ).
 letfun spqr__v1__unchunked__send_ct__serialize__Impl_1__from_pb(pb: bitstring) =
-let (=True()) = rust_primitives__hax__machine_int__eq(alloc__vec__Impl_1__len(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr(pb)),
-  nat_lit(64)) in (let hoist4 = core__option__Impl__ok_or(core__option__Impl__as_ref(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth(pb)),
-  spqr__Error__StateDecode()) in let hoist5 = (spqr__authenticator__serialize__Impl__from_pb(hoist4)) in
-  let hoist6 = (spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch(pb),
-  hoist5,
-  spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr(pb))) in
-  hoist6) else (bitstring_err()).
+  let (=True()) = rust_primitives__hax__machine_int__eq(
+      alloc__vec__Impl_1__len(
+        spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr(pb)
+      ),
+      nat_lit(64)
+    )
+    in (let hoist4 = core__option__Impl__ok_or(
+      core__option__Impl__as_ref(
+        spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__auth(pb)
+      ),
+      spqr__Error__StateDecode()
+    ) in
+      let hoist5 = (spqr__authenticator__serialize__Impl__from_pb(hoist4)) in
+      let hoist6 = (spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(
+        spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__epoch(pb),
+        hoist5,
+        spqr__proto__pq_ratchet__v1_state__unchunked__HeaderReceived__HeaderReceived__hdr(pb)
+      )) in
+      hoist6)
+    else (bitstring_err()).
 letfun spqr__v1__unchunked__send_ct__serialize__Impl_2__into_pb(self: bitstring) =
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch(self),
-  Some(spqr__authenticator__serialize__Impl__into_pb(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth(self))),
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr(self),
-  spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es(self),
-  alloc__slice__Impl__to_vec(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1(self))).
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent(
+    spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch(self),
+    Some(spqr__authenticator__serialize__Impl__into_pb(
+      spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth(self)
+    )),
+    spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__hdr(self),
+    spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es(self),
+    alloc__slice__Impl__to_vec(spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1(self))
+  ).
 letfun spqr__v1__unchunked__send_ct__serialize__Impl_2__from_pb(pb: bitstring) =
-let (=True()) = logical_and(logical_and(rust_primitives__hax__machine_int__eq(alloc__vec__Impl_1__len(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr(pb)),
-  nat_lit(64)),
-  rust_primitives__hax__machine_int__eq(alloc__vec__Impl_1__len(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es(pb)),
-  nat_lit(2080))),
-  rust_primitives__hax__machine_int__eq(alloc__vec__Impl_1__len(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1(pb)),
-  nat_lit(960))) in (let hoist7 = core__option__Impl__ok_or(core__option__Impl__as_ref(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth(pb)),
-  spqr__Error__StateDecode()) in let hoist8 = (spqr__authenticator__serialize__Impl__from_pb(hoist7)) in
-  let hoist9 = (spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch(pb),
-  hoist8,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr(pb),
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es(pb),
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1(pb))) in
-  hoist9) else (bitstring_err()).
+  let (=True()) = logical_and(
+      logical_and(
+        rust_primitives__hax__machine_int__eq(
+          alloc__vec__Impl_1__len(
+            spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr(pb)
+          ),
+          nat_lit(64)
+        ),
+        rust_primitives__hax__machine_int__eq(
+          alloc__vec__Impl_1__len(
+            spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es(pb)
+          ),
+          nat_lit(2080)
+        )
+      ),
+      rust_primitives__hax__machine_int__eq(
+        alloc__vec__Impl_1__len(
+          spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1(pb)
+        ),
+        nat_lit(960)
+      )
+    )
+    in (let hoist7 = core__option__Impl__ok_or(
+      core__option__Impl__as_ref(
+        spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__auth(pb)
+      ),
+      spqr__Error__StateDecode()
+    ) in
+      let hoist8 = (spqr__authenticator__serialize__Impl__from_pb(hoist7)) in
+      let hoist9 = (spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(
+        spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__epoch(pb),
+        hoist8,
+        spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__hdr(pb),
+        spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__es(pb),
+        spqr__proto__pq_ratchet__v1_state__unchunked__Ct1Sent__Ct1Sent__ct1(pb)
+      )) in
+      hoist9)
+    else (bitstring_err()).
 letfun spqr__v1__unchunked__send_ct__serialize__Impl_3__into_pb(self: bitstring) =
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived(spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch(self),
-  Some(spqr__authenticator__serialize__Impl__into_pb(spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth(self))),
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es(self),
-  spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek(self),
-  alloc__slice__Impl__to_vec(spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1(self))).
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived(
+    spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__epoch(self),
+    Some(spqr__authenticator__serialize__Impl__into_pb(
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__auth(self)
+    )),
+    spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__es(self),
+    spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ek(self),
+    alloc__slice__Impl__to_vec(
+      spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1(self)
+    )
+  ).
 letfun spqr__v1__unchunked__send_ct__serialize__Impl_3__from_pb(pb: bitstring) =
-let (=True()) = logical_and(logical_and(rust_primitives__hax__machine_int__eq(alloc__vec__Impl_1__len(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es(pb)),
-  nat_lit(2080)),
-  rust_primitives__hax__machine_int__eq(alloc__vec__Impl_1__len(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1(pb)),
-  nat_lit(960))),
-  rust_primitives__hax__machine_int__eq(alloc__vec__Impl_1__len(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek(pb)),
-  nat_lit(1152))) in (let hoist10 = core__option__Impl__ok_or(core__option__Impl__as_ref(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth(pb)),
-  spqr__Error__StateDecode()) in let hoist11 = (spqr__authenticator__serialize__Impl__from_pb(hoist10)) in
-  let hoist12 = (spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch(pb),
-  hoist11,
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es(pb),
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek(pb),
-  spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1(pb))) in
-  hoist12) else (bitstring_err()).
+  let (=True()) = logical_and(
+      logical_and(
+        rust_primitives__hax__machine_int__eq(
+          alloc__vec__Impl_1__len(
+            spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es(
+              pb
+            )
+          ),
+          nat_lit(2080)
+        ),
+        rust_primitives__hax__machine_int__eq(
+          alloc__vec__Impl_1__len(
+            spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1(
+              pb
+            )
+          ),
+          nat_lit(960)
+        )
+      ),
+      rust_primitives__hax__machine_int__eq(
+        alloc__vec__Impl_1__len(
+          spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek(pb)
+        ),
+        nat_lit(1152)
+      )
+    )
+    in (let hoist10 = core__option__Impl__ok_or(
+      core__option__Impl__as_ref(
+        spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__auth(pb)
+      ),
+      spqr__Error__StateDecode()
+    ) in
+      let hoist11 = (spqr__authenticator__serialize__Impl__from_pb(hoist10)) in
+      let hoist12 = (spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(
+        spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__epoch(
+          pb
+        ),
+        hoist11,
+        spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__es(pb),
+        spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ek(pb),
+        spqr__proto__pq_ratchet__v1_state__unchunked__Ct1SentEkReceived__Ct1SentEkReceived__ct1(pb)
+      )) in
+      hoist12)
+    else (bitstring_err()).
 letfun spqr__v1__unchunked__send_ct__serialize__Impl_4__into_pb(self: bitstring) =
-spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent(spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__epoch(self),
-  Some(spqr__authenticator__serialize__Impl__into_pb(spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth(self)))).
+  spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent(
+    spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__epoch(self),
+    Some(spqr__authenticator__serialize__Impl__into_pb(
+      spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth(self)
+    ))
+  ).
 letfun spqr__v1__unchunked__send_ct__serialize__Impl_4__from_pb(pb: bitstring) =
-let hoist13 = core__option__Impl__ok_or(core__option__Impl__as_ref(spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth(pb)),
-  spqr__Error__StateDecode()) in let hoist14 = (spqr__authenticator__serialize__Impl__from_pb(hoist13)) in
-  let hoist15 = (spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent(spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__epoch(pb),
-  hoist14)) in
-  hoist15.
+  let hoist13 = core__option__Impl__ok_or(
+    core__option__Impl__as_ref(
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__auth(pb)
+    ),
+    spqr__Error__StateDecode()
+  ) in
+    let hoist14 = (spqr__authenticator__serialize__Impl__from_pb(hoist13)) in
+    let hoist15 = (spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent(
+      spqr__proto__pq_ratchet__v1_state__unchunked__Ct2Sent__Ct2Sent__epoch(pb),
+      hoist14
+    )) in
+    hoist15.
