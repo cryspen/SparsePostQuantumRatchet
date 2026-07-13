@@ -72,10 +72,14 @@ jobs:
           path: ~/.opam
           key: opam-hax-proverif-${{ runner.os }}-${{ hashFiles('hax-engine/engine/**/dune-project') }}
 
-      - name: Build + install the hax engine into a switch
+      - name: Build the hax backend + install the OCaml engine into a switch
         run: |
-          opam switch list --short | grep -qx hax-proverif || opam switch create hax-proverif 5.3.0
-          HAX_OPAM_SWITCH=hax-proverif ./hax-engine/setup-local.sh
+          opam switch list --short | grep -qx hax-proverif || opam switch create hax-proverif 5.3.0 --yes
+          ( cd hax-engine && cargo build --release --workspace -p cargo-hax -p hax-driver -p hax-rust-engine )
+          export OPAMASSUMEDEPEXTS=1
+          opam pin add --switch=hax-proverif --yes --kind=path hax-engine ./hax-engine/engine
+          opam reinstall --switch=hax-proverif --yes --assume-depexts hax-engine \
+            || opam install --switch=hax-proverif --yes --assume-depexts hax-engine
 
       - name: Re-extract + drift check + verify
         env:

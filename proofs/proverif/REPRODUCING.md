@@ -18,14 +18,20 @@ reference model see [`handwritten/spqr-cka.pv`](handwritten/spqr-cka.pv).
 |---|---|
 | hax | `cryspen/hax` @ `fffb0fedea9cf17ed6c74310f6291255c5d49061` (branch `proverif-rust-backend`, rebased onto `main`; the ProVerif backend lives in hax's Rust engine) |
 | hax Rust toolchain | `nightly-2025-11-08` (+ `rustc-dev`, `rust-src`; pinned by hax's own `rust-toolchain.toml`, auto-installed by rustup) |
+| hax OCaml engine | built into the `hax-proverif` opam switch (OCaml 5.3.0) by `setup-hax.sh`; needs `opam`, `node`, `jq` |
 | hax-lib | 0.3.6 (from the same hax commit; injected at extraction time via `cargo --config`) |
 | ProVerif | 2.05 |
 | Rust (to build/test SPQR) | stable ≥ 1.83 (MSRV); produced with 1.95.0 |
 | libcrux-ml-kem / libcrux-hmac / sha2 / hkdf | 0.0.8 / 0.0.6 / 0.10.8 / 0.12.4 (see `Cargo.lock`) |
 
 The hax ProVerif backend lives in hax's **Rust engine**
-(`rust-engine/src/backends/proverif.rs`), so building it needs only Rust (no
-OCaml/opam). `proofs/proverif/setup-hax.sh` clones and builds it at the pin.
+(`rust-engine/src/backends/proverif.rs`), but extraction still runs its *import*
+phase through the OCaml `hax-engine`, so the Rust engine and the OCaml engine
+must be the **same** hax build (a version mismatch panics with "ocaml engine
+crashed"). `proofs/proverif/setup-hax.sh` clones the pin, builds the Rust
+binaries, and builds + installs the matching OCaml engine into the `hax-proverif`
+opam switch; `hax.py` then locates that engine automatically, so no `opam env` is
+needed (override with `$HAX_OPAM_SWITCH` / `$HAX_ENGINE_BINARY`).
 
 ## Trust boundary
 
@@ -99,8 +105,14 @@ Establishes that the verified protocol is exactly hax's output of the SPQR
 source:
 
 ```
-proofs/proverif/setup-hax.sh                    # clone + build pinned hax
+# One-time: clone the pinned hax + install the Rust engine AND the matching
+# OCaml hax-engine into the `hax-proverif` opam switch. Needs opam/node/jq (see
+# the toolchain table); the OCaml engine build takes a few minutes.
+proofs/proverif/setup-hax.sh                    # -> ./.hax-proverif by default
 export HAX_PROVERIF_DIR=<dir printed by the script>
+
+# hax.py resolves the matching OCaml engine from the hax-proverif switch itself
+# (override via $HAX_OPAM_SWITCH / $HAX_ENGINE_BINARY) — no `opam env` needed:
 python3 hax.py extract-proverif                 # regenerate extraction/lib.pvl
 shasum -a 256 -c proofs/proverif/extraction/lib.pvl.sha256   # must match
 ```
