@@ -41,24 +41,26 @@ cargo +nightly bench
 
 
 ## Formal Verification
-This crate is machine verified using [hax](https://github.com/cryspen/hax) and
-[F*](https://fstar-lang.org/) to be panic free, and the finite field arithmetic
-is machine verified to be correct. The formal verification is performed as part
-of the CI workflow for this repository. To use the formal verification tools
-locally, you will need to:
+This crate is machine-checked with [hax](https://github.com/cryspen/hax) and
+[F*](https://fstar-lang.org/) for **panic-freedom** (plus functional correctness of the
+finite-field arithmetic), and its public ratchet is analyzed symbolically with
+[ProVerif](https://bblanche.gitlabpages.inria.fr/proverif/) for confidentiality,
+forward secrecy, and mutual authentication. Both run as part of CI.
+
+**What is actually proven — and the trust boundary — is documented in
+[`proofs/PROOF_STATUS.md`](proofs/PROOF_STATUS.md);** read it before relying on any
+guarantee. To reproduce each proof effort, see
+[`proofs/fstar/REPRODUCING.md`](proofs/fstar/REPRODUCING.md) and
+[`proofs/proverif/REPRODUCING.md`](proofs/proverif/REPRODUCING.md).
+
+To run the F* verification locally:
 1. Set up hax and F*
    [(instructions)](https://hacspec.org/book/quick_start/intro.html)
 2. Ensure you have `python3` installed
 3. In the root directory of this repository run `python3 hax.py extract` to
    extract F* from the Rust source code.
-4. In the root directory of this repository run `python3 hax.py prove` to prove
-   the crate is panic free and correct.
-
-Additionally, this crate contains handwritten
-[ProVerif](https://bblanche.gitlabpages.inria.fr/proverif/) models of the ML-KEM
-Braid (implemented in [src/v1](src/v1/)) and the symmetric ratchet (implemented
-in [chain.rs](src/chain.rs)). These can be used to prove security properties of
-the protocol.
+4. In the root directory of this repository run `python3 hax.py prove` to
+   typecheck the extracted F* against the spec models.
 
 ## Contributing
 Signal does accept external contributions to this project. However unless the
