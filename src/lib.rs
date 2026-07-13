@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 pub(crate) mod authenticator;
+// DR-EXPERIMENT: loop-free in-order model of the message-key chain for ProVerif.
+pub mod dr_chain_model;
 #[cfg(feature = "test-utils")]
 pub mod chain;
 #[cfg(not(feature = "test-utils"))]

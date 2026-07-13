@@ -1,0 +1,100 @@
+(*****************************************************************)
+(* SPQR Double-Ratchet message-key layer — hax-GENERATED model    *)
+(*                                                                *)
+(* Drives the EXTRACTED letfuns from spqr::dr_chain_model          *)
+(*   spqr__dr_chain_model__chain_init                              *)
+(*   spqr__dr_chain_model__chain_add_epoch                         *)
+(*   spqr__dr_chain_model__ratchet                                 *)
+(* (compiled by hax from src/dr_chain_model.rs, which re-expresses  *)
+(*  chain.rs's exact HKDF salts/labels/sizes/slice offsets).       *)
+(*                                                                *)
+(* Approach (a): the CKA is abstracted as FRESH per-epoch secrets  *)
+(* (mirrors spqr-dr.pv's CKA_Key0/CKA_KeyN with the compromise      *)
+(* branch removed — epoch secrets are secure). The message-key      *)
+(* chain itself is the extracted Rust.                             *)
+(*                                                                *)
+(* Load: proverif -lib primitives.pvl -lib lib.pvl dr_secrecy.pv    *)
+(*****************************************************************)
+
+(* (helpers `alloc__slice__Impl__concat` / `core__array__Impl_23__as_slice` /
+   `core__num__Impl_8__to_be_bytes` are declared in the companion dr_missing.pvl,
+   loaded as a -lib before lib.pvl.) *)
+
+type dir.
+free a2b: dir.
+free b2a: dir.
+
+(* Bounds (kept small for tractability). Epochs 0..max_epoch, counters 1..max_ctr. *)
+letfun max_epoch() = 1.
+letfun max_ctr()   = 3.
+
+(* Abstracted CKA epoch secrets (always fresh = secure CKA). *)
+table SharedKeys(nat, bitstring).            (* epoch, shared secret *)
+(* DR chain state. *)
+table Roots(nat, bitstring).                 (* epoch, chain root *)
+table Chains(dir, nat, nat, bitstring).      (* dir, epoch, ctr, chain key *)
+
+event MsgKey(dir, nat, nat, bitstring).                 (* dir, epoch, ctr, message key *)
+
+(* ---- CKA abstraction: fresh epoch-0 shared key ---- *)
+let SharedInit() =
+    new k0: bitstring;
+    insert SharedKeys(0, k0).
+
+(* ---- CKA abstraction: fresh epoch-(ep+1) shared key ---- *)
+let SharedNext() =
+    get SharedKeys(ep, oldk) in
+    if ep + 1 <= max_epoch() then
+      new k: bitstring;
+      insert SharedKeys(ep + 1, k).
+
+(* ---- DR chain init from the epoch-0 shared key (= Chain::new) ---- *)
+let ChainInit() =
+    get SharedKeys(0, k0) in
+    let rust_primitives__hax__Tuple3__Tuple3(root, cka, ckb) =
+        spqr__dr_chain_model__chain_init(k0) in
+    insert Roots(0, root);
+    insert Chains(a2b, 0, 0, cka);
+    insert Chains(b2a, 0, 0, ckb).
+
+(* ---- DR add epoch (= Chain::add_epoch) ---- *)
+let ChainAddEpoch() =
+    get Roots(ep, root) in
+    get SharedKeys(ep2, esec) in
+    if ep2 = ep + 1 && ep2 <= max_epoch() then
+      let rust_primitives__hax__Tuple3__Tuple3(root2, cka, ckb) =
+          spqr__dr_chain_model__chain_add_epoch(root, esec) in
+      insert Roots(ep2, root2);
+      insert Chains(a2b, ep2, 0, cka);
+      insert Chains(b2a, ep2, 0, ckb).
+
+(* ---- DR one ratchet step / one message key (= next_key_internal) ---- *)
+let ChainNextKey() =
+    get Chains(d, ep, ctr, ck) in
+    if ctr < max_ctr() then
+      let rust_primitives__hax__Tuple2__Tuple2(ck2, mk) =
+          spqr__dr_chain_model__ratchet(ck, nat_lit(ctr + 1)) in
+      insert Chains(d, ep, ctr + 1, ck2);
+      event MsgKey(d, ep, ctr + 1, mk).
+
+(* =================== Queries =================== *)
+
+(* (0) Reachability: the extracted ratchet actually produces message keys.
+       Expect FALSE (i.e. each event IS reachable). *)
+query mk: bitstring; event(MsgKey(a2b, 0, 1, mk)).
+query mk: bitstring; event(MsgKey(b2a, 0, 1, mk)).
+query mk: bitstring; event(MsgKey(a2b, 0, 3, mk)).
+query mk: bitstring; event(MsgKey(a2b, 1, 1, mk)).
+
+(* (a) MESSAGE-KEY SECRECY: with the CKA epoch secrets secure (fresh), the
+       attacker never learns any derived message key. Expect
+       "not (event(...) && attacker(mk)) is TRUE" for every reachable key. *)
+query d: dir, ep: nat, ctr: nat, mk: bitstring;
+    event(MsgKey(d, ep, ctr, mk)) && attacker(mk).
+
+process
+    ( SharedInit()
+    | !SharedNext()
+    | !ChainInit()
+    | !ChainAddEpoch()
+    | !ChainNextKey() )

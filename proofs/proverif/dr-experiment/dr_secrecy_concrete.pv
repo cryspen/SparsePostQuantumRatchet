@@ -1,0 +1,39 @@
+(*****************************************************************)
+(* SPQR Double-Ratchet message-key layer — MESSAGE-KEY SECRECY    *)
+(*                                                                *)
+(* Concrete unrolled a2b chain (epoch 0) over the EXTRACTED        *)
+(* spqr::dr_chain_model letfuns, with NO compromise. The CKA       *)
+(* epoch-0 secret k0 is fresh (secure CKA, approach (a)).          *)
+(*                                                                *)
+(* Message-key secrecy: with the epoch secret secure, none of the  *)
+(* derived message keys mk1..mk3 leak to the attacker.             *)
+(*                                                                *)
+(* Load: proverif -lib primitives.pvl -lib dr_missing.pvl          *)
+(*                 -lib lib.pvl dr_secrecy_concrete.pv             *)
+(*****************************************************************)
+
+event Made(nat, bitstring).   (* counter, message key *)
+
+(* Reachability: the ratchet does produce these keys. Expect "is false". *)
+query mk: bitstring; event(Made(1, mk)).
+query mk: bitstring; event(Made(3, mk)).
+
+(* Message-key secrecy: no derived key leaks. Expect "is true" for each. *)
+query mk: bitstring; event(Made(1, mk)) && attacker(mk).
+query mk: bitstring; event(Made(2, mk)) && attacker(mk).
+query mk: bitstring; event(Made(3, mk)) && attacker(mk).
+
+process
+    new k0: bitstring;
+    let rust_primitives__hax__Tuple3__Tuple3(root, cka, ckb) =
+        spqr__dr_chain_model__chain_init(k0) in
+    let rust_primitives__hax__Tuple2__Tuple2(ck1, mk1) =
+        spqr__dr_chain_model__ratchet(cka, nat_lit(1)) in
+    let rust_primitives__hax__Tuple2__Tuple2(ck2, mk2) =
+        spqr__dr_chain_model__ratchet(ck1, nat_lit(2)) in
+    let rust_primitives__hax__Tuple2__Tuple2(ck3, mk3) =
+        spqr__dr_chain_model__ratchet(ck2, nat_lit(3)) in
+    event Made(1, mk1);
+    event Made(2, mk2);
+    event Made(3, mk3)
+    (* no out(c, _): nothing is compromised *)

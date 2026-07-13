@@ -9,8 +9,6 @@
 (* nature (one-way fun / data constructor / letfun) is unknown.  *)
 (* GOAL: this file is EMPTY.                                     *)
 (*****************************************************************)
-fun core__option__Impl__ok_or(bitstring, bitstring): bitstring.
-fun hax_lib__assume(bitstring): bitstring.
-fun hax_lib__prop__constructors__from_bool(bitstring): bitstring.
-fun libcrux_ml_kem__ind_cca__incremental__types__Impl_6__len(bitstring): bitstring.
-fun libcrux_ml_kem__mlkem768__incremental__pk1_len(bitstring): bitstring.
+fun alloc__slice__Impl__concat(bitstring): bitstring.
+fun core__array__Impl_23__as_slice(bitstring): bitstring.
+fun core__num__Impl_8__to_be_bytes(bitstring): bitstring.

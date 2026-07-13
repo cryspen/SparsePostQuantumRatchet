@@ -3,7 +3,12 @@
 
 use crate::Epoch;
 
-#[hax_lib::opaque]
+// ProVerif (DR experiment): model HKDF as an opaque, collision-free one-way
+// function `extern__hkdf_to_vec(salt, ikm, info, okm_len)`. `pv_extern` emits a
+// plain `fun` (NOT `[data]`), so the derived key material is genuinely one-way
+// (the attacker cannot invert an output back to the chain key / epoch secret).
+#[cfg_attr(hax_backend_proverif, hax_lib::pv_extern)]
+#[cfg_attr(not(hax_backend_proverif), hax_lib::opaque)]
 #[hax_lib::ensures(|res| res.len() >= okm_len)]
 pub fn hkdf_to_vec(salt: &[u8], ikm: &[u8], info: &[u8], okm_len: usize) -> Vec<u8> {
     let mut out = vec![0u8; okm_len];

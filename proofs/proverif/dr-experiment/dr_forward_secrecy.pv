@@ -1,0 +1,41 @@
+(*****************************************************************)
+(* SPQR Double-Ratchet message-key layer — FORWARD SECRECY        *)
+(*                                                                *)
+(* Concrete unrolled single a2b chain (epoch 0), driving the      *)
+(* EXTRACTED spqr::dr_chain_model letfuns. We derive message keys  *)
+(* mk1, mk2, mk3 by ratcheting, then leak EXACTLY the chain-key    *)
+(* state ck2 (the state AFTER producing mk2).                      *)
+(*                                                                *)
+(* Forward secrecy = leaking a chain key does not reveal EARLIER   *)
+(* message keys. Since ck2 lets the attacker ratchet FORWARD only, *)
+(* it must reveal mk3 but neither mk1 nor mk2.                     *)
+(*                                                                *)
+(* Load: proverif -lib primitives.pvl -lib dr_missing.pvl          *)
+(*                 -lib lib.pvl dr_forward_secrecy.pv              *)
+(*****************************************************************)
+
+event Made(nat, bitstring).   (* counter, message key *)
+
+(* mk1, mk2 are UPSTREAM of the leaked ck2 -> must stay secret (forward secrecy). *)
+query mk: bitstring; event(Made(1, mk)) && attacker(mk).
+query mk: bitstring; event(Made(2, mk)) && attacker(mk).
+(* mk3 is DOWNSTREAM of the leaked ck2 -> attacker can ratchet forward to it.
+   Expect "is false" (reachable): confirms the leak is real, not vacuous. *)
+query mk: bitstring; event(Made(3, mk)) && attacker(mk).
+
+process
+    new k0: bitstring;
+    let rust_primitives__hax__Tuple3__Tuple3(root, cka, ckb) =
+        spqr__dr_chain_model__chain_init(k0) in
+    (* ratchet the a2b chain: ctr 0 -> 1 -> 2 -> 3 *)
+    let rust_primitives__hax__Tuple2__Tuple2(ck1, mk1) =
+        spqr__dr_chain_model__ratchet(cka, nat_lit(1)) in
+    let rust_primitives__hax__Tuple2__Tuple2(ck2, mk2) =
+        spqr__dr_chain_model__ratchet(ck1, nat_lit(2)) in
+    let rust_primitives__hax__Tuple2__Tuple2(ck3, mk3) =
+        spqr__dr_chain_model__ratchet(ck2, nat_lit(3)) in
+    event Made(1, mk1);
+    event Made(2, mk2);
+    event Made(3, mk3);
+    (* leak the chain-key state at counter 2 *)
+    out(c, ck2)

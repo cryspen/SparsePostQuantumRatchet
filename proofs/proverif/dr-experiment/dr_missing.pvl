@@ -1,0 +1,6 @@
+(* Helpers referenced by the extracted lib.pvl but absent from primitives.pvl.
+   They only build the (non-secret) HKDF `info` label inside `ratchet`;
+   declared as plain one-way funs so distinct counters stay distinct terms. *)
+fun alloc__slice__Impl__concat(bitstring): bitstring.
+fun core__array__Impl_23__as_slice(bitstring): bitstring.
+fun core__num__Impl_8__to_be_bytes(bitstring): bitstring.
