@@ -1,0 +1,193 @@
+(*****************************************************************)
+(*  SPQR — shared process model for the extracted ProVerif proof *)
+(*                                                                *)
+(* Each role runs a FULL epoch in one process (one table get +    *)
+(* one insert), so the large mid-protocol states (carrying dk/es/  *)
+(* ct1) stay in local bindings and never enter the persistent     *)
+(* tables — only the small hand-off states (KeysUnsampled /        *)
+(* NoHeaderReceived = epoch + authenticator) are tabled. This is   *)
+(* what keeps multi-epoch ProVerif tractable. Compromisable key    *)
+(* material is published into flat compromise tables that the      *)
+(* fixed compromise processes read (scenario mirrors ../handwritten/spqr-cka). *)
+(*                                                                *)
+(* Roles still run as separate concurrent processes communicating  *)
+(* over the public channel c, so the attacker has full network     *)
+(* control and authentication remains meaningful. Mirrors the      *)
+(* hand-written ../handwritten/spqr-cka.pv; transcript binding comes from the  *)
+(* authenticator MAC chain (faithful to the spec; see ../README.md).  *)
+(*****************************************************************)
+
+(* ===== Aliases for hax's mangled names (every type is bitstring) ===== *)
+
+letfun ek_new(k: bitstring) =
+    spqr__v1__unchunked__send_ek__Impl__new_kw(k).
+letfun ek_send_header(s: bitstring, rng: bitstring) =
+    spqr__v1__unchunked__send_ek__Impl__send_header(s, rng).
+letfun ek_send_ek(s: bitstring) =
+    spqr__v1__unchunked__send_ek__Impl_1__send_ek(s).
+letfun ek_recv_ct1(s: bitstring, ep: bitstring, ct1: bitstring) =
+    spqr__v1__unchunked__send_ek__Impl_2__recv_ct1(s, ep, ct1).
+letfun ek_recv_ct2(s: bitstring, ct2: bitstring, mac: bitstring) =
+    spqr__v1__unchunked__send_ek__Impl_3__recv_ct2(s, ct2, mac).
+
+letfun ct_new(k: bitstring) =
+    spqr__v1__unchunked__send_ct__Impl__new_kw(k).
+letfun ct_recv_header(s: bitstring, ep: bitstring, hdr: bitstring, mac: bitstring) =
+    spqr__v1__unchunked__send_ct__Impl__recv_header(s, ep, hdr, mac).
+letfun ct_send_ct1(s: bitstring, rng: bitstring) =
+    spqr__v1__unchunked__send_ct__Impl_1__send_ct1(s, rng).
+letfun ct_recv_ek(s: bitstring, ep: bitstring, ek: bitstring) =
+    spqr__v1__unchunked__send_ct__Impl_2__recv_ek(s, ep, ek).
+letfun ct_send_ct2(s: bitstring) =
+    spqr__v1__unchunked__send_ct__Impl_3__send_ct2(s).
+letfun ct_recv_next_epoch(s: bitstring, nep: bitstring) =
+    spqr__v1__unchunked__send_ct__Impl_4__recv_next_epoch(s, nep).
+
+letfun epoch_ku(s: bitstring) = spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__epoch(s).
+letfun epoch_es(s: bitstring) = spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch(s).
+letfun epoch_nh(s: bitstring) = spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__epoch(s).
+letfun epoch_c1(s: bitstring) = spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__epoch(s).
+letfun epoch_c2(s: bitstring) = spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__epoch(s).
+
+letfun auth_hs(s: bitstring) = spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__auth(s).
+letfun auth_nh(s: bitstring) = spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth(s).
+letfun auth_c1(s: bitstring) = spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__auth(s).
+
+letfun dk_hs(s: bitstring) = spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk(s).
+letfun es_c1(s: bitstring) = spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es(s).
+
+letfun epochsecret_secret(es: bitstring) = spqr__EpochSecret__EpochSecret__secret_kw(es).
+letfun epoch_succ(e: bitstring) = rust_primitives__hax__machine_int__add(e, nat_lit(1)).
+
+free tag_hdr: bitstring.
+free tag_ek: bitstring.
+free tag_ct1: bitstring.
+free tag_ct2: bitstring.
+free no_secret: bitstring [private].
+
+type principal.
+free A: principal.
+free B: principal.
+
+(* Hand-off state tables: hold only the small (epoch, authenticator) states. *)
+table AStates(principal, principal, bitstring).            (* a requestor, b peer; KeysUnsampled *)
+table BStates(principal, principal, bitstring, bitstring). (* a responder, b peer; NoHeaderReceived + secret slot *)
+
+(* Flat compromise tables (small terms), populated unconditionally during the
+   protocol; the attacker leaks from them via the Compromise* processes. *)
+table ReqKeys(principal, principal, nat, bitstring).   (* a,b,epoch, decapsulation key *)
+table ReqAuth(principal, principal, nat, bitstring).   (* a,b,epoch, requestor authenticator *)
+table RespKeys(principal, principal, nat, bitstring, bitstring). (* a,b,epoch, encaps-state, secret *)
+table RespAuth(principal, principal, nat, bitstring).  (* a,b,epoch, responder authenticator *)
+
+event StartedA(principal, principal, nat, bitstring).
+event CompletedA(principal, principal, nat, bitstring).
+event StartedB(principal, principal, nat, bitstring).
+event CompletedB(principal, principal, nat, bitstring).
+event CompromisedKeysA(principal, principal, nat).
+event CompromisedKeysB(principal, principal, nat).
+event CompromisedAuthA(principal, principal, nat).
+event CompromisedAuthB(principal, principal, nat).
+
+(* `max_epoch()` (the NEPOCHS bound) is defined in `nepochs.pvl`, generated by
+   `hax.py verify-proverif epochs=N`. Load nepochs.pvl before this file.
+   Epochs are 1-based: the state machine starts at epoch 1 (straight from the
+   Rust source `KeysUnsampled/NoHeaderReceived::new { epoch: 1 }`, faithful to
+   the ML-KEM Braid spec, Section 2.6, which sets `epoch = 1` at init). The
+   guard `ep < max_epoch()` means the protocol runs epochs 1..max_epoch(), so the
+   committed nepochs=6 covers epochs 1..6 — the SAME bound as the hand-written
+   ../handwritten/spqr-cka.pv. The fixed compromise is at epochs 1/3/4, so epochs
+   5-6 are uncompromised headroom testing the ratchet healing past the last
+   (epoch-4) compromise. *)
+
+(* ===================== Requestor: one full epoch as EK generator ===================== *)
+let Requestor() =
+    get AStates(a, b, st0) in                       (* KeysUnsampled(ep, auth) *)
+    let nat_lit(ep) = epoch_ku(st0) in
+    new rng: bitstring;
+    let rust_primitives__hax__Tuple2__Tuple2(rng1, t1) = ek_send_header(st0, rng) in
+    let rust_primitives__hax__Tuple3__Tuple3(st1, hdr, hmac) = t1 in   (* HeaderSent: auth, dk *)
+    insert ReqKeys(a, b, ep, dk_hs(st1));
+    insert ReqAuth(a, b, ep, auth_hs(st1));
+    event StartedA(a, b, ep, hdr);
+    out(c, (tag_hdr, hdr, hmac));
+    let rust_primitives__hax__Tuple2__Tuple2(st2, ek) = ek_send_ek(st1) in   (* EkSent *)
+    out(c, (tag_ek, ek));
+    in(c, (=tag_ct1, ct1: bitstring));
+    let st3 = ek_recv_ct1(st2, epoch_es(st2), ct1) in                        (* EkSentCt1Received *)
+    in(c, (=tag_ct2, ct2: bitstring, mac: bitstring));
+    let rust_primitives__hax__Tuple2__Tuple2(st4, esec) = ek_recv_ct2(st3, ct2, mac) in
+    let spqr__EpochSecret__EpochSecret(eep, ka) = esec in
+    let nat_lit(cep) = eep in
+    event CompletedA(a, b, cep, ka);
+    if cep < max_epoch() then insert BStates(a, b, st4, no_secret).
+
+(* ===================== Responder: one full epoch as CT generator ===================== *)
+let Responder() =
+    get BStates(b, a, st0, sec0) in                 (* NoHeaderReceived(ep, auth) *)
+    let nat_lit(ep) = epoch_nh(st0) in
+    insert RespAuth(b, a, ep, auth_nh(st0));        (* pre-update authenticator *)
+    in(c, (=tag_hdr, hdr: bitstring, mac: bitstring));
+    event StartedB(b, a, ep, hdr);
+    let st1 = ct_recv_header(st0, epoch_nh(st0), hdr, mac) in                (* HeaderReceived *)
+    new rng: bitstring;
+    let rust_primitives__hax__Tuple2__Tuple2(rng1, t1) = ct_send_ct1(st1, rng) in
+    let rust_primitives__hax__Tuple3__Tuple3(st2, ct1, esec) = t1 in         (* Ct1Sent: es, auth(post) *)
+    let kb = epochsecret_secret(esec) in
+    insert RespKeys(b, a, ep, es_c1(st2), kb);
+    insert RespAuth(b, a, ep, auth_c1(st2));        (* post-update authenticator *)
+    out(c, (tag_ct1, ct1));
+    in(c, (=tag_ek, ek: bitstring));
+    let st3 = ct_recv_ek(st2, epoch_c1(st2), ek) in                          (* Ct1SentEkReceived *)
+    let rust_primitives__hax__Tuple3__Tuple3(st4, ct2, cmac) = ct_send_ct2(st3) in
+    out(c, (tag_ct2, ct2, cmac));
+    event CompletedB(b, a, ep, kb);
+    let st5 = ct_recv_next_epoch(st4, epoch_succ(epoch_c2(st4))) in
+    if ep < max_epoch() then insert AStates(b, a, st5).
+
+(* ===================== Compromise (fixed instances) =====================
+   Compromise is a fixed set of concrete (a,b,epoch) instances, mirroring the
+   chosen scenario in ../handwritten/spqr-cka.pv (see System() below). *)
+let CompromiseKeysA(a: principal, b: principal, e: nat) =
+    get ReqKeys(=a, =b, =e, dk) in
+    event CompromisedKeysA(a, b, e); out(c, dk).
+let CompromiseAuthA(a: principal, b: principal, e: nat) =
+    get ReqAuth(=a, =b, =e, au) in
+    event CompromisedAuthA(a, b, e); out(c, au).
+let CompromiseKeysB(a: principal, b: principal, e: nat) =
+    get RespKeys(=a, =b, =e, es, kb) in
+    let spqr_es(r) = es in
+    event CompromisedKeysB(a, b, e); out(c, (r, kb)).
+let CompromiseAuthB(a: principal, b: principal, e: nat) =
+    get RespAuth(=a, =b, =e, au) in
+    event CompromisedAuthB(a, b, e); out(c, au).
+
+(* ===================== Top-level system ===================== *)
+(* Roles swap each epoch (requestor -> responder -> requestor ...):
+     epoch 1: A requestor / B responder
+     epoch 2: B requestor / A responder
+     epoch 3: A requestor / B responder
+     epoch 4: B requestor / A responder
+   so ReqKeys/ReqAuth(X,Y,e) exists for the epoch-e requestor X (peer Y), and
+   RespKeys/RespAuth(X,Y,e) for the epoch-e responder X (peer Y).
+
+   Compromise scenario, shared with the hand-written ../handwritten/spqr-cka.pv
+   (KEM keys at alternating epochs + a responder authenticator), on THIS model's
+   1-based epochs and role-swap table above:
+     - KeysA(A,B,1): epoch-1 requestor A's KEM keys       (mirrors spqr-cka KeysA@1)
+     - KeysB(B,A,3): epoch-3 responder  B's KEM keys       (mirrors spqr-cka KeysB@3)
+     - AuthB(A,B,4): epoch-4 responder  A's authenticator  (mirrors spqr-cka AuthB@4)
+   Epochs 2/4/5/6 keep their KEM keys: those epoch secrets stay secret though
+   epochs 1 and 3 leak, the epoch-4 auth compromise does not break epoch-4
+   confidentiality, and epochs 5-6 heal past it.
+   Confidentiality matches spqr-cka.pv and the paper's Def 2: forward secrecy via
+   conf.pv's `ep_ <= ep` bound, and an authenticator compromised at time t' < t
+   via the `@j, j < i` ordering. *)
+let System() =
+    new auth_key: bitstring;
+    insert AStates(A, B, ek_new(auth_key));
+    insert BStates(B, A, ct_new(auth_key), no_secret);
+    ( !Requestor() | !Responder()
+    | CompromiseKeysA(A, B, 1)
+    | CompromiseKeysB(B, A, 3)
+    | CompromiseAuthB(A, B, 4) ).
