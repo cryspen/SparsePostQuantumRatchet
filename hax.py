@@ -100,6 +100,36 @@ PROVERIF_INCLUDE = "-** " + " ".join(
 )
 
 
+# The rust engine delegates its import phase to the OCaml `hax-engine`, which it
+# locates via $HAX_ENGINE_BINARY (falling back to a bare `hax-engine` on PATH). That
+# engine MUST be the build matching HAX_PROVERIF_DIR's rust engine (same hax version);
+# the shell's active opam switch usually ships a different `hax-engine` that panics
+# the import ("ocaml engine crashed"). We resolve the matching one from the
+# `hax-proverif` switch so extraction works regardless of the active switch. Override
+# the switch with $HAX_OPAM_SWITCH, or the binary directly with $HAX_ENGINE_BINARY.
+HAX_OPAM_SWITCH = os.environ.get("HAX_OPAM_SWITCH", "hax-proverif")
+
+
+def _ocaml_hax_engine():
+    """Absolute path to the OCaml `hax-engine` matching the rust engine, or None."""
+    explicit = os.environ.get("HAX_ENGINE_BINARY")
+    if explicit:
+        return explicit
+    candidates = []
+    try:
+        out = subprocess.run(
+            ["opam", "var", "bin", "--switch", HAX_OPAM_SWITCH],
+            capture_output=True, text=True,
+        ).stdout.strip()
+        if out:
+            candidates.append(os.path.join(out, "hax-engine"))
+    except FileNotFoundError:
+        pass  # opam not on PATH; fall back to the standard root layout below
+    opamroot = os.environ.get("OPAMROOT", os.path.expanduser("~/.opam"))
+    candidates.append(os.path.join(opamroot, HAX_OPAM_SWITCH, "bin", "hax-engine"))
+    return next((c for c in candidates if os.path.exists(c)), None)
+
+
 def _proverif_env():
     # Accept either a release or a debug build of the hax backend.
     for profile in ("release", "debug"):
@@ -107,10 +137,17 @@ def _proverif_env():
         cargo_hax = os.path.join(bin_dir, "cargo-hax")
         engine = os.path.join(bin_dir, "hax-rust-engine")
         if os.path.exists(cargo_hax) and os.path.exists(engine):
-            return cargo_hax, {
+            env = {
                 "HAX_RUST_ENGINE_BINARY": engine,
                 "PATH": bin_dir + os.pathsep + os.environ["PATH"],
             }
+            # Pin the matching OCaml hax-engine so extraction does not depend on the
+            # shell's active opam switch. If we can't resolve it, leave it unset and
+            # fall back to the PATH lookup (works when the right switch is active).
+            ocaml_engine = _ocaml_hax_engine()
+            if ocaml_engine is not None:
+                env["HAX_ENGINE_BINARY"] = ocaml_engine
+            return cargo_hax, env
     raise Exception(
         "hax ProVerif backend not found under {}/target/{{release,debug}}. "
         "Run proofs/proverif/setup-hax.sh (or set HAX_PROVERIF_DIR).".format(
