@@ -83,11 +83,21 @@ PROVERIF_DIR = "proofs/proverif"
 # verify-proverif loads libraries from both.
 PROVERIF_GEN_DIR = os.path.join(PROVERIF_DIR, "extraction")
 PROVERIF_MODEL_DIR = os.path.join(PROVERIF_DIR, "extraction-model")
-# Namespaces compiled to ProVerif: the unchunked v1 protocol state machine and
-# its dependencies. Crypto primitives within are abstracted via source-level
+# ProVerif extraction roots: the send/recv-ek/ct state-machine entry points (like
+# Aeneas's --keep-from). `+` pulls in their FULL transitive deps — exactly the
+# reachable protocol + crypto — and NOT the dead protobuf-serialization tree that a
+# whole-module `+~…::**` glob would sweep in (halves lib.pvl, verdicts unchanged).
+# `new` is the Rust name (the backend renames it `new_kw`); `*` matches the
+# `Impl`/`Impl_N` block. Crypto primitives are abstracted via source-level
 # `proverif::replace_body` / `pv_extern` annotations gated on
 # `cfg(hax_backend_proverif)`, which hax sets automatically during `into proverif`.
-PROVERIF_INCLUDE = "-** +~spqr::v1::unchunked::**"
+_PROVERIF_ROOTS = [("send_ek", m) for m in
+                   ("new", "send_header", "send_ek", "recv_ct1", "recv_ct2")] + \
+                  [("send_ct", m) for m in
+                   ("new", "recv_header", "send_ct1", "recv_ek", "send_ct2", "recv_next_epoch")]
+PROVERIF_INCLUDE = "-** " + " ".join(
+    "+spqr::v1::unchunked::{}::*::{}".format(mod, meth) for mod, meth in _PROVERIF_ROOTS
+)
 
 
 def _proverif_env():
@@ -353,12 +363,30 @@ class checkProverifAction(argparse.Action):
         return None
 
 
+class setupAction(argparse.Action):
+    """Build the pinned hax ProVerif backend by delegating to
+    proofs/proverif/setup-hax.sh (git clone + cargo build). Optional DEST_DIR."""
+
+    def __call__(self, parser, args, values, option_string=None) -> None:
+        script = os.path.join(PROVERIF_DIR, "setup-hax.sh")
+        shell(["bash", script] + list(values or []), cwd=".")
+        return None
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="SPQR prove script. "
         + "Make sure to separate sub-command arguments with --."
     )
     subparsers = parser.add_subparsers()
+
+    setup_parser = subparsers.add_parser(
+        "setup",
+        help="Build the pinned hax ProVerif backend into ~/.hax-proverif (or "
+        "DEST_DIR). Delegates to proofs/proverif/setup-hax.sh; run once before "
+        "extract-proverif, or set HAX_PROVERIF_DIR to an existing checkout.",
+    )
+    setup_parser.add_argument("setup", nargs="*", action=setupAction)
 
     extract_parser = subparsers.add_parser(
         "extract", help="Extract the F* code for the proofs."

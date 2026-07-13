@@ -19,8 +19,8 @@ set -euo pipefail
 
 # --- Pinned toolchain provenance (keep in sync with REPRODUCING.md) ----------
 HAX_REPO="https://github.com/cryspen/hax.git"
-HAX_BRANCH="proverif-uniform-bitstring"
-HAX_COMMIT="28865204ec172234a9e8223b33f7fa52bf542360"   # cargo-hax-v0.3.6-540-g28865204
+HAX_BRANCH="proverif-rust-backend"
+HAX_COMMIT="fffb0fedea9cf17ed6c74310f6291255c5d49061"   # proverif-rust-backend, rebased onto hax/main
 # ----------------------------------------------------------------------------
 
 DEST="${1:-$PWD/.hax-proverif}"

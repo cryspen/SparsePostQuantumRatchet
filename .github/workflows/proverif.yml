@@ -30,16 +30,11 @@ jobs:
       - run: opam init
       - run: opam install -y proverif
 
-      - name: hand-written proverif proofs
+      - name: proverif proofs (extracted + hand-written; verdicts vs EXPECTPV)
         run: |
           eval $(opam env)
-          proverif -lib handwritten/cryptolib.pvl handwritten/spqr-cka.pv
-          proverif -lib handwritten/cryptolib.pvl handwritten/spqr-dr.pv
-        working-directory: ./proofs/proverif
-
-      - name: extracted-model proverif proofs (check verdicts vs EXPECT)
-        run: |
-          eval $(opam env)
+          # `check-proverif` covers all targets: the extracted model
+          # (reach/auth/conf/sanity) AND the hand-written spqr-cka / spqr-dr.
           python3 hax.py check-proverif epochs=4
 
   extract:
@@ -86,7 +81,7 @@ jobs:
         env:
           HAX_PROVERIF_DIR: ${{ github.workspace }}/hax-engine
         run: |
-          EPOCHS=4 bash proofs/proverif/check-pv-new-backend.sh
+          python3 hax.py extract-proverif
           shasum -a 256 -c proofs/proverif/extraction/lib.pvl.sha256
           git diff --exit-code -- proofs/proverif/extraction/lib.pvl \
             || { echo "::error::extraction drifted from committed lib.pvl — re-snapshot it"; exit 1; }
