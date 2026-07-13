@@ -32,16 +32,29 @@ pub struct Authenticator {
 #[hax_lib::attributes]
 impl Authenticator {
     pub const MACSIZE: usize = 32usize;
+    // ProVerif: the authenticator is a single opaque chaining-MAC state.
+    // `new` derives the initial state from the shared root key and epoch.
+    #[cfg_attr(
+        hax_backend_proverif,
+        hax_lib::proverif::replace_body("auth_new(root_key, ep)")
+    )]
     pub fn new(root_key: Vec<u8>, ep: Epoch) -> Self {
-        let mut result = Self {
+        let result = Self {
             root_key: vec![0u8; 32],
             mac_key: vec![0u8; 32],
         };
-        result.update(ep, &root_key);
-        result
+        result.update(ep, &root_key)
     }
 
-    pub fn update(&mut self, ep: Epoch, k: &[u8]) {
+    // ProVerif: ratchet the authenticator state by mixing in epoch secret `k`.
+    // `update` consumes and returns `self` (rather than `&mut self`) so the
+    // ProVerif `replace_body` can return the new state directly; the `&mut self`
+    // form would discard the body's value and return the unchanged state.
+    #[cfg_attr(
+        hax_backend_proverif,
+        hax_lib::proverif::replace_body("auth_update(self, ep, k)")
+    )]
+    pub fn update(mut self, ep: Epoch, k: &[u8]) -> Self {
         let ikm = [self.root_key.as_slice(), k].concat();
         let info = [
             b"Signal_PQCKA_V1_MLKEM768:Authenticator Update".as_slice(),
@@ -51,8 +64,18 @@ impl Authenticator {
         let kdf_out = kdf::hkdf_to_vec(&[0u8; 32], &ikm, &info, 64);
         self.root_key = kdf_out[..32].to_vec();
         self.mac_key = kdf_out[32..].to_vec();
+        self
     }
 
+    // ProVerif: verification succeeds iff the supplied tag equals the
+    // recomputed tag. Modeling this precisely (rather than via an opaque
+    // comparison) is what makes authentication sound in the symbolic model.
+    #[cfg_attr(
+        hax_backend_proverif,
+        hax_lib::proverif::replace_body(
+            "let (=expected_mac) = mac_ct_f(self, ep, ct) in rust_primitives__hax__Tuple0__Tuple0 else bitstring_err()"
+        )
+    )]
     #[hax_lib::requires(expected_mac.len() == Authenticator::MACSIZE)]
     pub fn verify_ct(&self, ep: Epoch, ct: &[u8], expected_mac: &[u8]) -> Result<(), Error> {
         if compare(expected_mac, &self.mac_ct(ep, ct)) != 0 {
@@ -62,6 +85,11 @@ impl Authenticator {
         }
     }
 
+    // ProVerif: opaque one-way MAC over (state, epoch, ciphertext).
+    #[cfg_attr(
+        hax_backend_proverif,
+        hax_lib::proverif::replace_body("mac_ct_f(self, ep, ct)")
+    )]
     #[hax_lib::ensures(|res| res.len() == Authenticator::MACSIZE)]
     pub fn mac_ct(&self, ep: Epoch, ct: &[u8]) -> Mac {
         let ct_mac_data = [
@@ -78,6 +106,14 @@ impl Authenticator {
         )
     }
 
+    // ProVerif: verification succeeds iff the supplied tag equals the
+    // recomputed header tag.
+    #[cfg_attr(
+        hax_backend_proverif,
+        hax_lib::proverif::replace_body(
+            "let (=expected_mac) = mac_hdr_f(self, ep, hdr) in rust_primitives__hax__Tuple0__Tuple0 else bitstring_err()"
+        )
+    )]
     #[hax_lib::requires(expected_mac.len() == Authenticator::MACSIZE)]
     pub fn verify_hdr(&self, ep: Epoch, hdr: &[u8], expected_mac: &[u8]) -> Result<(), Error> {
         if compare(expected_mac, &self.mac_hdr(ep, hdr)) != 0 {
@@ -87,6 +123,11 @@ impl Authenticator {
         }
     }
 
+    // ProVerif: opaque one-way MAC over (state, epoch, header).
+    #[cfg_attr(
+        hax_backend_proverif,
+        hax_lib::proverif::replace_body("mac_hdr_f(self, ep, hdr)")
+    )]
     #[hax_lib::ensures(|res| res.len() == Authenticator::MACSIZE)]
     pub fn mac_hdr(&self, ep: Epoch, hdr: &[u8]) -> Mac {
         let ct_mac_data = [
