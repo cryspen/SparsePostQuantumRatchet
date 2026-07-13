@@ -1,0 +1,7 @@
+process
+    new authAB: authenticator;
+    insert AStates(A, B, NeedToSample(1), authAB);
+    insert BStates(B, A, Waiting(1), authAB);
+    (!SendEkProc() | !SendCtProc() |
+     !CompromiseKeysA_any() | !CompromiseAuthA_any() |
+     !CompromiseKeysB_any() | !CompromiseAuthB_any() )

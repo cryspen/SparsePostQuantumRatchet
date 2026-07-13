@@ -1,0 +1,9 @@
+
+(* ===================== Lemma (auth only) ===================== *)
+lemma x: principal, y: principal, ep:nat, ek:seed, sk:symkey;
+    event(CompletedB(y,x,ep,sk)) ==> event(StartedA(x,y,ep,ek));
+    event(CompletedA(x,y,ep,sk)) ==> event(StartedB(y,x,ep,ek)) [induction].
+
+(* trivial reachability query so ProVerif has a main goal *)
+query x: principal, y: principal, ep:nat, sk:symkey;
+    event(CompletedA(x,y,ep,sk)).

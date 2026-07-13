@@ -1,0 +1,24 @@
+
+(* ===================== Lemmas + Queries ===================== *)
+(* Authentication theorem as a MUTUAL inductive lemma (with compromise). *)
+lemma x: principal, y: principal, ep, ep_:nat, ek:seed, sk:symkey;
+    event(CompletedB(y,x,ep,sk)) ==>
+            (event(StartedA(x,y,ep,ek)) ||
+            (ep_ <= ep && (event(CompromisedAuthA(x,y,ep_)) || event(CompromisedAuthA(y,x,ep_))
+                || event(CompromisedAuthB(y,x,ep_)) ||  event(CompromisedAuthB(x,y,ep_)))));
+    event(CompletedA(x,y,ep,sk)) ==>
+            (event(StartedB(y,x,ep,ek))  ||
+            (ep_ <= ep && (event(CompromisedAuthA(x,y,ep_)) || event(CompromisedAuthA(y,x,ep_))
+                || event(CompromisedAuthB(y,x,ep_)) ||  event(CompromisedAuthB(x,y,ep_))))) [induction].
+
+(* Confidentiality WITHOUT temporal ordering (epoch-forward-secrecy),
+   universally over epoch ep -- proved BY INDUCTION. Keeps ep_ <= ep. *)
+query ep:nat, sk:symkey, ep_:nat, x:principal, y:principal;
+    event(CompletedA(x,y,ep,sk)) && attacker(sk) ==>
+            (event(CompromisedKeysA(x,y,ep)) || event(CompromisedKeysB(y,x,ep)) ||
+            (ep_ <= ep && (event(CompromisedAuthA(y,x,ep_)) || event(CompromisedAuthA(x,y,ep_))
+                || event(CompromisedAuthB(x,y,ep_)) || event(CompromisedAuthB(y,x,ep_)))));
+    event(CompletedB(x,y,ep,sk)) && attacker(sk) ==>
+            (event(CompromisedKeysB(x,y,ep)) || event(CompromisedKeysA(y,x,ep)) ||
+            (ep_ <= ep && (event(CompromisedAuthA(x,y,ep_)) || event(CompromisedAuthA(y,x,ep_))
+                || event(CompromisedAuthB(x,y,ep_)) || event(CompromisedAuthB(y,x,ep_))))) [induction].

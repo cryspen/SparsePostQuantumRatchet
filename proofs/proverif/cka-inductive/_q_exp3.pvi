@@ -1,0 +1,13 @@
+
+(* ===================== Lemmas + Queries ===================== *)
+(* Authentication as a MUTUAL inductive lemma (no compromise present):
+   both directions grouped so they serve as each other's induction hyp. *)
+lemma x: principal, y: principal, ep:nat, ek:seed, sk:symkey;
+    event(CompletedB(y,x,ep,sk)) ==> event(StartedA(x,y,ep,ek));
+    event(CompletedA(x,y,ep,sk)) ==> event(StartedB(y,x,ep,ek)) [induction].
+
+(* Secrecy of every completed epoch key (reachability form). *)
+query x: principal, y: principal, ep:nat, sk:symkey;
+    event(CompletedA(x,y,ep,sk)) && attacker(sk).
+query x: principal, y: principal, ep:nat, sk:symkey;
+    event(CompletedB(x,y,ep,sk)) && attacker(sk).

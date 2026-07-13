@@ -1,0 +1,4 @@
+free c: channel.
+event E(nat).
+lemma x:nat; event(E(x)) ==> false.
+process !(in(c,x:nat); event E(x))

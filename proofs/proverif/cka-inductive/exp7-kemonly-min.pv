@@ -1,0 +1,35 @@
+free c: channel.
+type seed. type enckey. type deckey. type ctsecret. type symkey.
+fun dk2seed(deckey): seed.
+fun dk2enckey(deckey): enckey.
+fun pkenc1(ctsecret, seed, symkey): bitstring.
+fun pkenc2(ctsecret, enckey): bitstring.
+fun pkdec(deckey, bitstring, bitstring): symkey
+reduc forall dk:deckey, sk:symkey, r: ctsecret;
+      pkdec(dk, pkenc1(r, dk2seed(dk), sk), pkenc2(r, dk2enckey(dk))) = sk.
+fun kdf(symkey, bitstring): symkey.
+free lbl: bitstring.
+
+table St(nat, deckey).
+event Key(nat, symkey).
+
+(* requestor publishes ek (=dk2enckey) each epoch; responder encapsulates *)
+let req() =
+   get St(ep, dk) in
+   out(c, dk2enckey(dk));            (* publish public key *)
+   in(c, (ct1: bitstring, ct2: bitstring));
+   let ss = pkdec(dk, ct1, ct2) in
+   let k = kdf(ss, lbl) in
+   event Key(ep, k);
+   new dk2: deckey;
+   insert St(ep+1, dk2).
+
+let rsp() =
+   in(c, ek: enckey);
+   new r: ctsecret; new sk: symkey;
+   out(c, (pkenc1(r, ?, sk), pkenc2(r, ek))).
+
+process
+   new dk0: deckey;
+   insert St(1, dk0);
+   ( !req() )

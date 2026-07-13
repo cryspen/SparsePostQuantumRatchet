@@ -1,0 +1,290 @@
+(* ============================================================= *)
+(* SPQR-CKA  --  UNBOUNDED epochs, v1 (no inductive lemmas yet).  *)
+(* Derived from handwritten/spqr-cka.pv. Changes vs baseline:     *)
+(*   (1) the `if ep < max_epoch()` epoch caps are REMOVED so the  *)
+(*       ratchet runs for unboundedly many epochs;                *)
+(*   (2) fixed 3-point compromise replaced by GENERIC replicated  *)
+(*       compromise at ANY epoch;                                 *)
+(*   (3) queries reduced to the generic (forall-epoch) disjunctive*)
+(*       forward-secrecy / PCS confidentiality theorem + the      *)
+(*       generic authentication theorem.                          *)
+(* ============================================================= *)
+
+(* Protocol-specific crypto *)
+
+free ct_label: bitstring.
+free hdr_label: bitstring.
+letfun mac_ct(auth: authenticator, ct1: bitstring, ct2: bitstring) =
+       mac(auth, (ct_label, ct1, ct2)).
+letfun mac_header(auth: authenticator, ep: nat, ekseed: seed, ek_hash: bitstring) =
+       mac(auth, (hdr_label, ep, ekseed, ek_hash)).
+
+free cka_label: bitstring.
+
+(* Saturation control (sound: nounif only guides resolution order). *)
+nounif r: ctsecret, s: seed, k: symkey; attacker(pkenc1(r, s, k)) / 30000.
+nounif r: ctsecret, ek: enckey; attacker(pkenc2(r, ek)) / 30000.
+nounif dk: deckey; attacker(dk2enckey(dk)) / 30000.
+nounif dk: deckey; attacker(dk2seed(dk)) / 30000.
+nounif a: authenticator, k: symkey; attacker(auth_update(a, k)) / 30000.
+nounif a: authenticator, m: bitstring; attacker(mac(a, m)) / 30000.
+nounif k: symkey, ctx: bitstring; attacker(kdf(k, ctx)) / 30000.
+
+(* Protocol Data structures *)
+
+type opt_symkey.
+fun SK_None(): opt_symkey [data].
+fun SK(symkey): opt_symkey [data].
+
+type opt_mac.
+fun MAC_None(): opt_mac [data].
+fun MAC(bitstring): opt_mac [data].
+
+type opt_keypair.
+fun KP_None(): opt_keypair [data].
+fun KP(deckey, seed, enckey): opt_keypair [data].
+
+(* Requestor/EK Generator States *)
+type eksender.
+fun NeedToSample(nat): eksender [data].
+fun SentHeader(nat, deckey, seed, enckey): eksender [data].
+fun ReceivedCt1(nat, deckey, seed, enckey, bitstring): eksender [data].
+fun SentEk(nat, deckey, seed, enckey): eksender [data].
+fun SentEkReceivedCt1(nat, deckey, seed, enckey, bitstring): eksender [data].
+
+(* Responder/CT Generator States *)
+type ctsender.
+fun Waiting(nat): ctsender [data].
+fun ReceivedHeader(nat, seed, bitstring): ctsender [data].
+fun SentCt1(nat, ctsecret, seed, bitstring, bitstring, symkey): ctsender [data].
+fun SentCt1ReceivedEk(nat, ctsecret, seed, enckey, bitstring, symkey): ctsender [data].
+fun SentCt2(nat, symkey): ctsender [data].
+
+reduc forall ep: nat; RequestorEpoch(NeedToSample(ep)) = ep;
+    forall ep: nat, dk: deckey, ekseed: seed, ek: enckey; RequestorEpoch(SentHeader(ep, dk, ekseed, ek)) = ep;
+    forall ep: nat, dk: deckey, ekseed: seed, ek: enckey, ct1: bitstring; RequestorEpoch(ReceivedCt1(ep, dk, ekseed, ek, ct1)) = ep;
+    forall ep: nat, dk: deckey, ekseed: seed, ek: enckey; RequestorEpoch(SentEk(ep, dk, ekseed, ek)) = ep;
+    forall ep: nat, dk: deckey, ekseed: seed, ek: enckey, ct1: bitstring; RequestorEpoch(SentEkReceivedCt1(ep, dk, ekseed, ek, ct1)) = ep
+.
+
+(* Requestor/EK Generator Functions *)
+
+letfun sendHeader(req: eksender, auth: authenticator) =
+       let NeedToSample(ep) = req in
+       let (dk: deckey, ekseed: seed, ek: enckey) = kem_keygen() in
+       let ek_hash = h((ekseed, ek)) in
+       let header_mac = mac_header(auth, ep, ekseed, ek_hash) in
+       (SentHeader(ep, dk, ekseed, ek), (ekseed, ek_hash, header_mac))
+.
+
+letfun sendEK(req: eksender, auth: authenticator) =
+    let SentHeader(ep, dk, ekseed, ek) = req in
+        (SentEk(ep, dk, ekseed, ek), ek)
+    else let ReceivedCt1(ep, dk, ekseed, ek, ct1) = req in
+        (SentEkReceivedCt1(ep, dk, ekseed, ek, ct1), ek)
+.
+
+letfun recvCT1(req: eksender, ct1: bitstring) =
+    let SentEk(ep, dk, ekseed, ek) = req in
+        SentEkReceivedCt1(ep, dk, ekseed, ek, ct1)
+    else let SentHeader(ep, dk, ekseed, ek) = req in
+        ReceivedCt1(ep, dk, ekseed, ek, ct1)
+.
+
+letfun recvCT2(req: eksender, auth: authenticator, ct2: bitstring, ct_mac: bitstring) =
+    let SentEkReceivedCt1(ep, dk, ekseed, ek, ct1) = req in
+    let ss = kem_decap(dk, ct1, ct2) in
+    let k = kdf(ss, (ep, cka_label)) in
+    let new_auth = auth_update(auth, k) in
+    if mac_ct(new_auth, ct1, ct2) = ct_mac then
+    (Waiting(ep+1), (new_auth, ep, k))
+.
+
+reduc forall ep: nat; ResponderEpoch(Waiting(ep)) = ep;
+    forall ep: nat, ekseed: seed, ek_hash: bitstring; ResponderEpoch(ReceivedHeader(ep, ekseed, ek_hash)) = ep;
+    forall ep: nat, r: ctsecret, ekseed: seed, ek_hash: bitstring, ct1: bitstring, k: symkey; ResponderEpoch(SentCt1(ep, r, ekseed, ek_hash, ct1, k)) = ep;
+    forall ep: nat, r: ctsecret, ekseed: seed, ek: enckey, ct1: bitstring, k: symkey; ResponderEpoch(SentCt1ReceivedEk(ep, r, ekseed, ek, ct1, k)) = ep;
+    forall ep: nat, k: symkey; ResponderEpoch(SentCt2(ep, k)) = ep
+.
+
+letfun recvHeader(rsp: ctsender, auth: authenticator, ekseed: seed, ek_hash: bitstring, header_mac: bitstring) =
+    let Waiting(ep) = rsp in
+        if mac_header(auth, ep, ekseed, ek_hash) = header_mac then
+            ReceivedHeader(ep, ekseed, ek_hash)
+.
+
+letfun sendCT1(rsp: ctsender, auth: authenticator) =
+    let ReceivedHeader(ep, ekseed, ek_hash)  = rsp in
+    new r: ctsecret;
+    new sk: symkey;
+    let ct1 = pkenc1(r, ekseed, sk) in
+    let k = kdf(sk, (ep, cka_label)) in
+    let new_auth = auth_update(auth, k) in
+    (SentCt1(ep, r, ekseed, ek_hash, ct1, k), (new_auth, ct1))
+.
+
+letfun recvEK(rsp: ctsender, auth: authenticator, ek: enckey) =
+    let SentCt1(ep, r, ekseed, ek_hash, ct1, k) = rsp in
+    if ek_hash = h((ekseed, ek)) then
+    SentCt1ReceivedEk(ep, r, ekseed, ek, ct1, k)
+.
+
+letfun sendCT2(rsp: ctsender, auth: authenticator) =
+    let SentCt1ReceivedEk(ep, r, ekseed, ek, ct1, k) = rsp in
+    let ct2: bitstring = pkenc2(r, ek) in
+    let ct_mac = mac_ct(auth, ct1, ct2) in
+    (SentCt2(ep, k), (ct2, ct_mac))
+.
+
+letfun takeResponderKey(rsp: ctsender) =
+    let SentCt2(ep, k) = rsp in
+    (NeedToSample(ep+1), (ep,k))
+.
+
+(* Main processes *)
+
+free A: principal.
+free B: principal.
+
+table AStates(principal, principal, eksender, authenticator).
+table BStates(principal, principal, ctsender, authenticator).
+
+event StartedA(principal, principal, nat, seed).
+event CompletedA(principal, principal, nat, symkey).
+
+event StartedB(principal, principal, nat, seed).
+event CompletedB(principal, principal, nat, symkey).
+
+let SendEk0() =
+    get AStates(a, b, req, auth) in
+    let (req': eksender, (ekseed: seed, ek_hash: bitstring, header_mac: bitstring)) = sendHeader(req, auth) in
+    let ep = RequestorEpoch(req') in
+    event StartedA(a, b, ep, ekseed);
+    out(c, (ekseed, ek_hash, header_mac));
+    insert AStates(a, b, req', auth).
+
+let SendEk1a() =
+    get AStates(a, b, req, auth) in
+    in (c, ct1: bitstring);
+    let req' = recvCT1(req, ct1) in
+    insert AStates(a, b, req', auth)
+.
+
+let SendEk1b() =
+    get AStates(a, b, req, auth) in
+    let (req': eksender, ek: enckey) = sendEK(req, auth) in
+    out(c, ek);
+    insert AStates(a, b, req', auth)
+.
+
+(* UNBOUNDED: epoch cap removed -- always insert next-epoch responder state. *)
+let SendEk2() =
+    get AStates(a, b, req, auth) in
+    in (c, (ct2: bitstring, ct_mac: bitstring));
+    let (req': ctsender,
+    	(new_auth: authenticator,
+            ep: nat,
+            k: symkey)) = recvCT2(req, auth, ct2, ct_mac) in
+    event CompletedA(a, b, ep, k);
+    insert BStates(a, b, req', new_auth).
+
+let SendEkProc() =
+    SendEk0() | SendEk1a() | SendEk1b() | SendEk2()
+.
+
+let SendCt0() =
+    get BStates(b, a, rsp, auth) in
+    let ep = ResponderEpoch(rsp) in
+    in(c, (ekseed: seed, ek_hash: bitstring, header_mac: bitstring));
+    event StartedB(b, a, ep, ekseed);
+    let rsp' = recvHeader(rsp, auth, ekseed, ek_hash, header_mac) in
+    insert BStates(b, a, rsp', auth)
+.
+
+let SendCt1() =
+    get BStates(b, a, rsp, auth) in
+    let (rsp': ctsender, (new_auth: authenticator,  ct1: bitstring)) = sendCT1(rsp, auth) in
+    out (c, ct1);
+    insert BStates(b, a, rsp', new_auth)
+.
+
+let SendCt2() =
+    get BStates(b, a, rsp, auth) in
+    in(c, ek: enckey);
+    let rsp': ctsender = recvEK(rsp, auth, ek) in
+    insert BStates(b, a, rsp', auth)
+ .
+
+(* UNBOUNDED: epoch cap removed -- always insert next-epoch requestor state. *)
+let SendCt3() =
+    get BStates(b, a, rsp, auth) in
+    let (rsp': ctsender, (ct2: bitstring, ct_mac: bitstring)) = sendCT2(rsp, auth) in
+    out(c, (ct2, ct_mac));
+    let (rsp'': eksender, (ep: nat, k: symkey)) = takeResponderKey(rsp') in
+    event CompletedB(b, a, ep, k);
+    insert AStates(b, a, rsp'', auth)
+.
+
+let SendCtProc() =
+    SendCt0() | SendCt1() | SendCt2() | SendCt3()
+.
+
+(* Generic (ANY-epoch) compromise processes for the UNBOUNDED model.
+   The attacker may compromise ANY requestor/responder state that ever
+   exists, at any epoch, any number of times. The emitted event records
+   the true (a,b,ep) that was compromised. *)
+
+event CompromisedKeysA(principal, principal, nat).
+let CompromiseKeysA_any() =
+    get AStates(a, b, req, auth) in
+    (   let SentHeader(ep, dk, ekseed, ek) = req in
+            event CompromisedKeysA(a,b,ep); out(c,dk)
+      else let ReceivedCt1(ep, dk, ekseed, ek, ct1) = req in
+            event CompromisedKeysA(a,b,ep); out(c,dk)
+      else let SentEk(ep, dk, ekseed, ek) = req in
+            event CompromisedKeysA(a,b,ep); out(c,dk)
+      else let SentEkReceivedCt1(ep, dk, ekseed, ek, ct1) = req in
+            event CompromisedKeysA(a,b,ep); out(c,dk) )
+.
+
+event CompromisedAuthA(principal, principal, nat).
+let CompromiseAuthA_any() =
+    get AStates(a, b, req, auth) in
+    let ep = RequestorEpoch(req) in
+    event CompromisedAuthA(a,b,ep);
+    out(c,auth)
+.
+
+event CompromisedKeysB(principal, principal, nat).
+let CompromiseKeysB_any() =
+    get BStates(a, b, rsp, auth) in
+    (   let SentCt1(ep, r, ekseed, ek_hash, ct1, k) = rsp in
+            event CompromisedKeysB(a,b,ep); out(c,(r,k))
+      else let SentCt1ReceivedEk(ep, r, ekseed, ek, ct1, k) = rsp in
+            event CompromisedKeysB(a,b,ep); out(c,(r,k))
+      else let SentCt2(ep, k) = rsp in
+            event CompromisedKeysB(a,b,ep); out(c,k) )
+.
+
+event CompromisedAuthB(principal, principal, nat).
+let CompromiseAuthB_any() =
+    get BStates(a, b, rsp, auth) in
+    let ep = ResponderEpoch(rsp) in
+    event CompromisedAuthB(a,b,ep);
+    out(c,auth)
+.
+
+
+(* ===================== Lemma (auth only) ===================== *)
+lemma x: principal, y: principal, ep:nat, ek:seed, sk:symkey;
+    event(CompletedB(y,x,ep,sk)) ==> event(StartedA(x,y,ep,ek));
+    event(CompletedA(x,y,ep,sk)) ==> event(StartedB(y,x,ep,ek)) [induction].
+
+(* trivial reachability query so ProVerif has a main goal *)
+query x: principal, y: principal, ep:nat, sk:symkey;
+    event(CompletedA(x,y,ep,sk)).
+process
+    new authAB: authenticator;
+    insert AStates(A, B, NeedToSample(1), authAB);
+    insert BStates(B, A, Waiting(1), authAB);
+    (!SendEkProc() | !SendCtProc())

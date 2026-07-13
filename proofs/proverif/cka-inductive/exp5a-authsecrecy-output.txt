@@ -1,0 +1,305 @@
+Process 0 (that is, the initial process):
+{1}new authAB: authenticator;
+{2}insert AStates(A,B,NeedToSample(1),authAB);
+{3}insert BStates(B,A,Waiting(1),authAB);
+(
+    {4}!
+    (
+        {22}get AStates(a: principal,b: principal,req: eksender,auth: authenticator) in
+        {5}let v: eksender = req in
+        {6}let v_1: bool = success?(1-proj-NeedToSample(v)) in
+        {7}let ep: nat = (if v_1 then 1-proj-NeedToSample(v) else caught-fail) in
+        {8}new dk: deckey;
+        {9}let v_2: bitstring = (if v_1 then catch-fail((dk,dk2seed(dk),dk2enckey(dk))) else caught-fail) in
+        {10}let v_3: bool = (not-caught-fail(v_2) && success?(1-proj-3-tuple(v_2))) in
+        {11}let ek: enckey = (if v_3 then 3-proj-3-tuple(v_2) else caught-fail) in
+        {12}let ekseed: seed = (if v_3 then 2-proj-3-tuple(v_2) else caught-fail) in
+        {13}let dk_1: deckey = (if v_3 then 1-proj-3-tuple(v_2) else caught-fail) in
+        {14}let ek_hash: bitstring = (if v_3 then h((ekseed,ek)) else caught-fail) in
+        {15}let header_mac: bitstring = (if v_3 then mac(auth,(hdr_label,ep,ekseed,ek_hash)) else caught-fail) in
+        {16}let (req': eksender,(ekseed_1: seed,ek_hash_1: bitstring,header_mac_1: bitstring)) = (if v_1 then (if v_3 then (SentHeader(ep,dk_1,ekseed,ek),(ekseed,ek_hash,header_mac)) else fail-any_type) else fail-any_type) in
+        {17}let ep_1: nat = RequestorEpoch(req') in
+        {18}event UsesAuth(ep_1,auth);
+        {19}event StartedA(a,b,ep_1,ekseed_1);
+        {20}out(c, (ekseed_1,ek_hash_1,header_mac_1));
+        {21}insert AStates(a,b,req',auth)
+    ) | (
+        {39}get AStates(a_1: principal,b_1: principal,req_1: eksender,auth_1: authenticator) in
+        {23}in(c, ct1: bitstring);
+        {24}let v_4: eksender = req_1 in
+        {25}let v_5: bool = success?(1-proj-SentEk(v_4)) in
+        {26}let ek_1: enckey = (if v_5 then 4-proj-SentEk(v_4) else caught-fail) in
+        {27}let ekseed_2: seed = (if v_5 then 3-proj-SentEk(v_4) else caught-fail) in
+        {28}let dk_2: deckey = (if v_5 then 2-proj-SentEk(v_4) else caught-fail) in
+        {29}let ep_2: nat = (if v_5 then 1-proj-SentEk(v_4) else caught-fail) in
+        {30}let v_6: bool = not(v_5) in
+        {31}let v_7: eksender = (if v_6 then catch-fail(req_1) else caught-fail) in
+        {32}let v_8: bool = (not-caught-fail(v_7) && success?(1-proj-SentHeader(v_7))) in
+        {33}let ek_2: enckey = (if v_8 then 4-proj-SentHeader(v_7) else caught-fail) in
+        {34}let ekseed_3: seed = (if v_8 then 3-proj-SentHeader(v_7) else caught-fail) in
+        {35}let dk_3: deckey = (if v_8 then 2-proj-SentHeader(v_7) else caught-fail) in
+        {36}let ep_3: nat = (if v_8 then 1-proj-SentHeader(v_7) else caught-fail) in
+        {37}let req'_1: eksender = (if v_5 then SentEkReceivedCt1(ep_2,dk_2,ekseed_2,ek_1,ct1) else (if v_8 then ReceivedCt1(ep_3,dk_3,ekseed_3,ek_2,ct1) else fail-any_type)) in
+        {38}insert AStates(a_1,b_1,req'_1,auth_1)
+    ) | (
+        {57}get AStates(a_2: principal,b_2: principal,req_2: eksender,auth_2: authenticator) in
+        {40}let v_9: eksender = req_2 in
+        {41}let v_10: bool = success?(1-proj-SentHeader(v_9)) in
+        {42}let ek_3: enckey = (if v_10 then 4-proj-SentHeader(v_9) else caught-fail) in
+        {43}let ekseed_4: seed = (if v_10 then 3-proj-SentHeader(v_9) else caught-fail) in
+        {44}let dk_4: deckey = (if v_10 then 2-proj-SentHeader(v_9) else caught-fail) in
+        {45}let ep_4: nat = (if v_10 then 1-proj-SentHeader(v_9) else caught-fail) in
+        {46}let v_11: bool = not(v_10) in
+        {47}let v_12: eksender = (if v_11 then catch-fail(req_2) else caught-fail) in
+        {48}let v_13: bool = (not-caught-fail(v_12) && success?(1-proj-ReceivedCt1(v_12))) in
+        {49}let ct1_1: bitstring = (if v_13 then 5-proj-ReceivedCt1(v_12) else caught-fail) in
+        {50}let ek_4: enckey = (if v_13 then 4-proj-ReceivedCt1(v_12) else caught-fail) in
+        {51}let ekseed_5: seed = (if v_13 then 3-proj-ReceivedCt1(v_12) else caught-fail) in
+        {52}let dk_5: deckey = (if v_13 then 2-proj-ReceivedCt1(v_12) else caught-fail) in
+        {53}let ep_5: nat = (if v_13 then 1-proj-ReceivedCt1(v_12) else caught-fail) in
+        {54}let (req'_2: eksender,ek_5: enckey) = (if v_10 then (SentEk(ep_4,dk_4,ekseed_4,ek_3),ek_3) else (if v_13 then (SentEkReceivedCt1(ep_5,dk_5,ekseed_5,ek_4,ct1_1),ek_4) else fail-any_type)) in
+        {55}out(c, ek_5);
+        {56}insert AStates(a_2,b_2,req'_2,auth_2)
+    ) | (
+        {73}get AStates(a_3: principal,b_3: principal,req_3: eksender,auth_3: authenticator) in
+        {58}in(c, (ct2: bitstring,ct_mac: bitstring));
+        {59}let v_14: eksender = req_3 in
+        {60}let v_15: bool = success?(1-proj-SentEkReceivedCt1(v_14)) in
+        {61}let ct1_2: bitstring = (if v_15 then 5-proj-SentEkReceivedCt1(v_14) else caught-fail) in
+        {62}let ek_6: enckey = (if v_15 then 4-proj-SentEkReceivedCt1(v_14) else caught-fail) in
+        {63}let ekseed_6: seed = (if v_15 then 3-proj-SentEkReceivedCt1(v_14) else caught-fail) in
+        {64}let dk_6: deckey = (if v_15 then 2-proj-SentEkReceivedCt1(v_14) else caught-fail) in
+        {65}let ep_6: nat = (if v_15 then 1-proj-SentEkReceivedCt1(v_14) else caught-fail) in
+        {66}let ss: symkey = (if v_15 then catch-fail(pkdec(dk_6,ct1_2,ct2)) else caught-fail) in
+        {67}let v_16: bool = not-caught-fail(ss) in
+        {68}let k: symkey = (if v_16 then kdf(ss,(ep_6,cka_label)) else caught-fail) in
+        {69}let new_auth: authenticator = (if v_16 then auth_update(auth_3,k) else caught-fail) in
+        {70}let (req'_3: ctsender,(new_auth_1: authenticator,ep_7: nat,k_1: symkey)) = (if v_15 then (if v_16 then (if (mac(new_auth,(ct_label,ct1_2,ct2)) = ct_mac) then (Waiting(ep_6 + 1),(new_auth,ep_6,k)) else fail-any_type) else fail-any_type) else fail-any_type) in
+        {71}event CompletedA(a_3,b_3,ep_7,k_1);
+        {72}insert BStates(a_3,b_3,req'_3,new_auth_1)
+    )
+) | (
+    {74}!
+    (
+        {84}get BStates(b_4: principal,a_4: principal,rsp: ctsender,auth_4: authenticator) in
+        {75}let ep_8: nat = ResponderEpoch(rsp) in
+        {76}event UsesAuth(ep_8,auth_4);
+        {77}in(c, (ekseed_7: seed,ek_hash_2: bitstring,header_mac_2: bitstring));
+        {78}event StartedB(b_4,a_4,ep_8,ekseed_7);
+        {79}let v_17: ctsender = rsp in
+        {80}let v_18: bool = success?(1-proj-Waiting(v_17)) in
+        {81}let ep_9: nat = (if v_18 then 1-proj-Waiting(v_17) else caught-fail) in
+        {82}let rsp': ctsender = (if v_18 then (if (mac(auth_4,(hdr_label,ep_9,ekseed_7,ek_hash_2)) = header_mac_2) then ReceivedHeader(ep_9,ekseed_7,ek_hash_2) else fail-any_type) else fail-any_type) in
+        {83}insert BStates(b_4,a_4,rsp',auth_4)
+    ) | (
+        {98}get BStates(b_5: principal,a_5: principal,rsp_1: ctsender,auth_5: authenticator) in
+        {85}let v_19: ctsender = rsp_1 in
+        {86}let v_20: bool = success?(1-proj-ReceivedHeader(v_19)) in
+        {87}let ek_hash_3: bitstring = (if v_20 then 3-proj-ReceivedHeader(v_19) else caught-fail) in
+        {88}let ekseed_8: seed = (if v_20 then 2-proj-ReceivedHeader(v_19) else caught-fail) in
+        {89}let ep_10: nat = (if v_20 then 1-proj-ReceivedHeader(v_19) else caught-fail) in
+        {90}new r: ctsecret;
+        {91}new sk: symkey;
+        {92}let ct1_3: bitstring = (if v_20 then pkenc1(r,ekseed_8,sk) else caught-fail) in
+        {93}let k_2: symkey = (if v_20 then kdf(sk,(ep_10,cka_label)) else caught-fail) in
+        {94}let new_auth_2: authenticator = (if v_20 then auth_update(auth_5,k_2) else caught-fail) in
+        {95}let (rsp'_1: ctsender,(new_auth_3: authenticator,ct1_4: bitstring)) = (if v_20 then (SentCt1(ep_10,r,ekseed_8,ek_hash_3,ct1_3,k_2),(new_auth_2,ct1_3)) else fail-any_type) in
+        {96}out(c, ct1_4);
+        {97}insert BStates(b_5,a_5,rsp'_1,new_auth_3)
+    ) | (
+        {110}get BStates(b_6: principal,a_6: principal,rsp_2: ctsender,auth_6: authenticator) in
+        {99}in(c, ek_7: enckey);
+        {100}let v_21: ctsender = rsp_2 in
+        {101}let v_22: bool = success?(1-proj-SentCt1(v_21)) in
+        {102}let k_3: symkey = (if v_22 then 6-proj-SentCt1(v_21) else caught-fail) in
+        {103}let ct1_5: bitstring = (if v_22 then 5-proj-SentCt1(v_21) else caught-fail) in
+        {104}let ek_hash_4: bitstring = (if v_22 then 4-proj-SentCt1(v_21) else caught-fail) in
+        {105}let ekseed_9: seed = (if v_22 then 3-proj-SentCt1(v_21) else caught-fail) in
+        {106}let r_1: ctsecret = (if v_22 then 2-proj-SentCt1(v_21) else caught-fail) in
+        {107}let ep_11: nat = (if v_22 then 1-proj-SentCt1(v_21) else caught-fail) in
+        {108}let rsp'_2: ctsender = (if v_22 then (if (ek_hash_4 = h((ekseed_9,ek_7))) then SentCt1ReceivedEk(ep_11,r_1,ekseed_9,ek_7,ct1_5,k_3) else fail-any_type) else fail-any_type) in
+        {109}insert BStates(b_6,a_6,rsp'_2,auth_6)
+    ) | (
+        {130}get BStates(b_7: principal,a_7: principal,rsp_3: ctsender,auth_7: authenticator) in
+        {111}let v_23: ctsender = rsp_3 in
+        {112}let v_24: bool = success?(1-proj-SentCt1ReceivedEk(v_23)) in
+        {113}let k_4: symkey = (if v_24 then 6-proj-SentCt1ReceivedEk(v_23) else caught-fail) in
+        {114}let ct1_6: bitstring = (if v_24 then 5-proj-SentCt1ReceivedEk(v_23) else caught-fail) in
+        {115}let ek_8: enckey = (if v_24 then 4-proj-SentCt1ReceivedEk(v_23) else caught-fail) in
+        {116}let ekseed_10: seed = (if v_24 then 3-proj-SentCt1ReceivedEk(v_23) else caught-fail) in
+        {117}let r_2: ctsecret = (if v_24 then 2-proj-SentCt1ReceivedEk(v_23) else caught-fail) in
+        {118}let ep_12: nat = (if v_24 then 1-proj-SentCt1ReceivedEk(v_23) else caught-fail) in
+        {119}let ct2_1: bitstring = (if v_24 then pkenc2(r_2,ek_8) else caught-fail) in
+        {120}let ct_mac_1: bitstring = (if v_24 then mac(auth_7,(ct_label,ct1_6,ct2_1)) else caught-fail) in
+        {121}let (rsp'_3: ctsender,(ct2_2: bitstring,ct_mac_2: bitstring)) = (if v_24 then (SentCt2(ep_12,k_4),(ct2_1,ct_mac_1)) else fail-any_type) in
+        {122}out(c, (ct2_2,ct_mac_2));
+        {123}let v_25: ctsender = rsp'_3 in
+        {124}let v_26: bool = success?(1-proj-SentCt2(v_25)) in
+        {125}let k_5: symkey = (if v_26 then 2-proj-SentCt2(v_25) else caught-fail) in
+        {126}let ep_13: nat = (if v_26 then 1-proj-SentCt2(v_25) else caught-fail) in
+        {127}let (rsp'': eksender,(ep_14: nat,k_6: symkey)) = (if v_26 then (NeedToSample(ep_13 + 1),(ep_13,k_5)) else fail-any_type) in
+        {128}event CompletedB(b_7,a_7,ep_14,k_6);
+        {129}insert AStates(b_7,a_7,rsp'',auth_7)
+    )
+)
+
+--  Process 1 (that is, process 0, with let moved downwards):
+{1}new authAB: authenticator;
+{2}insert AStates(A,B,NeedToSample(1),authAB);
+{3}insert BStates(B,A,Waiting(1),authAB);
+(
+    {4}!
+    (
+        {22}get AStates(a: principal,b: principal,req: eksender,auth: authenticator) in
+        {5}let v: eksender = req in
+        {6}let v_1: bool = success?(1-proj-NeedToSample(v)) in
+        {7}let ep: nat = (if v_1 then 1-proj-NeedToSample(v) else caught-fail) in
+        {8}new dk: deckey;
+        {9}let v_2: bitstring = (if v_1 then catch-fail((dk,dk2seed(dk),dk2enckey(dk))) else caught-fail) in
+        {10}let v_3: bool = (not-caught-fail(v_2) && success?(1-proj-3-tuple(v_2))) in
+        {11}let ek: enckey = (if v_3 then 3-proj-3-tuple(v_2) else caught-fail) in
+        {12}let ekseed: seed = (if v_3 then 2-proj-3-tuple(v_2) else caught-fail) in
+        {13}let dk_1: deckey = (if v_3 then 1-proj-3-tuple(v_2) else caught-fail) in
+        {14}let ek_hash: bitstring = (if v_3 then h((ekseed,ek)) else caught-fail) in
+        {15}let header_mac: bitstring = (if v_3 then mac(auth,(hdr_label,ep,ekseed,ek_hash)) else caught-fail) in
+        {16}let (req': eksender,(ekseed_1: seed,ek_hash_1: bitstring,header_mac_1: bitstring)) = (if v_1 then (if v_3 then (SentHeader(ep,dk_1,ekseed,ek),(ekseed,ek_hash,header_mac)) else fail-any_type) else fail-any_type) in
+        {17}let ep_1: nat = RequestorEpoch(req') in
+        {18}event UsesAuth(ep_1,auth);
+        {19}event StartedA(a,b,ep_1,ekseed_1);
+        {20}out(c, (ekseed_1,ek_hash_1,header_mac_1));
+        {21}insert AStates(a,b,req',auth)
+    ) | (
+        {39}get AStates(a_1: principal,b_1: principal,req_1: eksender,auth_1: authenticator) in
+        {23}in(c, ct1: bitstring);
+        {24}let v_4: eksender = req_1 in
+        {25}let v_5: bool = success?(1-proj-SentEk(v_4)) in
+        {26}let ek_1: enckey = (if v_5 then 4-proj-SentEk(v_4) else caught-fail) in
+        {27}let ekseed_2: seed = (if v_5 then 3-proj-SentEk(v_4) else caught-fail) in
+        {28}let dk_2: deckey = (if v_5 then 2-proj-SentEk(v_4) else caught-fail) in
+        {29}let ep_2: nat = (if v_5 then 1-proj-SentEk(v_4) else caught-fail) in
+        {30}let v_6: bool = not(v_5) in
+        {31}let v_7: eksender = (if v_6 then catch-fail(req_1) else caught-fail) in
+        {32}let v_8: bool = (not-caught-fail(v_7) && success?(1-proj-SentHeader(v_7))) in
+        {33}let ek_2: enckey = (if v_8 then 4-proj-SentHeader(v_7) else caught-fail) in
+        {34}let ekseed_3: seed = (if v_8 then 3-proj-SentHeader(v_7) else caught-fail) in
+        {35}let dk_3: deckey = (if v_8 then 2-proj-SentHeader(v_7) else caught-fail) in
+        {36}let ep_3: nat = (if v_8 then 1-proj-SentHeader(v_7) else caught-fail) in
+        {37}let req'_1: eksender = (if v_5 then SentEkReceivedCt1(ep_2,dk_2,ekseed_2,ek_1,ct1) else (if v_8 then ReceivedCt1(ep_3,dk_3,ekseed_3,ek_2,ct1) else fail-any_type)) in
+        {38}insert AStates(a_1,b_1,req'_1,auth_1)
+    ) | (
+        {57}get AStates(a_2: principal,b_2: principal,req_2: eksender,auth_2: authenticator) in
+        {40}let v_9: eksender = req_2 in
+        {41}let v_10: bool = success?(1-proj-SentHeader(v_9)) in
+        {42}let ek_3: enckey = (if v_10 then 4-proj-SentHeader(v_9) else caught-fail) in
+        {43}let ekseed_4: seed = (if v_10 then 3-proj-SentHeader(v_9) else caught-fail) in
+        {44}let dk_4: deckey = (if v_10 then 2-proj-SentHeader(v_9) else caught-fail) in
+        {45}let ep_4: nat = (if v_10 then 1-proj-SentHeader(v_9) else caught-fail) in
+        {46}let v_11: bool = not(v_10) in
+        {47}let v_12: eksender = (if v_11 then catch-fail(req_2) else caught-fail) in
+        {48}let v_13: bool = (not-caught-fail(v_12) && success?(1-proj-ReceivedCt1(v_12))) in
+        {49}let ct1_1: bitstring = (if v_13 then 5-proj-ReceivedCt1(v_12) else caught-fail) in
+        {50}let ek_4: enckey = (if v_13 then 4-proj-ReceivedCt1(v_12) else caught-fail) in
+        {51}let ekseed_5: seed = (if v_13 then 3-proj-ReceivedCt1(v_12) else caught-fail) in
+        {52}let dk_5: deckey = (if v_13 then 2-proj-ReceivedCt1(v_12) else caught-fail) in
+        {53}let ep_5: nat = (if v_13 then 1-proj-ReceivedCt1(v_12) else caught-fail) in
+        {54}let (req'_2: eksender,ek_5: enckey) = (if v_10 then (SentEk(ep_4,dk_4,ekseed_4,ek_3),ek_3) else (if v_13 then (SentEkReceivedCt1(ep_5,dk_5,ekseed_5,ek_4,ct1_1),ek_4) else fail-any_type)) in
+        {55}out(c, ek_5);
+        {56}insert AStates(a_2,b_2,req'_2,auth_2)
+    ) | (
+        {73}get AStates(a_3: principal,b_3: principal,req_3: eksender,auth_3: authenticator) in
+        {58}in(c, (ct2: bitstring,ct_mac: bitstring));
+        {59}let v_14: eksender = req_3 in
+        {60}let v_15: bool = success?(1-proj-SentEkReceivedCt1(v_14)) in
+        {61}let ct1_2: bitstring = (if v_15 then 5-proj-SentEkReceivedCt1(v_14) else caught-fail) in
+        {62}let ek_6: enckey = (if v_15 then 4-proj-SentEkReceivedCt1(v_14) else caught-fail) in
+        {63}let ekseed_6: seed = (if v_15 then 3-proj-SentEkReceivedCt1(v_14) else caught-fail) in
+        {64}let dk_6: deckey = (if v_15 then 2-proj-SentEkReceivedCt1(v_14) else caught-fail) in
+        {65}let ep_6: nat = (if v_15 then 1-proj-SentEkReceivedCt1(v_14) else caught-fail) in
+        {66}let ss: symkey = (if v_15 then catch-fail(pkdec(dk_6,ct1_2,ct2)) else caught-fail) in
+        {67}let v_16: bool = not-caught-fail(ss) in
+        {68}let k: symkey = (if v_16 then kdf(ss,(ep_6,cka_label)) else caught-fail) in
+        {69}let new_auth: authenticator = (if v_16 then auth_update(auth_3,k) else caught-fail) in
+        {70}let (req'_3: ctsender,(new_auth_1: authenticator,ep_7: nat,k_1: symkey)) = (if v_15 then (if v_16 then (if (mac(new_auth,(ct_label,ct1_2,ct2)) = ct_mac) then (Waiting(ep_6 + 1),(new_auth,ep_6,k)) else fail-any_type) else fail-any_type) else fail-any_type) in
+        {71}event CompletedA(a_3,b_3,ep_7,k_1);
+        {72}insert BStates(a_3,b_3,req'_3,new_auth_1)
+    )
+) | (
+    {74}!
+    (
+        {84}get BStates(b_4: principal,a_4: principal,rsp: ctsender,auth_4: authenticator) in
+        {75}let ep_8: nat = ResponderEpoch(rsp) in
+        {76}event UsesAuth(ep_8,auth_4);
+        {77}in(c, (ekseed_7: seed,ek_hash_2: bitstring,header_mac_2: bitstring));
+        {78}event StartedB(b_4,a_4,ep_8,ekseed_7);
+        {79}let v_17: ctsender = rsp in
+        {80}let v_18: bool = success?(1-proj-Waiting(v_17)) in
+        {81}let ep_9: nat = (if v_18 then 1-proj-Waiting(v_17) else caught-fail) in
+        {82}let rsp': ctsender = (if v_18 then (if (mac(auth_4,(hdr_label,ep_9,ekseed_7,ek_hash_2)) = header_mac_2) then ReceivedHeader(ep_9,ekseed_7,ek_hash_2) else fail-any_type) else fail-any_type) in
+        {83}insert BStates(b_4,a_4,rsp',auth_4)
+    ) | (
+        {98}get BStates(b_5: principal,a_5: principal,rsp_1: ctsender,auth_5: authenticator) in
+        {85}let v_19: ctsender = rsp_1 in
+        {86}let v_20: bool = success?(1-proj-ReceivedHeader(v_19)) in
+        {87}let ek_hash_3: bitstring = (if v_20 then 3-proj-ReceivedHeader(v_19) else caught-fail) in
+        {88}let ekseed_8: seed = (if v_20 then 2-proj-ReceivedHeader(v_19) else caught-fail) in
+        {89}let ep_10: nat = (if v_20 then 1-proj-ReceivedHeader(v_19) else caught-fail) in
+        {90}new r: ctsecret;
+        {91}new sk: symkey;
+        {93}let k_2: symkey = (if v_20 then kdf(sk,(ep_10,cka_label)) else caught-fail) in
+        {94}let new_auth_2: authenticator = (if v_20 then auth_update(auth_5,k_2) else caught-fail) in
+        {92}let ct1_3: bitstring = (if v_20 then pkenc1(r,ekseed_8,sk) else caught-fail) in
+        {95}let (rsp'_1: ctsender,(new_auth_3: authenticator,ct1_4: bitstring)) = (if v_20 then (SentCt1(ep_10,r,ekseed_8,ek_hash_3,ct1_3,k_2),(new_auth_2,ct1_3)) else fail-any_type) in
+        {96}out(c, ct1_4);
+        {97}insert BStates(b_5,a_5,rsp'_1,new_auth_3)
+    ) | (
+        {110}get BStates(b_6: principal,a_6: principal,rsp_2: ctsender,auth_6: authenticator) in
+        {99}in(c, ek_7: enckey);
+        {100}let v_21: ctsender = rsp_2 in
+        {101}let v_22: bool = success?(1-proj-SentCt1(v_21)) in
+        {102}let k_3: symkey = (if v_22 then 6-proj-SentCt1(v_21) else caught-fail) in
+        {103}let ct1_5: bitstring = (if v_22 then 5-proj-SentCt1(v_21) else caught-fail) in
+        {104}let ek_hash_4: bitstring = (if v_22 then 4-proj-SentCt1(v_21) else caught-fail) in
+        {105}let ekseed_9: seed = (if v_22 then 3-proj-SentCt1(v_21) else caught-fail) in
+        {106}let r_1: ctsecret = (if v_22 then 2-proj-SentCt1(v_21) else caught-fail) in
+        {107}let ep_11: nat = (if v_22 then 1-proj-SentCt1(v_21) else caught-fail) in
+        {108}let rsp'_2: ctsender = (if v_22 then (if (ek_hash_4 = h((ekseed_9,ek_7))) then SentCt1ReceivedEk(ep_11,r_1,ekseed_9,ek_7,ct1_5,k_3) else fail-any_type) else fail-any_type) in
+        {109}insert BStates(b_6,a_6,rsp'_2,auth_6)
+    ) | (
+        {130}get BStates(b_7: principal,a_7: principal,rsp_3: ctsender,auth_7: authenticator) in
+        {111}let v_23: ctsender = rsp_3 in
+        {112}let v_24: bool = success?(1-proj-SentCt1ReceivedEk(v_23)) in
+        {113}let k_4: symkey = (if v_24 then 6-proj-SentCt1ReceivedEk(v_23) else caught-fail) in
+        {114}let ct1_6: bitstring = (if v_24 then 5-proj-SentCt1ReceivedEk(v_23) else caught-fail) in
+        {115}let ek_8: enckey = (if v_24 then 4-proj-SentCt1ReceivedEk(v_23) else caught-fail) in
+        {116}let ekseed_10: seed = (if v_24 then 3-proj-SentCt1ReceivedEk(v_23) else caught-fail) in
+        {117}let r_2: ctsecret = (if v_24 then 2-proj-SentCt1ReceivedEk(v_23) else caught-fail) in
+        {118}let ep_12: nat = (if v_24 then 1-proj-SentCt1ReceivedEk(v_23) else caught-fail) in
+        {119}let ct2_1: bitstring = (if v_24 then pkenc2(r_2,ek_8) else caught-fail) in
+        {120}let ct_mac_1: bitstring = (if v_24 then mac(auth_7,(ct_label,ct1_6,ct2_1)) else caught-fail) in
+        {121}let (rsp'_3: ctsender,(ct2_2: bitstring,ct_mac_2: bitstring)) = (if v_24 then (SentCt2(ep_12,k_4),(ct2_1,ct_mac_1)) else fail-any_type) in
+        {122}out(c, (ct2_2,ct_mac_2));
+        {123}let v_25: ctsender = rsp'_3 in
+        {124}let v_26: bool = success?(1-proj-SentCt2(v_25)) in
+        {125}let k_5: symkey = (if v_26 then 2-proj-SentCt2(v_25) else caught-fail) in
+        {126}let ep_13: nat = (if v_26 then 1-proj-SentCt2(v_25) else caught-fail) in
+        {127}let (rsp'': eksender,(ep_14: nat,k_6: symkey)) = (if v_26 then (NeedToSample(ep_13 + 1),(ep_13,k_5)) else fail-any_type) in
+        {128}event CompletedB(b_7,a_7,ep_14,k_6);
+        {129}insert AStates(b_7,a_7,rsp'',auth_7)
+    )
+)
+
+Declared: select attacker(kdf(k_7,ctx))/-9999
+Declared: select attacker(mac(a_8,m))/-9999
+Declared: select attacker(auth_update(a_8,k_7))/-9999
+Declared: select attacker(dk2seed(dk_7))/-9999
+Declared: select attacker(dk2enckey(dk_7))/-9999
+Declared: select attacker(pkenc2(r_3,ek_9))/-9999
+Declared: select attacker(pkenc1(r_3,s,k_7))/-9999
+-- Query not (event(UsesAuth(ep_15,auth_8)) && attacker(auth_8)) in process 1.
+Translating the process into Horn clauses...
+Termination warning: attacker(r_3) && attacker(pkenc1(r_3,s,sk_1)) -> attacker(sk_1)
+Selecting 1
+Completing...
+Termination warning: attacker(r_3) && attacker(pkenc1(r_3,s,sk_1)) -> attacker(sk_1)
+Selecting 1
+200 rules inserted. Base: 184 rules (98 with conclusion selected). Queue: 7 rules.

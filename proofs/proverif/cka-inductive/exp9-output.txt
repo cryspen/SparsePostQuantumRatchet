@@ -1,0 +1,527 @@
+Process 0 (that is, the initial process):
+{1}new auth0: auth;
+{2}new s0: skey;
+{3}insert Rstate(1,s0,auth0);
+{4}insert Sstate(1,auth0);
+(
+    {5}!
+    {10}get Rstate(ep: nat,s: skey,a: auth) in
+    {6}event UsesAuth(ep,a);
+    {7}let p: pkey = pk(s) in
+    {8}event StartedR(ep,p);
+    {9}out(c, (p,mac(a,(ep,tag_hdr(p)))))
+) | (
+    {11}!
+    {21}get Sstate(ep_1: nat,a_1: auth) in
+    {12}event UsesAuth(ep_1,a_1);
+    {13}in(c, (p_1: pkey,hmac: bitstring));
+    {14}if (hmac = mac(a_1,(ep_1,tag_hdr(p_1)))) then
+    {15}new k: symkey;
+    {16}let ct: bitstring = aenc(p_1,k) in
+    {17}let a2: auth = auth_update(a_1,k) in
+    {18}event CompletedS(ep_1,k);
+    {19}out(c, (ct,mac(a2,(ep_1,tag_ct(ct)))));
+    {20}insert Sstate(ep_1 + 1,a2)
+) | (
+    {22}!
+    {30}get Rstate(ep_2: nat,s_1: skey,a_2: auth) in
+    {23}in(c, (ct_1: bitstring,cmac: bitstring));
+    {24}let k_1: symkey = adec(s_1,ct_1) in
+    {25}let a2_1: auth = auth_update(a_2,k_1) in
+    {26}if (cmac = mac(a2_1,(ep_2,tag_ct(ct_1)))) then
+    {27}event CompletedR(ep_2,k_1);
+    {28}new s2: skey;
+    {29}insert Rstate(ep_2 + 1,s2,a2_1)
+) | (
+    {31}!
+    {34}get Rstate(ep_3: nat,s_2: skey,a_3: auth) in
+    {32}event CompromiseKey(ep_3);
+    {33}out(c, s_2)
+)
+
+--  Process 1 (that is, process 0, with let moved downwards):
+{1}new auth0: auth;
+{2}new s0: skey;
+{3}insert Rstate(1,s0,auth0);
+{4}insert Sstate(1,auth0);
+(
+    {5}!
+    {10}get Rstate(ep: nat,s: skey,a: auth) in
+    {6}event UsesAuth(ep,a);
+    {7}let p: pkey = pk(s) in
+    {8}event StartedR(ep,p);
+    {9}out(c, (p,mac(a,(ep,tag_hdr(p)))))
+) | (
+    {11}!
+    {21}get Sstate(ep_1: nat,a_1: auth) in
+    {12}event UsesAuth(ep_1,a_1);
+    {13}in(c, (p_1: pkey,hmac: bitstring));
+    {14}if (hmac = mac(a_1,(ep_1,tag_hdr(p_1)))) then
+    {15}new k: symkey;
+    {18}event CompletedS(ep_1,k);
+    {17}let a2: auth = auth_update(a_1,k) in
+    {16}let ct: bitstring = aenc(p_1,k) in
+    {19}out(c, (ct,mac(a2,(ep_1,tag_ct(ct)))));
+    {20}insert Sstate(ep_1 + 1,a2)
+) | (
+    {22}!
+    {30}get Rstate(ep_2: nat,s_1: skey,a_2: auth) in
+    {23}in(c, (ct_1: bitstring,cmac: bitstring));
+    {24}let k_1: symkey = adec(s_1,ct_1) in
+    {25}let a2_1: auth = auth_update(a_2,k_1) in
+    {26}if (cmac = mac(a2_1,(ep_2,tag_ct(ct_1)))) then
+    {27}event CompletedR(ep_2,k_1);
+    {28}new s2: skey;
+    {29}insert Rstate(ep_2 + 1,s2,a2_1)
+) | (
+    {31}!
+    {34}get Rstate(ep_3: nat,s_2: skey,a_3: auth) in
+    {32}event CompromiseKey(ep_3);
+    {33}out(c, s_2)
+)
+
+Declared: select table(Sstate(ep_4,a_4))/-6000 [inductionOn = {ep_4},ignoreAFewTimes,hypothesis]
+Declared: select table(Rstate(ep_4,s_3,a_4))/-6000 [inductionOn = {ep_4},ignoreAFewTimes,hypothesis]
+Declared: select attacker(aenc(p_2,k_2))/-9999
+Declared: select attacker(mac(a_4,m))/-9999
+Declared: select attacker(auth_update(a_4,k_2))/-9999 [ignoreAFewTimes,hypothesis]
+-- Query 
+   not (event(UsesAuth(ep_4,a_4)) && attacker(a_4))
+   event(CompletedS(ep_4,k_2)) && attacker(k_2) ==> event(CompromiseKey(ep_4))
+   event(CompletedR(ep_4,k_2)) && attacker(k_2) ==> event(CompromiseKey(ep_4))
+ in process 1.
+Translating the process into Horn clauses...
+Termination warning: b-event(CompromiseKey(ep_4)) && table(Rstate(ep_4,s_3,a_4)) -> attacker(s_3)
+Selecting 1
+Completing...
+Termination warning: b-event(CompromiseKey(ep_4)) && table(Rstate(ep_4,s_3,a_4)) -> attacker(s_3)
+Selecting 1
+Starting query not (event(UsesAuth(ep_4,a_4)) && attacker(a_4))
+goal reachable: b-event(CompletedR(ep_4,k_2)) && attacker(ep_4) && b-event(UsesAuth(ep_5,a_4)) && table(Rstate(ep_5,s_3,a_4)) && attacker(k_2) && table(Rstate(ep_4,s_3,a_5)) && attacker(auth_update(a_5,k_2)) && b-event(CompromiseKey(ep_4)) -> event(UsesAuth(ep_4 + 1,auth_update(a_5,k_2))) && attacker(auth_update(a_5,k_2))
+The 1st, 2nd, 3rd, 5th, 7th, 8th hypotheses occur strictly before the 1st conclusion.
+The 4th, 6th hypotheses occur before the 1st conclusion.
+The 7th hypothesis occurs before the 2nd conclusion.
+
+Derivation:
+Abbreviations:
+s2_1 = s2[cmac = mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2)))),ct_1 = aenc(pk(s_3),k_2),a_2 = a_4,s_1 = s_3,ep_2 = ep_4,!1 = @sid]
+
+1. We assume as hypothesis that
+attacker(auth_update(a_4,k_2)).
+
+2. We assume as hypothesis that
+table(Rstate(ep_4,s_3,a_4)).
+
+3. We assume as hypothesis that
+attacker(k_2).
+
+4. We assume as hypothesis that
+table(Rstate(ep_5,s_3,a_5)).
+
+5. The entry Rstate(ep_5,s_3,a_5) that may be in a table by 4 may be read at get {10}.
+The event UsesAuth(ep_5,a_5) may be executed at {6}.
+So the message (pk(s_3),mac(a_5,(ep_5,tag_hdr(pk(s_3))))) may be sent to the attacker at output {9}.
+attacker((pk(s_3),mac(a_5,(ep_5,tag_hdr(pk(s_3)))))).
+
+6. By 5, the attacker may know (pk(s_3),mac(a_5,(ep_5,tag_hdr(pk(s_3))))).
+Using the function 1-proj-2-tuple the attacker may obtain pk(s_3).
+attacker(pk(s_3)).
+
+7. By 6, the attacker may know pk(s_3).
+By 3, the attacker may know k_2.
+Using the function aenc the attacker may obtain aenc(pk(s_3),k_2).
+attacker(aenc(pk(s_3),k_2)).
+
+8. By 7, the attacker may know aenc(pk(s_3),k_2).
+Using the function tag_ct the attacker may obtain tag_ct(aenc(pk(s_3),k_2)).
+attacker(tag_ct(aenc(pk(s_3),k_2))).
+
+9. We assume as hypothesis that
+attacker(ep_4).
+
+10. By 9, the attacker may know ep_4.
+By 8, the attacker may know tag_ct(aenc(pk(s_3),k_2)).
+Using the function 2-tuple the attacker may obtain (ep_4,tag_ct(aenc(pk(s_3),k_2))).
+attacker((ep_4,tag_ct(aenc(pk(s_3),k_2)))).
+
+11. By 1, the attacker may know auth_update(a_4,k_2).
+By 10, the attacker may know (ep_4,tag_ct(aenc(pk(s_3),k_2))).
+Using the function mac the attacker may obtain mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2)))).
+attacker(mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2))))).
+
+12. By 7, the attacker may know aenc(pk(s_3),k_2).
+By 11, the attacker may know mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2)))).
+Using the function 2-tuple the attacker may obtain (aenc(pk(s_3),k_2),mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2))))).
+attacker((aenc(pk(s_3),k_2),mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2)))))).
+
+13. The entry Rstate(ep_4,s_3,a_4) that may be in a table by 2 may be read at get {30}.
+The message (aenc(pk(s_3),k_2),mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2))))) that the attacker may have by 12 may be received at input {23}.
+The event CompletedR(ep_4,k_2) may be executed at {27}.
+So the entry Rstate(ep_4 + 1,s2_1,auth_update(a_4,k_2)) may be inserted in a table at insert {29}.
+table(Rstate(ep_4 + 1,s2_1,auth_update(a_4,k_2))).
+
+14. The entry Rstate(ep_4 + 1,s2_1,auth_update(a_4,k_2)) that may be in a table by 13 may be read at get {10}.
+So event UsesAuth(ep_4 + 1,auth_update(a_4,k_2)) may be executed at {6}.
+event(UsesAuth(ep_4 + 1,auth_update(a_4,k_2))).
+
+15. By 14, event(UsesAuth(ep_4 + 1,auth_update(a_4,k_2))).
+By 1, attacker(auth_update(a_4,k_2)).
+The goals are reached, combined in the following fact:
+event(UsesAuth(ep_4 + 1,auth_update(a_4,k_2))) && attacker(auth_update(a_4,k_2)).
+
+
+A more detailed output of the traces is available with
+  set traceDisplay = long.
+
+new auth0: auth creating auth0_1 at {1}
+
+new s0: skey creating s0_1 at {2}
+
+insert Rstate(1,s0_1,auth0_1) at {3}
+
+insert Sstate(1,auth0_1) at {4}
+
+get Rstate(a_6,a_7,a_8) at {10} in copy a_9
+
+event UsesAuth(a_6,a_8) at {6} in copy a_9
+
+event StartedR(a_6,pk(a_7)) at {8} in copy a_9
+
+out(c, (~M,~M_1)) with ~M = pk(a_7), ~M_1 = mac(a_8,(a_6,tag_hdr(pk(a_7)))) at {9} in copy a_9
+
+get Rstate(a_10,a_7,a_11) at {30} in copy a_12
+
+in(c, (aenc(pk(a_7),a_13),mac(auth_update(a_11,a_13),(a_10,tag_ct(aenc(pk(a_7),a_13)))))) at {23} in copy a_12
+
+event CompletedR(a_10,a_13) at {27} in copy a_12
+
+new s2: skey creating s2_2 at {28} in copy a_12
+
+insert Rstate(a_10 + 1,s2_2,auth_update(a_11,a_13)) at {29} in copy a_12
+
+get Rstate(a_10 + 1,s2_2,auth_update(a_11,a_13)) at {10} in copy a_14
+
+event UsesAuth(a_10 + 1,auth_update(a_11,a_13)) at {6} in copy a_14 (goal)
+
+The event UsesAuth(a_10 + 1,auth_update(a_11,a_13)) is executed at {6} in copy a_14.
+The attacker has the message auth_update(a_11,a_13).
+A trace has been found, assuming the following hypothesis:
+table(Rstate(a_6[],a_7[],a_8[]))
+table(Rstate(a_10[],a_7[],a_11[]))
+goal reachable: b-event(CompletedR(ep_4,k_2)) && attacker(ep_4) && attacker(s_3) && attacker(k_2) && table(Rstate(ep_4,s_3,a_4)) && attacker(auth_update(a_4,k_2)) && b-event(CompromiseKey(ep_4)) -> event(UsesAuth(ep_4 + 1,auth_update(a_4,k_2))) && attacker(auth_update(a_4,k_2))
+The 1st, 2nd, 3rd, 4th, 6th, 7th hypotheses occur strictly before the 1st conclusion.
+The 5th hypothesis occurs before the 1st conclusion.
+The 6th hypothesis occurs before the 2nd conclusion.
+
+Derivation:
+Abbreviations:
+s2_1 = s2[cmac = mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2)))),ct_1 = aenc(pk(s_3),k_2),a_2 = a_4,s_1 = s_3,ep_2 = ep_4,!1 = @sid]
+
+1. We assume as hypothesis that
+attacker(auth_update(a_4,k_2)).
+
+2. We assume as hypothesis that
+table(Rstate(ep_4,s_3,a_4)).
+
+3. We assume as hypothesis that
+attacker(k_2).
+
+4. We assume as hypothesis that
+attacker(s_3).
+
+5. By 4, the attacker may know s_3.
+Using the function pk the attacker may obtain pk(s_3).
+attacker(pk(s_3)).
+
+6. By 5, the attacker may know pk(s_3).
+By 3, the attacker may know k_2.
+Using the function aenc the attacker may obtain aenc(pk(s_3),k_2).
+attacker(aenc(pk(s_3),k_2)).
+
+7. By 6, the attacker may know aenc(pk(s_3),k_2).
+Using the function tag_ct the attacker may obtain tag_ct(aenc(pk(s_3),k_2)).
+attacker(tag_ct(aenc(pk(s_3),k_2))).
+
+8. We assume as hypothesis that
+attacker(ep_4).
+
+9. By 8, the attacker may know ep_4.
+By 7, the attacker may know tag_ct(aenc(pk(s_3),k_2)).
+Using the function 2-tuple the attacker may obtain (ep_4,tag_ct(aenc(pk(s_3),k_2))).
+attacker((ep_4,tag_ct(aenc(pk(s_3),k_2)))).
+
+10. By 1, the attacker may know auth_update(a_4,k_2).
+By 9, the attacker may know (ep_4,tag_ct(aenc(pk(s_3),k_2))).
+Using the function mac the attacker may obtain mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2)))).
+attacker(mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2))))).
+
+11. By 6, the attacker may know aenc(pk(s_3),k_2).
+By 10, the attacker may know mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2)))).
+Using the function 2-tuple the attacker may obtain (aenc(pk(s_3),k_2),mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2))))).
+attacker((aenc(pk(s_3),k_2),mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2)))))).
+
+12. The entry Rstate(ep_4,s_3,a_4) that may be in a table by 2 may be read at get {30}.
+The message (aenc(pk(s_3),k_2),mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2))))) that the attacker may have by 11 may be received at input {23}.
+The event CompletedR(ep_4,k_2) may be executed at {27}.
+So the entry Rstate(ep_4 + 1,s2_1,auth_update(a_4,k_2)) may be inserted in a table at insert {29}.
+table(Rstate(ep_4 + 1,s2_1,auth_update(a_4,k_2))).
+
+13. The entry Rstate(ep_4 + 1,s2_1,auth_update(a_4,k_2)) that may be in a table by 12 may be read at get {10}.
+So event UsesAuth(ep_4 + 1,auth_update(a_4,k_2)) may be executed at {6}.
+event(UsesAuth(ep_4 + 1,auth_update(a_4,k_2))).
+
+14. By 13, event(UsesAuth(ep_4 + 1,auth_update(a_4,k_2))).
+By 1, attacker(auth_update(a_4,k_2)).
+The goals are reached, combined in the following fact:
+event(UsesAuth(ep_4 + 1,auth_update(a_4,k_2))) && attacker(auth_update(a_4,k_2)).
+
+
+A more detailed output of the traces is available with
+  set traceDisplay = long.
+
+new auth0: auth creating auth0_1 at {1}
+
+new s0: skey creating s0_1 at {2}
+
+insert Rstate(1,s0_1,auth0_1) at {3}
+
+insert Sstate(1,auth0_1) at {4}
+
+get Rstate(a_5,a_6,a_7) at {30} in copy a_8
+
+in(c, (aenc(pk(a_6),a_9),mac(auth_update(a_7,a_9),(a_5,tag_ct(aenc(pk(a_6),a_9)))))) at {23} in copy a_8
+
+event CompletedR(a_5,a_9) at {27} in copy a_8
+
+new s2: skey creating s2_2 at {28} in copy a_8
+
+insert Rstate(a_5 + 1,s2_2,auth_update(a_7,a_9)) at {29} in copy a_8
+
+get Rstate(a_5 + 1,s2_2,auth_update(a_7,a_9)) at {10} in copy a_10
+
+event UsesAuth(a_5 + 1,auth_update(a_7,a_9)) at {6} in copy a_10 (goal)
+
+The event UsesAuth(a_5 + 1,auth_update(a_7,a_9)) is executed at {6} in copy a_10.
+The attacker has the message auth_update(a_7,a_9).
+A trace has been found, assuming the following hypothesis:
+table(Rstate(a_5[],a_6[],a_7[]))
+goal reachable: b-event(CompletedR(ep_4,k_2)) && attacker(ep_4) && table(Rstate(ep_4,s_3,a_4)) && attacker(a_4) && attacker(s_3) && b-event(CompletedS(ep_5,k_2)) && table(Rstate(ep_5,s_3,a_5)) && b-event(UsesAuth(ep_5,a_5)) && table(Sstate(ep_5,a_5)) && b-event(CompromiseKey(ep_5)) && b-event(CompromiseKey(ep_4)) -> event(UsesAuth(ep_4 + 1,auth_update(a_4,k_2))) && attacker(auth_update(a_4,k_2))
+The 1st, 2nd, 4th, 5th, 6th, 8th hypotheses occur strictly before the 1st conclusion.
+The 3rd, 7th, 9th hypotheses occur before the 1st conclusion.
+The 4th, 5th, 6th, 7th, 8th, 9th hypotheses occur strictly before the 2nd conclusion.
+Abbreviations:
+k_2 = k[hmac = mac(a_5,(ep_5,tag_hdr(pk(s_3)))),p_1 = pk(s_3),a_1 = a_5,ep_1 = ep_5,!1 = @sid]
+
+Derivation:
+Abbreviations:
+k_2 = k[hmac = mac(a_4,(ep_4,tag_hdr(pk(s_3)))),p_1 = pk(s_3),a_1 = a_4,ep_1 = ep_4,!1 = @sid]
+s2_1 = s2[cmac = mac(auth_update(a_5,k_2),(ep_5,tag_ct(aenc(pk(s_3),k_2)))),ct_1 = aenc(pk(s_3),k_2),a_2 = a_5,s_1 = s_3,ep_2 = ep_5,!1 = @sid_1]
+
+1. We assume as hypothesis that
+table(Sstate(ep_4,a_4)).
+
+2. We assume as hypothesis that
+table(Rstate(ep_4,s_3,a_4)).
+
+3. The entry Rstate(ep_4,s_3,a_4) that may be in a table by 2 may be read at get {10}.
+The event UsesAuth(ep_4,a_4) may be executed at {6}.
+So the message (pk(s_3),mac(a_4,(ep_4,tag_hdr(pk(s_3))))) may be sent to the attacker at output {9}.
+attacker((pk(s_3),mac(a_4,(ep_4,tag_hdr(pk(s_3)))))).
+
+4. By 3, the attacker may know (pk(s_3),mac(a_4,(ep_4,tag_hdr(pk(s_3))))).
+Using the function 2-proj-2-tuple the attacker may obtain mac(a_4,(ep_4,tag_hdr(pk(s_3)))).
+attacker(mac(a_4,(ep_4,tag_hdr(pk(s_3))))).
+
+5. By 3, the attacker may know (pk(s_3),mac(a_4,(ep_4,tag_hdr(pk(s_3))))).
+Using the function 1-proj-2-tuple the attacker may obtain pk(s_3).
+attacker(pk(s_3)).
+
+6. By 5, the attacker may know pk(s_3).
+By 4, the attacker may know mac(a_4,(ep_4,tag_hdr(pk(s_3)))).
+Using the function 2-tuple the attacker may obtain (pk(s_3),mac(a_4,(ep_4,tag_hdr(pk(s_3))))).
+attacker((pk(s_3),mac(a_4,(ep_4,tag_hdr(pk(s_3)))))).
+
+7. The entry Sstate(ep_4,a_4) that may be in a table by 1 may be read at get {21}.
+The event UsesAuth(ep_4,a_4) may be executed at {12}.
+The message (pk(s_3),mac(a_4,(ep_4,tag_hdr(pk(s_3))))) that the attacker may have by 6 may be received at input {13}.
+The event CompletedS(ep_4,k_2) may be executed at {18}.
+So the message (aenc(pk(s_3),k_2),mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2))))) may be sent to the attacker at output {19}.
+attacker((aenc(pk(s_3),k_2),mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2)))))).
+
+8. By 7, the attacker may know (aenc(pk(s_3),k_2),mac(auth_update(a_4,k_2),(ep_4,tag_ct(aenc(pk(s_3),k_2))))).
+Using the function 1-proj-2-tuple the attacker may obtain aenc(pk(s_3),k_2).
+attacker(aenc(pk(s_3),k_2)).
+
+9. We assume as hypothesis that
+attacker(s_3).
+
+10. By 9, the attacker may know s_3.
+By 8, the attacker may know aenc(pk(s_3),k_2).
+Using the function adec the attacker may obtain k_2.
+attacker(k_2).
+
+11. We assume as hypothesis that
+attacker(a_5).
+
+12. By 11, the attacker may know a_5.
+By 10, the attacker may know k_2.
+Using the function auth_update the attacker may obtain auth_update(a_5,k_2).
+attacker(auth_update(a_5,k_2)).
+
+13. We assume as hypothesis that
+table(Rstate(ep_5,s_3,a_5)).
+
+14. By 8, the attacker may know aenc(pk(s_3),k_2).
+Using the function tag_ct the attacker may obtain tag_ct(aenc(pk(s_3),k_2)).
+attacker(tag_ct(aenc(pk(s_3),k_2))).
+
+15. We assume as hypothesis that
+attacker(ep_5).
+
+16. By 15, the attacker may know ep_5.
+By 14, the attacker may know tag_ct(aenc(pk(s_3),k_2)).
+Using the function 2-tuple the attacker may obtain (ep_5,tag_ct(aenc(pk(s_3),k_2))).
+attacker((ep_5,tag_ct(aenc(pk(s_3),k_2)))).
+
+17. By 12, the attacker may know auth_update(a_5,k_2).
+By 16, the attacker may know (ep_5,tag_ct(aenc(pk(s_3),k_2))).
+Using the function mac the attacker may obtain mac(auth_update(a_5,k_2),(ep_5,tag_ct(aenc(pk(s_3),k_2)))).
+attacker(mac(auth_update(a_5,k_2),(ep_5,tag_ct(aenc(pk(s_3),k_2))))).
+
+18. By 8, the attacker may know aenc(pk(s_3),k_2).
+By 17, the attacker may know mac(auth_update(a_5,k_2),(ep_5,tag_ct(aenc(pk(s_3),k_2)))).
+Using the function 2-tuple the attacker may obtain (aenc(pk(s_3),k_2),mac(auth_update(a_5,k_2),(ep_5,tag_ct(aenc(pk(s_3),k_2))))).
+attacker((aenc(pk(s_3),k_2),mac(auth_update(a_5,k_2),(ep_5,tag_ct(aenc(pk(s_3),k_2)))))).
+
+19. The entry Rstate(ep_5,s_3,a_5) that may be in a table by 13 may be read at get {30}.
+The message (aenc(pk(s_3),k_2),mac(auth_update(a_5,k_2),(ep_5,tag_ct(aenc(pk(s_3),k_2))))) that the attacker may have by 18 may be received at input {23}.
+The event CompletedR(ep_5,k_2) may be executed at {27}.
+So the entry Rstate(ep_5 + 1,s2_1,auth_update(a_5,k_2)) may be inserted in a table at insert {29}.
+table(Rstate(ep_5 + 1,s2_1,auth_update(a_5,k_2))).
+
+20. The entry Rstate(ep_5 + 1,s2_1,auth_update(a_5,k_2)) that may be in a table by 19 may be read at get {10}.
+So event UsesAuth(ep_5 + 1,auth_update(a_5,k_2)) may be executed at {6}.
+event(UsesAuth(ep_5 + 1,auth_update(a_5,k_2))).
+
+21. By 20, event(UsesAuth(ep_5 + 1,auth_update(a_5,k_2))).
+By 12, attacker(auth_update(a_5,k_2)).
+The goals are reached, combined in the following fact:
+event(UsesAuth(ep_5 + 1,auth_update(a_5,k_2))) && attacker(auth_update(a_5,k_2)).
+
+
+A more detailed output of the traces is available with
+  set traceDisplay = long.
+
+new auth0: auth creating auth0_1 at {1}
+
+new s0: skey creating s0_1 at {2}
+
+insert Rstate(1,s0_1,auth0_1) at {3}
+
+insert Sstate(1,auth0_1) at {4}
+
+get Rstate(a_6,a_7,a_8) at {10} in copy a_9
+
+event UsesAuth(a_6,a_8) at {6} in copy a_9
+
+event StartedR(a_6,pk(a_7)) at {8} in copy a_9
+
+out(c, (~M,~M_1)) with ~M = pk(a_7), ~M_1 = mac(a_8,(a_6,tag_hdr(pk(a_7)))) at {9} in copy a_9
+
+get Sstate(a_6,a_8) at {21} in copy a_10
+
+event UsesAuth(a_6,a_8) at {12} in copy a_10
+
+in(c, (pk(a_7),mac(a_8,(a_6,tag_hdr(pk(a_7)))))) at {13} in copy a_10
+
+new k: symkey creating k_3 at {15} in copy a_10
+
+event CompletedS(a_6,k_3) at {18} in copy a_10
+
+out(c, (~M_2,~M_3)) with ~M_2 = aenc(pk(a_7),k_3), ~M_3 = mac(auth_update(a_8,k_3),(a_6,tag_ct(aenc(pk(a_7),k_3)))) at {19} in copy a_10
+
+insert Sstate(a_6 + 1,auth_update(a_8,k_3)) at {20} in copy a_10
+
+get Rstate(a_11,a_7,a_12) at {30} in copy a_13
+
+in(c, (~M_2,mac(auth_update(a_12,adec(a_7,~M_2)),(a_11,tag_ct(~M_2))))) with ~M_2 = aenc(pk(a_7),k_3), mac(auth_update(a_12,adec(a_7,~M_2)),(a_11,tag_ct(~M_2))) = mac(auth_update(a_12,k_3),(a_11,tag_ct(aenc(pk(a_7),k_3)))) at {23} in copy a_13
+
+event CompletedR(a_11,k_3) at {27} in copy a_13
+
+new s2: skey creating s2_2 at {28} in copy a_13
+
+insert Rstate(a_11 + 1,s2_2,auth_update(a_12,k_3)) at {29} in copy a_13
+
+get Rstate(a_11 + 1,s2_2,auth_update(a_12,k_3)) at {10} in copy a_14
+
+event UsesAuth(a_11 + 1,auth_update(a_12,k_3)) at {6} in copy a_14 (goal)
+
+The event UsesAuth(a_11 + 1,auth_update(a_12,k_3)) is executed at {6} in copy a_14.
+The attacker has the message auth_update(a_12,adec(a_7,~M_2)) = auth_update(a_12,k_3).
+A trace has been found, assuming the following hypothesis:
+table(Rstate(a_11[],a_7[],a_12[]))
+table(Rstate(a_6[],a_7[],a_8[]))
+table(Sstate(a_6[],a_8[]))
+PARTIAL RESULT not (event(UsesAuth(ep_4,a_4)) && attacker(a_4)) cannot be proved if the inductive queries can be proved.
+Starting query event(CompletedS(ep_4,k_2)) && attacker(k_2) ==> event(CompromiseKey(ep_4))
+goal reachable: b-event(CompromiseKey(ep_4 + 1)) && b-event(CompletedS(ep_4 + 1,k_2)) && b-event(CompletedR(ep_4,k_3)) && b-event(UsesAuth(ep_4 + 1,auth_update(a_4,k_3))) && b-event(CompletedS(ep_4,k_3)) && table(Rstate(ep_4,s_3,a_4)) && b-event(UsesAuth(ep_4,a_4)) && table(Sstate(ep_4,a_4)) -> event(CompletedS(ep_4 + 1,k_2)) && attacker(k_2)
+The 1st, 2nd, 3rd, 4th, 5th, 6th, 7th, 8th hypotheses occur strictly before the 2nd conclusion.
+The 3rd, 4th, 5th, 7th hypotheses occur strictly before the 1st conclusion.
+The 6th, 8th hypotheses occur before the 1st conclusion.
+Abbreviations:
+k_3 = k[hmac = mac(a_4,(ep_4,tag_hdr(pk(s_3)))),p_1 = pk(s_3),a_1 = a_4,ep_1 = ep_4,!1 = @sid]
+s2_1 = s2[cmac = mac(auth_update(a_4,k_3),(ep_4,tag_ct(aenc(pk(s_3),k_3)))),ct_1 = aenc(pk(s_3),k_3),a_2 = a_4,s_1 = s_3,ep_2 = ep_4,!1 = @sid_1]
+k_2 = k[hmac = mac(auth_update(a_4,k_3),(ep_4 + 1,tag_hdr(pk(s2_1)))),p_1 = pk(s2_1),a_1 = auth_update(a_4,k_3),ep_1 = ep_4 + 1,!1 = @sid_2]
+goal reachable: b-event(CompromiseKey(1)) && b-event(CompletedS(1,k_2)) && b-event(UsesAuth(1,auth0[])) -> event(CompletedS(1,k_2)) && attacker(k_2)
+The 1st, 2nd, 3rd hypotheses occur strictly before the 2nd conclusion.
+The 3rd hypothesis occurs strictly before the 1st conclusion.
+Abbreviations:
+k_2 = k[hmac = mac(auth0[],(1,tag_hdr(pk(s0[])))),p_1 = pk(s0[]),a_1 = auth0[],ep_1 = 1,!1 = @sid]
+PARTIAL RESULT event(CompletedS(ep_4,k_2)) && attacker(k_2) ==> event(CompromiseKey(ep_4)) is true if the inductive queries can be proved.
+Starting query event(CompletedR(ep_4,k_2)) && attacker(k_2) ==> event(CompromiseKey(ep_4))
+goal reachable: b-event(CompromiseKey(ep_4 + 1)) && b-event(CompletedR(ep_4,k_2)) && attacker(auth_update(a_4,k_2)) && attacker(ep_4) && b-event(UsesAuth(ep_5,a_5)) && table(Rstate(ep_5,s_3,a_5)) && attacker(k_2) && table(Rstate(ep_4,s_3,a_4)) && attacker(k_3) && b-event(CompromiseKey(ep_4)) -> event(CompletedR(ep_4 + 1,k_3)) && attacker(k_3)
+The 1st, 2nd, 3rd, 4th, 5th, 6th, 7th, 8th, 9th, 10th hypotheses occur strictly before the 1st conclusion.
+The 9th hypothesis occurs before the 2nd conclusion.
+goal reachable: b-event(CompromiseKey(ep_4 + 1)) && b-event(CompletedR(ep_4,k_2)) && attacker(auth_update(a_4,k_2)) && attacker(ep_4) && attacker(s_3) && attacker(k_2) && table(Rstate(ep_4,s_3,a_4)) && attacker(k_3) && b-event(CompromiseKey(ep_4)) -> event(CompletedR(ep_4 + 1,k_3)) && attacker(k_3)
+The 1st, 2nd, 3rd, 4th, 5th, 6th, 7th, 8th, 9th hypotheses occur strictly before the 1st conclusion.
+The 8th hypothesis occurs before the 2nd conclusion.
+goal reachable: b-event(CompletedS(ep_4 + 1,k_2)) && b-event(CompletedR(ep_4,k_3)) && b-event(UsesAuth(ep_4 + 1,auth_update(a_4,k_3))) && b-event(CompletedS(ep_4,k_3)) && table(Rstate(ep_4,s_3,a_4)) && b-event(UsesAuth(ep_4,a_4)) && table(Sstate(ep_4,a_4)) && b-event(CompromiseKey(ep_4 + 1)) -> event(CompletedR(ep_4 + 1,k_2)) && attacker(k_2)
+The 1st, 2nd, 3rd, 4th, 6th hypotheses occur strictly before the 1st conclusion.
+The 1st, 2nd, 3rd, 4th, 5th, 6th, 7th, 8th hypotheses occur strictly before the 2nd conclusion.
+The 5th, 7th hypotheses occur before the 1st conclusion.
+Abbreviations:
+k_3 = k[hmac = mac(a_4,(ep_4,tag_hdr(pk(s_3)))),p_1 = pk(s_3),a_1 = a_4,ep_1 = ep_4,!1 = @sid]
+s2_1 = s2[cmac = mac(auth_update(a_4,k_3),(ep_4,tag_ct(aenc(pk(s_3),k_3)))),ct_1 = aenc(pk(s_3),k_3),a_2 = a_4,s_1 = s_3,ep_2 = ep_4,!1 = @sid_1]
+k_2 = k[hmac = mac(auth_update(a_4,k_3),(ep_4 + 1,tag_hdr(pk(s2_1)))),p_1 = pk(s2_1),a_1 = auth_update(a_4,k_3),ep_1 = ep_4 + 1,!1 = @sid_2]
+goal reachable: b-event(CompletedS(1,k_2)) && b-event(UsesAuth(1,auth0[])) && b-event(CompromiseKey(1)) -> event(CompletedR(1,k_2)) && attacker(k_2)
+The 1st, 2nd hypotheses occur strictly before the 1st conclusion.
+The 1st, 2nd, 3rd hypotheses occur strictly before the 2nd conclusion.
+Abbreviations:
+k_2 = k[hmac = mac(auth0[],(1,tag_hdr(pk(s0[])))),p_1 = pk(s0[]),a_1 = auth0[],ep_1 = 1,!1 = @sid]
+goal reachable: b-event(CompromiseKey(ep_4 + 1)) && b-event(CompletedR(ep_4,k_2)) && attacker(a_4) && attacker(s_3) && attacker(ep_4) && b-event(CompletedS(ep_5,k_2)) && table(Rstate(ep_5,s_3,a_5)) && b-event(UsesAuth(ep_5,a_5)) && table(Sstate(ep_5,a_5)) && table(Rstate(ep_4,s_3,a_4)) && attacker(k_3) && b-event(CompromiseKey(ep_5)) && b-event(CompromiseKey(ep_4)) -> event(CompletedR(ep_4 + 1,k_3)) && attacker(k_3)
+The 1st, 2nd, 3rd, 4th, 5th, 6th, 7th, 8th, 9th, 10th, 11th, 12th, 13th hypotheses occur strictly before the 1st conclusion.
+The 11th hypothesis occurs before the 2nd conclusion.
+Abbreviations:
+k_2 = k[hmac = mac(a_5,(ep_5,tag_hdr(pk(s_3)))),p_1 = pk(s_3),a_1 = a_5,ep_1 = ep_5,!1 = @sid]
+PARTIAL RESULT event(CompletedR(ep_4,k_2)) && attacker(k_2) ==> event(CompromiseKey(ep_4)) is true if the inductive queries can be proved.
+FINAL RESULT:
+RESULT not (event(UsesAuth(ep_4,a_4)) && attacker(a_4)) cannot be proved.
+RESULT event(CompletedS(ep_4,k_2)) && attacker(k_2) ==> event(CompromiseKey(ep_4)) cannot be proved.
+RESULT event(CompletedR(ep_4,k_2)) && attacker(k_2) ==> event(CompromiseKey(ep_4)) cannot be proved.
+
+--------------------------------------------------------------
+Verification summary:
+
+Query(ies):
+ - Query not event(CompletedR(ep_4,k_2)) cannot be proved.
+ - Query 
+   event(CompletedR(ep_4,k_2)) ==> event(CompletedS(ep_4,k_2))
+   event(CompletedS(ep_4,k_2)) ==> event(StartedR(ep_4,p_2))
+ cannot be proved.
+Associated lemma(s):
+ - Lemma event(CompletedR(ep_4,k_2)) && attacker(k_2) ==> event(CompromiseKey(ep_4)) cannot be proved in process 1, and these results are ERRORS because this lemma is not declared with the option [MaxSubset].
+ - Lemma event(CompletedS(ep_4,k_2)) && attacker(k_2) ==> event(CompromiseKey(ep_4)) cannot be proved in process 1, and these results are ERRORS because this lemma is not declared with the option [MaxSubset].
+ - Lemma not (event(UsesAuth(ep_4,a_4)) && attacker(a_4)) cannot be proved in process 1, and these results are ERRORS because this lemma is not declared with the option [MaxSubset].
+
+--------------------------------------------------------------
+

@@ -1,0 +1,28 @@
+free c: channel.
+type authenticator.
+type symkey.
+fun auth_update(authenticator, symkey): authenticator.
+fun mac(authenticator, bitstring): bitstring.
+nounif a: authenticator, k: symkey; attacker(auth_update(a, k)) / 30000.
+nounif a: authenticator, m: bitstring; attacker(mac(a, m)) / 30000.
+
+table Chain(nat, authenticator).
+event UsesAuth(nat, authenticator).
+
+let step() =
+   get Chain(ep, auth) in
+   event UsesAuth(ep, auth);
+   in(c, m: bitstring);
+   out(c, mac(auth, m));
+   new k: symkey;
+   insert Chain(ep+1, auth_update(auth, k)).
+
+lemma ep:nat, auth:authenticator;
+   event(UsesAuth(ep,auth)) && attacker(auth) ==> false [induction].
+
+query ep:nat, auth:authenticator; event(UsesAuth(ep,auth)).
+
+process
+   new auth0: authenticator;
+   insert Chain(1, auth0);
+   !step()

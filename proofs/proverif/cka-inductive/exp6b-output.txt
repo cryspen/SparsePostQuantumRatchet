@@ -1,0 +1,122 @@
+Process 0 (that is, the initial process):
+{1}new auth0: authenticator;
+{2}insert Chain(1,auth0);
+{3}!
+{9}get Chain(ep: nat,auth: authenticator) in
+{4}event UsesAuth(ep,auth);
+{5}in(c, m: bitstring);
+{6}out(c, mac(auth,m));
+{7}new k: symkey;
+{8}insert Chain(ep + 1,auth_update(auth,k))
+
+Declared: select table(Chain(ep_1,auth_1))/-6000 [ignoreAFewTimes,hypothesis]
+Declared: select attacker(mac(a,m_1))/-9999
+Declared: select attacker(auth_update(a,k_1))/-9999
+-- Query not (event(UsesAuth(ep_1,auth_1)) && attacker(auth_1)) in process 0.
+Translating the process into Horn clauses...
+Completing...
+Starting query not (event(UsesAuth(ep_1,auth_1)) && attacker(auth_1))
+RESULT not (event(UsesAuth(ep_1,auth_1)) && attacker(auth_1)) is true.
+Declared: select table(Chain(ep_1,auth_1))/-6000 [ignoreAFewTimes,hypothesis]
+Declared: select attacker(mac(a,m_1))/-9999
+Declared: select attacker(auth_update(a,k_1))/-9999
+-- Query not event(UsesAuth(ep_1,auth_1)) in process 0.
+Translating the process into Horn clauses...
+Completing...
+Starting query not event(UsesAuth(ep_1,auth_1))
+goal reachable: attacker(m_1) && b-event(UsesAuth(ep_1,auth_1)) && table(Chain(ep_1,auth_1)) -> event(UsesAuth(ep_1 + 1,auth_update(auth_1,k_1)))
+Abbreviations:
+k_1 = k[m = m_1,auth = auth_1,ep = ep_1,!1 = @sid]
+
+Derivation:
+Abbreviations:
+k_1 = k[m = m_1,auth = auth_1,ep = ep_1,!1 = @sid]
+
+1. We assume as hypothesis that
+table(Chain(ep_1,auth_1)).
+
+2. We assume as hypothesis that
+attacker(m_1).
+
+3. The entry Chain(ep_1,auth_1) that may be in a table by 1 may be read at get {9}.
+The event UsesAuth(ep_1,auth_1) may be executed at {4}.
+The message m_1 that the attacker may have by 2 may be received at input {5}.
+So the entry Chain(ep_1 + 1,auth_update(auth_1,k_1)) may be inserted in a table at insert {8}.
+table(Chain(ep_1 + 1,auth_update(auth_1,k_1))).
+
+4. The entry Chain(ep_1 + 1,auth_update(auth_1,k_1)) that may be in a table by 3 may be read at get {9}.
+So event UsesAuth(ep_1 + 1,auth_update(auth_1,k_1)) may be executed at {4}.
+event(UsesAuth(ep_1 + 1,auth_update(auth_1,k_1))).
+
+5. By 4, event(UsesAuth(ep_1 + 1,auth_update(auth_1,k_1))).
+The goal is reached, represented in the following fact:
+event(UsesAuth(ep_1 + 1,auth_update(auth_1,k_1))).
+
+
+A more detailed output of the traces is available with
+  set traceDisplay = long.
+
+new auth0: authenticator creating auth0_1 at {1}
+
+insert Chain(1,auth0_1) at {2}
+
+get Chain(a,a_1) at {9} in copy a_2
+
+event UsesAuth(a,a_1) at {4} in copy a_2
+
+in(c, a_3) at {5} in copy a_2
+
+out(c, ~M) with ~M = mac(a_1,a_3) at {6} in copy a_2
+
+new k: symkey creating k_2 at {7} in copy a_2
+
+insert Chain(a + 1,auth_update(a_1,k_2)) at {8} in copy a_2
+
+get Chain(a + 1,auth_update(a_1,k_2)) at {9} in copy a_4
+
+event UsesAuth(a + 1,auth_update(a_1,k_2)) at {4} in copy a_4 (goal)
+
+The event UsesAuth(a + 1,auth_update(a_1,k_2)) is executed at {4} in copy a_4.
+A trace has been found, assuming the following hypothesis:
+table(Chain(a[],a_1[]))
+goal reachable: event(UsesAuth(1,auth0[]))
+
+Derivation:
+
+1. The entry Chain(1,auth0[]) may be inserted in a table at insert {2}.
+table(Chain(1,auth0[])).
+
+2. The entry Chain(1,auth0[]) that may be in a table by 1 may be read at get {9}.
+So event UsesAuth(1,auth0[]) may be executed at {4}.
+event(UsesAuth(1,auth0[])).
+
+3. By 2, event(UsesAuth(1,auth0[])).
+The goal is reached, represented in the following fact:
+event(UsesAuth(1,auth0[])).
+
+
+A more detailed output of the traces is available with
+  set traceDisplay = long.
+
+new auth0: authenticator creating auth0_1 at {1}
+
+insert Chain(1,auth0_1) at {2}
+
+get Chain(1,auth0_1) at {9} in copy a
+
+event UsesAuth(1,auth0_1) at {4} in copy a (goal)
+
+The event UsesAuth(1,auth0_1) is executed at {4} in copy a.
+A trace has been found.
+RESULT not event(UsesAuth(ep_1,auth_1)) is false.
+
+--------------------------------------------------------------
+Verification summary:
+
+Query(ies):
+ - Query not event(UsesAuth(ep_1,auth_1)) is false.
+Associated lemma(s):
+ - Lemma not (event(UsesAuth(ep_1,auth_1)) && attacker(auth_1)) is true in process 0.
+
+--------------------------------------------------------------
+

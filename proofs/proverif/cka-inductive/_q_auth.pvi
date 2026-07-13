@@ -1,0 +1,13 @@
+
+(* ===================== Security Queries ===================== *)
+(* Authentication, universally over epoch ep -- proved BY INDUCTION
+   (Blanchet-Cheval-Cortier S&P'22 inductive correspondence proofs). *)
+query x: principal, y: principal, ep, ep_:nat, ek:seed, sk:symkey;
+    event(CompletedB(y,x,ep,sk)) ==>
+            (event(StartedA(x,y,ep,ek)) ||
+            (ep_ <= ep && (event(CompromisedAuthA(x,y,ep_)) || event(CompromisedAuthA(y,x,ep_))
+                || event(CompromisedAuthB(y,x,ep_)) ||  event(CompromisedAuthB(x,y,ep_)))));
+    event(CompletedA(x,y,ep,sk)) ==>
+            (event(StartedB(y,x,ep,ek))  ||
+            (ep_ <= ep && (event(CompromisedAuthA(x,y,ep_)) || event(CompromisedAuthA(y,x,ep_))
+                || event(CompromisedAuthB(y,x,ep_)) ||  event(CompromisedAuthB(x,y,ep_))))) [induction].

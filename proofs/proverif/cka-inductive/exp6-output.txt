@@ -1,0 +1,67 @@
+Process 0 (that is, the initial process):
+{1}new auth0: authenticator;
+{2}insert Chain(1,auth0);
+{3}!
+{9}get Chain(ep: nat,auth: authenticator) in
+{4}event UsesAuth(ep,auth);
+{5}in(c, m: bitstring);
+{6}out(c, mac(auth,m));
+{7}new k: symkey;
+{8}insert Chain(ep + 1,auth_update(auth,k))
+
+Declared: select attacker(mac(a,m_1))/-9999
+Declared: select attacker(auth_update(a,k_1))/-9999
+-- Query not (event(UsesAuth(ep_1,auth_1)) && attacker(auth_1)) in process 0.
+Translating the process into Horn clauses...
+select table(Chain(ep_1,auth_1))/-5000
+Completing...
+Starting query not (event(UsesAuth(ep_1,auth_1)) && attacker(auth_1))
+goal reachable: table(Chain(ep_1,auth_1)) && attacker(auth_1) -> event(UsesAuth(ep_1,auth_1)) && attacker(auth_1)
+The 1st hypothesis occurs before the 1st conclusion.
+The 2nd hypothesis occurs before the 2nd conclusion.
+
+Derivation:
+
+1. We assume as hypothesis that
+attacker(auth_1).
+
+2. We assume as hypothesis that
+table(Chain(ep_1,auth_1)).
+
+3. The entry Chain(ep_1,auth_1) that may be in a table by 2 may be read at get {9}.
+So event UsesAuth(ep_1,auth_1) may be executed at {4}.
+event(UsesAuth(ep_1,auth_1)).
+
+4. By 3, event(UsesAuth(ep_1,auth_1)).
+By 1, attacker(auth_1).
+The goals are reached, combined in the following fact:
+event(UsesAuth(ep_1,auth_1)) && attacker(auth_1).
+
+
+A more detailed output of the traces is available with
+  set traceDisplay = long.
+
+new auth0: authenticator creating auth0_1 at {1}
+
+insert Chain(1,auth0_1) at {2}
+
+get Chain(a,a_1) at {9} in copy a_2
+
+event UsesAuth(a,a_1) at {4} in copy a_2 (goal)
+
+The event UsesAuth(a,a_1) is executed at {4} in copy a_2.
+The attacker has the message a_1.
+A trace has been found, assuming the following hypothesis:
+table(Chain(a[],a_1[]))
+RESULT not (event(UsesAuth(ep_1,auth_1)) && attacker(auth_1)) cannot be proved.
+
+--------------------------------------------------------------
+Verification summary:
+
+Query(ies):
+ - Query not event(UsesAuth(ep_1,auth_1)) cannot be proved.
+Associated lemma(s):
+ - Lemma not (event(UsesAuth(ep_1,auth_1)) && attacker(auth_1)) cannot be proved in process 0, and these results are ERRORS because this lemma is not declared with the option [MaxSubset].
+
+--------------------------------------------------------------
+

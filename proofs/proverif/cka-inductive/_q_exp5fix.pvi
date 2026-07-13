@@ -1,0 +1,22 @@
+
+(* KEY FIX (manual 6.7.2): resolve ONCE on the blocking ratchet-state table
+   facts during verification, exposing the insert so induction can fire. *)
+nounif a: principal, b: principal, req: eksender, auth: authenticator;
+    table(AStates(a,b,req,auth)) [ignoreAFewTimes].
+nounif a: principal, b: principal, rsp: ctsender, auth: authenticator;
+    table(BStates(a,b,rsp,auth)) [ignoreAFewTimes].
+
+(* ===== Inductive invariant 1: authenticator-chain secrecy ===== *)
+lemma ep:nat, auth:authenticator;
+    event(UsesAuth(ep,auth)) && attacker(auth) ==> false [induction].
+
+(* ===== Inductive invariant 2: mutual authentication agreement ===== *)
+lemma x: principal, y: principal, ep:nat, ek:seed, sk:symkey;
+    event(CompletedB(y,x,ep,sk)) ==> event(StartedA(x,y,ep,ek));
+    event(CompletedA(x,y,ep,sk)) ==> event(StartedB(y,x,ep,ek)) [induction].
+
+(* ===== Main goals: secrecy of every completed epoch key ===== *)
+query x: principal, y: principal, ep:nat, sk:symkey;
+    event(CompletedA(x,y,ep,sk)) && attacker(sk).
+query x: principal, y: principal, ep:nat, sk:symkey;
+    event(CompletedB(x,y,ep,sk)) && attacker(sk).

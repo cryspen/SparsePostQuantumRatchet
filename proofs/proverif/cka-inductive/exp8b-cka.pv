@@ -1,0 +1,90 @@
+(* ============================================================= *)
+(* Clean UNBOUNDED continuous-KEM ratchet (CKA essence), designed *)
+(* for ProVerif induction. Unidirectional (abstracts SPQR's       *)
+(* role-swap) but keeps: fresh KEM per epoch (forward secrecy),   *)
+(* authenticator chain auth_{e+1}=auth_update(auth_e,k_e), and    *)
+(* MAC-authenticated header+ciphertext. Explicit epoch nat as     *)
+(* first table field so inductionOn=ep can force termination.     *)
+(* ============================================================= *)
+free c: channel.
+type skey. type pkey. type symkey. type auth.
+fun pk(skey): pkey.
+fun aenc(pkey, symkey): bitstring.
+reduc forall s:skey, k:symkey; adec(s, aenc(pk(s), k)) = k.
+fun mac(auth, bitstring): bitstring.
+fun auth_update(auth, symkey): auth.
+fun tag_hdr(pkey): bitstring [data].
+fun tag_ct(bitstring): bitstring [data].
+
+table Rstate(nat, skey, auth).
+table Sstate(nat, auth).
+
+event StartedR(nat, pkey).
+event CompletedR(nat, symkey).
+event CompletedS(nat, symkey).
+event UsesAuth(nat, auth).
+
+(* saturation control *)
+nounif a:auth, k:symkey; attacker(auth_update(a,k)) / 30000 [ignoreAFewTimes].
+nounif a:auth, m:bitstring; attacker(mac(a,m)) / 30000.
+nounif p:pkey, k:symkey; attacker(aenc(p,k)) / 30000.
+nounif ep:nat, s:skey, a:auth; table(Rstate(ep,s,a)) [ignoreAFewTimes, inductionOn=ep].
+nounif ep:nat, a:auth;         table(Sstate(ep,a))   [ignoreAFewTimes, inductionOn=ep].
+
+(* R publishes header for its epoch *)
+let R_hdr() =
+    get Rstate(ep, s, a) in
+    event UsesAuth(ep, a);
+    let p = pk(s) in
+    event StartedR(ep, p);
+    out(c, (p, mac(a, (ep, tag_hdr(p))))).
+
+(* S receives header, encapsulates fresh key, ratchets *)
+let S_step() =
+    get Sstate(ep, a) in
+    event UsesAuth(ep, a);
+    in(c, (p: pkey, hmac: bitstring));
+    if hmac = mac(a, (ep, tag_hdr(p))) then
+    new k: symkey;
+    let ct = aenc(p, k) in
+    let a2 = auth_update(a, k) in
+    event CompletedS(ep, k);
+    out(c, (ct, mac(a2, (ep, tag_ct(ct)))));
+    insert Sstate(ep+1, a2).
+
+(* R receives ciphertext, decaps, ratchets *)
+let R_recv() =
+    get Rstate(ep, s, a) in
+    in(c, (ct: bitstring, cmac: bitstring));
+    let k = adec(s, ct) in
+    let a2 = auth_update(a, k) in
+    if cmac = mac(a2, (ep, tag_ct(ct))) then
+    event CompletedR(ep, k);
+    new s2: skey;
+    insert Rstate(ep+1, s2, a2).
+
+(* ===== Inductive invariant BUNDLE, proved by MUTUAL induction =====
+   (1) authenticator-chain secrecy, (2)+(3) epoch-key secrecy.
+   They are mutually dependent (auth secrecy prevents ct/header forgery
+   => key secrecy; key secrecy prevents the attacker ratcheting the
+   authenticator => auth secrecy), so must be one [induction, proveAll]
+   group so each serves as the other's induction hypothesis. *)
+lemma ep:nat, a:auth, k:symkey;
+    event(UsesAuth(ep,a))   && attacker(a) ==> false;
+    event(CompletedS(ep,k)) && attacker(k) ==> false;
+    event(CompletedR(ep,k)) && attacker(k) ==> false [induction].
+
+(* ===== Authentication (key agreement) for ALL epochs, by induction ===== *)
+query ep:nat, k:symkey, p:pkey;
+    event(CompletedR(ep,k)) ==> event(CompletedS(ep,k));
+    event(CompletedS(ep,k)) ==> event(StartedR(ep,p)) [induction].
+
+(* sanity: the ratchet really runs (CompletedR reachable) *)
+query ep:nat, k:symkey; event(CompletedR(ep,k)).
+
+process
+    new auth0: auth;
+    new s0: skey;
+    insert Rstate(1, s0, auth0);
+    insert Sstate(1, auth0);
+    ( !R_hdr() | !S_step() | !R_recv() )

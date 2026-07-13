@@ -1,0 +1,16 @@
+
+(* ===================== Lemmas + Queries ===================== *)
+(* No AUTH compromise present => auth chain intact; auth as MUTUAL
+   inductive lemma (plain agreement). *)
+lemma x: principal, y: principal, ep:nat, ek:seed, sk:symkey;
+    event(CompletedB(y,x,ep,sk)) ==> event(StartedA(x,y,ep,ek));
+    event(CompletedA(x,y,ep,sk)) ==> event(StartedB(y,x,ep,ek)) [induction].
+
+(* Per-epoch forward secrecy under KEM-key compromise, universally over
+   epoch ep -- proved BY INDUCTION. attacker learns epoch-ep key only if
+   the KEM state of THAT epoch was compromised. *)
+query ep:nat, sk:symkey, x:principal, y:principal;
+    event(CompletedA(x,y,ep,sk)) && attacker(sk) ==>
+            (event(CompromisedKeysA(x,y,ep)) || event(CompromisedKeysB(y,x,ep)));
+    event(CompletedB(x,y,ep,sk)) && attacker(sk) ==>
+            (event(CompromisedKeysB(x,y,ep)) || event(CompromisedKeysA(y,x,ep))) [induction].

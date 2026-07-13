@@ -1,0 +1,13 @@
+
+(* ============ Inductive invariant: authenticator secrecy ============ *)
+(* The start-of-epoch authenticator is never known to the attacker.
+   Proved BY INDUCTION on the trace: auth_start(ep) = auth_update(
+   auth_start(ep-1), k); to build it the attacker needs auth_start(ep-1),
+   which the induction hypothesis rules out. Base: auth_start(1)=authAB
+   is a fresh secret. *)
+lemma ep:nat, auth:authenticator;
+    event(UsesAuth(ep,auth)) && attacker(auth) ==> false [induction].
+
+(* trivial main goal so ProVerif runs *)
+query x: principal, y: principal, ep:nat, sk:symkey;
+    event(CompletedA(x,y,ep,sk)).

@@ -1,0 +1,35 @@
+(* Minimal clean KEM in an unbounded per-epoch loop. Question: does
+   SATURATION terminate, and is per-epoch key secrecy provable by induction? *)
+free c: channel.
+type skey. type pkey. type ss. type ctsec. type symkey.
+fun pk(skey): pkey.
+fun encap(pkey, ctsec): bitstring.       (* KEM ciphertext *)
+fun ssof(pkey, ctsec): ss.               (* shared secret of that encaps *)
+reduc forall s:skey, r:ctsec; decap(s, encap(pk(s), r)) = ssof(pk(s), r).
+fun kdf(ss, nat): symkey.
+
+table St(nat, skey).
+event Key(nat, symkey).
+
+let party() =
+   get St(ep, s) in
+   out(c, pk(s));                        (* publish public key for this epoch *)
+   in(c, ct: bitstring);
+   let shared = decap(s, ct) in
+   let k = kdf(shared, ep) in
+   event Key(ep, k);
+   new s2: skey;
+   insert St(ep+1, s2).
+
+(* attacker-driven responder is just the network; honest responder: *)
+let resp() =
+   in(c, p: pkey);
+   new r: ctsec;
+   out(c, encap(p, r)).
+
+query ep:nat, k:symkey; event(Key(ep,k)) && attacker(k).
+
+process
+   new s0: skey;
+   insert St(1, s0);
+   ( !party() | !resp() )
