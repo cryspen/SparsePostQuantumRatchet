@@ -117,9 +117,16 @@ python3 hax.py extract-proverif                 # regenerate extraction/lib.pvl
 shasum -a 256 -c proofs/proverif/extraction/lib.pvl.sha256   # must match
 ```
 
-Expected `lib.pvl` digest (SHA-256):
-`51b54eed55ee23d19386f7a62fb68dbf3a25ef80d5567c77f86e1c8d20f6395b`
-(also stored in `extraction/lib.pvl.sha256`).
+The expected `lib.pvl` digest (SHA-256) lives in `extraction/lib.pvl.sha256`,
+which is what the `shasum -c` above checks. Read it with:
+
+```bash
+cat proofs/proverif/extraction/lib.pvl.sha256
+```
+
+That file is the single source of truth: it is regenerated alongside `lib.pvl`,
+so it cannot drift. Do not copy the digest into prose here — an earlier copy
+went stale and made the extraction look like it had drifted when it had not.
 
 ### Regression (the SPQR refactors are behaviour-preserving)
 
