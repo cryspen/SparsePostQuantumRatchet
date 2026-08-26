@@ -1,21 +1,21 @@
 (*****************************************************************)
 (*  hax — ProVerif primitives library                            *)
 (*****************************************************************)
-(* Anything that used to live in the per-extraction `lib.pvl`     *)
-(* preamble is here instead. Loading this file via `-lib` gives   *)
-(* the extracted file everything it needs to typecheck:           *)
+(* This file supplies what the extracted `lib.pvl` references but *)
+(* does not define. Loading it via `-lib` lets the extracted file *)
+(* typecheck:                                                     *)
 (*                                                                *)
 (*   - `channel c.` — the public attacker channel.                *)
 (*   - `construct_fail` / `empty` — fail/default helpers.         *)
 (*   - `Some`/`None` (`Option_err`) — `Option<T>` constructors.   *)
 (*   - `True`/`False` (`bool_default`/`bool_err`) — booleans.     *)
-(*   - `nat_lit` — encode `usize`/`uN`/`iN` literals.             *)
+(*   - `nat_0 .. nat_16` — small `usize`/`uN`/`iN` literals.      *)
 (*   - `logical_and`/`logical_or` — opaque `&&`/`||`.            *)
 (*   - `rust_primitives::*`, `core::num`/`ops`/`cmp`/`slice`      *)
 (*     trait roots, `hax_lib::*` helpers, the tuple constructors. *)
 (*                                                                *)
-(* `core_models::*` symbols are out of scope here; they'll        *)
-(* migrate upstream as `#[proverif_replace]` annotations.         *)
+(* `core_models::*` symbols are out of scope here; a using crate  *)
+(* supplies them via `#[proverif_replace]` annotations.           *)
 (*                                                                *)
 (* Use:                                                           *)
 (*   proverif -lib primitives.pvl lib.pvl                         *)
@@ -43,8 +43,32 @@ fun False(): bitstring [data].
 letfun bool_default() = False().
 letfun bool_err() = let x = construct_fail() in False().
 
-(*** Integer literal lifting ***)
-fun nat_lit(nat): bitstring [data].
+(*** Integer literals — one opaque constant per literal value ***)
+(* ProVerif's `nat` is unary (Peano), so a large literal (`u32::MAX`,       *)
+(* `u64::MAX`, a 20-digit constant) overflows its front-end. Instead every  *)
+(* integer literal `N` is its own opaque constant `nat_N` (`nat_neg_N` when *)
+(* negative), exactly like string/char/float literals. The small values     *)
+(* `nat_0 .. nat_16` are declared here so `+ 1` / `- 1` can reduce over them *)
+(* (see `machine_int__add`/`sub` below) and the head/tail index and         *)
+(* insert/remove-at-0 rules can name them; any larger literal is            *)
+(* auto-declared in `missingdecl.pvl`. Distinct literals stay distinct.      *)
+const nat_0: bitstring.
+const nat_1: bitstring.
+const nat_2: bitstring.
+const nat_3: bitstring.
+const nat_4: bitstring.
+const nat_5: bitstring.
+const nat_6: bitstring.
+const nat_7: bitstring.
+const nat_8: bitstring.
+const nat_9: bitstring.
+const nat_10: bitstring.
+const nat_11: bitstring.
+const nat_12: bitstring.
+const nat_13: bitstring.
+const nat_14: bitstring.
+const nat_15: bitstring.
+const nat_16: bitstring.
 
 (*** Opaque short-circuit operators ***)
 fun logical_and(bitstring, bitstring): bitstring.
@@ -69,34 +93,161 @@ fun rust_primitives__hax__cast_op(bitstring): bitstring [data].
 fun rust_primitives__hax__logical_op_and(bitstring, bitstring): bitstring [data].
 fun rust_primitives__hax__logical_op_or(bitstring, bitstring): bitstring [data].
 
-(* `+ 1` on a `nat_lit` reduces concretely (`nat_lit(x) + nat_lit(1) = nat_lit(x+1)`)
-   so loop/epoch counters become `nat_lit(1)`, `nat_lit(2)`, ... that queries can
-   name and order (ProVerif `nat` supports only `x + constant`). Any other operands
-   (byte arithmetic on opaque blobs) fall through to an opaque `[data]` term. *)
+(* `nat2native` / `native2nat`: bridge the opaque `nat_0 .. nat_16` constants to
+   ProVerif's built-in `nat` and back. Both are PARTIAL — an operand outside
+   `0 .. 16` (a larger literal, or an opaque byte blob) does not convert, so a
+   caller can fall back to an opaque symbol; a larger value never reaches the
+   unary `nat`, so it cannot overflow. These are only used by the *opt-in*
+   `nat_*` operators at the end of this block; the canonical `machine_int__*`
+   operators keep the opaque / `± 1` model, so a model that does not call the
+   `nat_*` versions pays nothing for the bridge. *)
+letfun nat2native(x: bitstring) =
+  let (= nat_0) = x in 0 else let (= nat_1) = x in 1 else let (= nat_2) = x in 2
+  else let (= nat_3) = x in 3 else let (= nat_4) = x in 4 else let (= nat_5) = x in 5
+  else let (= nat_6) = x in 6 else let (= nat_7) = x in 7 else let (= nat_8) = x in 8
+  else let (= nat_9) = x in 9 else let (= nat_10) = x in 10 else let (= nat_11) = x in 11
+  else let (= nat_12) = x in 12 else let (= nat_13) = x in 13 else let (= nat_14) = x in 14
+  else let (= nat_15) = x in 15 else let (= nat_16) = x in 16.
+letfun native2nat(n: nat) =
+  if n = 0 then nat_0 else if n = 1 then nat_1 else if n = 2 then nat_2
+  else if n = 3 then nat_3 else if n = 4 then nat_4 else if n = 5 then nat_5
+  else if n = 6 then nat_6 else if n = 7 then nat_7 else if n = 8 then nat_8
+  else if n = 9 then nat_9 else if n = 10 then nat_10 else if n = 11 then nat_11
+  else if n = 12 then nat_12 else if n = 13 then nat_13 else if n = 14 then nat_14
+  else if n = 15 then nat_15 else if n = 16 then nat_16 else construct_fail().
+
+(* Canonical arithmetic (what the extracted code calls). `+ 1` / `- 1` on a
+   small concrete literal reduces over the declared constants `nat_0 .. nat_16`,
+   so loop/epoch counters progress (`nat_1`, `nat_2`, ...) for queries to name.
+   Only `± 1` reduces; any other operand falls through to an opaque `[data]`
+   term. The bound (16) covers every counter that climbs concretely under the
+   bounded loop model (LOOP_BOUND = 3). For general small arithmetic use the
+   opt-in `nat_add` / `nat_sub` below. *)
 fun rust_primitives__hax__machine_int__add_opaque(bitstring, bitstring): bitstring [data].
 letfun rust_primitives__hax__machine_int__add(a: bitstring, b: bitstring) =
-  let nat_lit(x) = a in
-    (let nat_lit(1) = b in nat_lit(x + 1)
+  let (= nat_1) = b in
+    (let (= nat_0)  = a in nat_1
+     else let (= nat_1)  = a in nat_2
+     else let (= nat_2)  = a in nat_3
+     else let (= nat_3)  = a in nat_4
+     else let (= nat_4)  = a in nat_5
+     else let (= nat_5)  = a in nat_6
+     else let (= nat_6)  = a in nat_7
+     else let (= nat_7)  = a in nat_8
+     else let (= nat_8)  = a in nat_9
+     else let (= nat_9)  = a in nat_10
+     else let (= nat_10) = a in nat_11
+     else let (= nat_11) = a in nat_12
+     else let (= nat_12) = a in nat_13
+     else let (= nat_13) = a in nat_14
+     else let (= nat_14) = a in nat_15
+     else let (= nat_15) = a in nat_16
      else rust_primitives__hax__machine_int__add_opaque(a, b))
   else rust_primitives__hax__machine_int__add_opaque(a, b).
-fun rust_primitives__hax__machine_int__sub(bitstring, bitstring): bitstring [data].
+fun rust_primitives__hax__machine_int__sub_opaque(bitstring, bitstring): bitstring [data].
+letfun rust_primitives__hax__machine_int__sub(a: bitstring, b: bitstring) =
+  let (= nat_1) = b in
+    (let (= nat_1)  = a in nat_0
+     else let (= nat_2)  = a in nat_1
+     else let (= nat_3)  = a in nat_2
+     else let (= nat_4)  = a in nat_3
+     else let (= nat_5)  = a in nat_4
+     else let (= nat_6)  = a in nat_5
+     else let (= nat_7)  = a in nat_6
+     else let (= nat_8)  = a in nat_7
+     else let (= nat_9)  = a in nat_8
+     else let (= nat_10) = a in nat_9
+     else let (= nat_11) = a in nat_10
+     else let (= nat_12) = a in nat_11
+     else let (= nat_13) = a in nat_12
+     else let (= nat_14) = a in nat_13
+     else let (= nat_15) = a in nat_14
+     else let (= nat_16) = a in nat_15
+     else rust_primitives__hax__machine_int__sub_opaque(a, b))
+  else rust_primitives__hax__machine_int__sub_opaque(a, b).
 fun rust_primitives__hax__machine_int__mul(bitstring, bitstring): bitstring [data].
 fun rust_primitives__hax__machine_int__div(bitstring, bitstring): bitstring [data].
 fun rust_primitives__hax__machine_int__rem(bitstring, bitstring): bitstring [data].
 (* Integer (in)equality is *structural* equality on the symbolic terms, like
    `PartialEq::eq` below. Without this, `eq(x, x)` stays an opaque term that
    never reduces to `True()`, so every `if a == b` / `assert_eq!(a, b)` /
-   `find(|e| e.id == id)` mis-fires (e.g. a prefix check that always "fails").
-   The ordering comparisons (`lt`/`le`/`gt`/`ge`) and arithmetic stay opaque —
-   the model carries no integer arithmetic. *)
+   `find(|e| e.id == id)` mis-fires (e.g. a prefix check that always "fails"). *)
 letfun rust_primitives__hax__machine_int__eq(a: bitstring, b: bitstring) =
   let (= a) = b in True() else False().
 letfun rust_primitives__hax__machine_int__ne(a: bitstring, b: bitstring) =
   let (= a) = b in False() else True().
+(* Canonical ordering is opaque — the model carries no integer ordering. For a
+   concrete comparison of two small constants use the opt-in `nat_lt` etc. *)
 fun rust_primitives__hax__machine_int__lt(bitstring, bitstring): bitstring [data].
 fun rust_primitives__hax__machine_int__le(bitstring, bitstring): bitstring [data].
 fun rust_primitives__hax__machine_int__gt(bitstring, bitstring): bitstring [data].
 fun rust_primitives__hax__machine_int__ge(bitstring, bitstring): bitstring [data].
+
+(* Opt-in reductive small-integer layer. Each evaluates concretely when both
+   operands are constants in `nat_0 .. nat_16` and otherwise falls back to the
+   canonical `machine_int__*` operator above (opaque, or `± 1` for add/sub). A
+   model that needs a concrete epoch/counter comparison or a general small add
+   (e.g. `cep < max_epoch()`) calls these by name in its handwritten
+   process/queries; the extracted code keeps using `machine_int__*`, so no other
+   model is affected and none pays for the bridge. `nat` has no `x + y` (only
+   `x + <literal>`), so `nat_add` / `nat_sub` match the second operand to a
+   literal `k`. *)
+letfun nat_add(a: bitstring, b: bitstring) =
+  let r =
+    ( let (= nat_0)  = b in a
+      else let (= nat_1)  = b in native2nat(nat2native(a) + 1)
+      else let (= nat_2)  = b in native2nat(nat2native(a) + 2)
+      else let (= nat_3)  = b in native2nat(nat2native(a) + 3)
+      else let (= nat_4)  = b in native2nat(nat2native(a) + 4)
+      else let (= nat_5)  = b in native2nat(nat2native(a) + 5)
+      else let (= nat_6)  = b in native2nat(nat2native(a) + 6)
+      else let (= nat_7)  = b in native2nat(nat2native(a) + 7)
+      else let (= nat_8)  = b in native2nat(nat2native(a) + 8)
+      else let (= nat_9)  = b in native2nat(nat2native(a) + 9)
+      else let (= nat_10) = b in native2nat(nat2native(a) + 10)
+      else let (= nat_11) = b in native2nat(nat2native(a) + 11)
+      else let (= nat_12) = b in native2nat(nat2native(a) + 12)
+      else let (= nat_13) = b in native2nat(nat2native(a) + 13)
+      else let (= nat_14) = b in native2nat(nat2native(a) + 14)
+      else let (= nat_15) = b in native2nat(nat2native(a) + 15)
+      else let (= nat_16) = b in native2nat(nat2native(a) + 16) ) in r
+  else rust_primitives__hax__machine_int__add(a, b).
+letfun nat_sub(a: bitstring, b: bitstring) =
+  let r =
+    ( let (= nat_0)  = b in a
+      else let (= nat_1)  = b in native2nat(nat2native(a) - 1)
+      else let (= nat_2)  = b in native2nat(nat2native(a) - 2)
+      else let (= nat_3)  = b in native2nat(nat2native(a) - 3)
+      else let (= nat_4)  = b in native2nat(nat2native(a) - 4)
+      else let (= nat_5)  = b in native2nat(nat2native(a) - 5)
+      else let (= nat_6)  = b in native2nat(nat2native(a) - 6)
+      else let (= nat_7)  = b in native2nat(nat2native(a) - 7)
+      else let (= nat_8)  = b in native2nat(nat2native(a) - 8)
+      else let (= nat_9)  = b in native2nat(nat2native(a) - 9)
+      else let (= nat_10) = b in native2nat(nat2native(a) - 10)
+      else let (= nat_11) = b in native2nat(nat2native(a) - 11)
+      else let (= nat_12) = b in native2nat(nat2native(a) - 12)
+      else let (= nat_13) = b in native2nat(nat2native(a) - 13)
+      else let (= nat_14) = b in native2nat(nat2native(a) - 14)
+      else let (= nat_15) = b in native2nat(nat2native(a) - 15)
+      else let (= nat_16) = b in native2nat(nat2native(a) - 16) ) in r
+  else rust_primitives__hax__machine_int__sub(a, b).
+letfun nat_lt(a: bitstring, b: bitstring) =
+  let r = (let x = nat2native(a) in let y = nat2native(b) in
+             if x < y then True() else False()) in r
+  else rust_primitives__hax__machine_int__lt(a, b).
+letfun nat_le(a: bitstring, b: bitstring) =
+  let r = (let x = nat2native(a) in let y = nat2native(b) in
+             if x <= y then True() else False()) in r
+  else rust_primitives__hax__machine_int__le(a, b).
+letfun nat_gt(a: bitstring, b: bitstring) =
+  let r = (let x = nat2native(a) in let y = nat2native(b) in
+             if x > y then True() else False()) in r
+  else rust_primitives__hax__machine_int__gt(a, b).
+letfun nat_ge(a: bitstring, b: bitstring) =
+  let r = (let x = nat2native(a) in let y = nat2native(b) in
+             if x >= y then True() else False()) in r
+  else rust_primitives__hax__machine_int__ge(a, b).
 fun rust_primitives__hax__machine_int__shl(bitstring, bitstring): bitstring [data].
 fun rust_primitives__hax__machine_int__shr(bitstring, bitstring): bitstring [data].
 fun rust_primitives__hax__machine_int__bitxor(bitstring, bitstring): bitstring [data].
@@ -120,16 +271,15 @@ fun rust_primitives__hax__int__from_machine(bitstring): bitstring [data].
 fun rust_primitives__hax__int__into_machine(bitstring): bitstring [data].
 
 (*** rust_primitives::arithmetic / slice / sequence — non-auto-decl ***)
-(* The ~251 per-int-width arithmetic ops and most slice / sequence  *)
-(* primitives are opaque `fun NAME(...): bitstring [data].` shapes,  *)
-(* shape-identical to what the auto-decl pass synthesises, and have *)
-(* `#[cfg_attr(hax_backend_proverif, hax_lib::pv_constructor)]` on   *)
-(* their Rust source. They've been removed from this file.           *)
-(* What stays below is the small set that is *not* shape-equivalent  *)
-(* to auto-decl: identity letfuns that collapse otherwise-distinct  *)
-(* collection wrappers (so equality fires across `&v[..]` vs        *)
-(* `v.as_slice()`), the `*SIZE_*` consts, and synthesised names      *)
-(* (`neg`, `slice_index_range`, `hax::repeat`) with no Rust source. *)
+(* Only the primitives whose shape is *not* the opaque                *)
+(* `fun NAME(...): bitstring [data].` that the auto-decl pass would   *)
+(* synthesise live here: identity letfuns that collapse               *)
+(* otherwise-distinct collection wrappers (so equality fires across   *)
+(* `&v[..]` vs `v.as_slice()`), the `*SIZE_*` consts, and synthesised *)
+(* names (`neg`, `slice_index_range`, `hax::repeat`) with no Rust     *)
+(* source. Shape-equivalent opaque ops carry                          *)
+(* `#[cfg_attr(hax_backend_proverif, hax_lib::pv_constructor)]` in    *)
+(* their Rust source.                                                 *)
 
 const rust_primitives__arithmetic__ISIZE_MAX: bitstring.
 const rust_primitives__arithmetic__ISIZE_MIN: bitstring.
@@ -265,14 +415,20 @@ letfun rand_core__RngCore__fill_bytes(rng: bitstring, dest: bitstring) =
   new b: bitstring;
   rust_primitives__hax__Tuple2__Tuple2(rng, b).
 
-(* `hax_lib::assume` and `hax_lib::prop::constructors::from_bool` *)
-(* are opaque `fun ... [data]` — equivalent to auto-decl, dropped. *)
+(* `hax_lib::prop::constructors::from_bool` is a bool -> prop coercion  *)
+(* (identity in the bitstring model); `hax_lib::assume` is a proof hint *)
+(* with no runtime effect, and the extracted code discards its result   *)
+(* (`let wildcard = assume(..)`). Both are identity `letfun`s: faithful *)
+(* and footprint-free (an opaque `fun` would add a spurious constructor *)
+(* to the attacker term algebra). Defining them here also keeps them    *)
+(* out of the auto-declared `missingdecl` diagnostic.                   *)
+letfun hax_lib__prop__constructors__from_bool(b: bitstring) = b.
+letfun hax_lib__assume(p: bitstring) = p.
 
 (*****************************************************************)
-(*  std prelude — formerly synthesised by the auto-decl pass as  *)
-(*  invertible `[data]`. Made explicit here with real semantics  *)
-(*  (or honest opaque stubs) so `missingdecl.pvl` stays a signal  *)
-(*  and the one-way shapes are not silently destructurable.       *)
+(*  std prelude — explicit declarations with real semantics      *)
+(*  (or honest opaque stubs) so `missingdecl.pvl` stays a signal *)
+(*  and the one-way shapes are not silently destructurable.      *)
 (*****************************************************************)
 
 (*** Tuple field projectors `t.0` .. `t.5` (over the [data] tuple ctors) ***)
@@ -420,9 +576,9 @@ fun core__slice__Impl__last(bitstring): bitstring.
 (* `s[0]` -> head, `s[1..]` -> tail; other indices / opaque (byte-buffer)      *)
 (* operands fall back to an opaque accessor. *)
 letfun core__ops__index__Index__index(s: bitstring, pos: bitstring) =
-  let (= nat_lit(0)) = pos in
+  let (= nat_0) = pos in
     (let rust_primitives__hax__array_cons(x, r) = s in x else array_index_opaque(s, pos))
-  else let (= core__ops__range__RangeFrom__RangeFrom(nat_lit(1))) = pos in
+  else let (= core__ops__range__RangeFrom__RangeFrom(nat_1)) = pos in
     (let rust_primitives__hax__array_cons(x, r) = s in r else array_index_opaque(s, pos))
   (* Fixed-offset split of a two-part concatenation: `s[..n]` -> first part,
      `s[n..]` -> second part (the offset itself is abstracted away). *)
@@ -436,8 +592,7 @@ letfun core__slice__Impl__copy_from_slice(self: bitstring, src: bitstring) = src
 letfun core__slice__Impl__clone_from_slice(self: bitstring, src: bitstring) = src.
 
 (*****************************************************************)
-(*  More std prelude, surfaced once minos (not just mandrake) is  *)
-(*  composed in. Same conventions: ADT variants are `[data]`,     *)
+(*  More std prelude. Same conventions: ADT variants are `[data]`, *)
 (*  Result/Option methods follow the transparent/structural model *)
 (*  above, byte<->int conversions are identity, and the remaining  *)
 (*  Vec/slice ops are Seq stubs (workstream 2).                    *)
@@ -484,31 +639,13 @@ fun core__iter__traits__exact_size__ExactSizeIterator__len(bitstring): bitstring
 (*** at position 0, so they must cancel; other positions stay opaque.          ***)
 letfun alloc__vec__Impl__with_capacity(n: bitstring) = rust_primitives__hax__array_nil().
 letfun alloc__vec__Impl_1__insert_kw(s: bitstring, pos: bitstring, x: bitstring) =
-  let (= nat_lit(0)) = pos in rust_primitives__hax__array_cons(x, s)
+  let (= nat_0) = pos in rust_primitives__hax__array_cons(x, s)
   else array_insert_opaque(s, pos, x).
 (* `Vec::remove(&mut self, i) -> T` is functionalized to `(self_without_i, removed_i)`. *)
 letfun alloc__vec__Impl_1__remove(s: bitstring, pos: bitstring) =
-  let (= nat_lit(0)) = pos in
+  let (= nat_0) = pos in
     (let rust_primitives__hax__array_cons(x, r) = s in
        rust_primitives__hax__Tuple2__Tuple2(r, x)
      else rust_primitives__hax__Tuple2__Tuple2(array_remove_rest(s, pos), array_index_opaque(s, pos)))
   else rust_primitives__hax__Tuple2__Tuple2(array_remove_rest(s, pos), array_index_opaque(s, pos)).
 letfun alloc__vec__Impl_2__extend_from_slice(a: bitstring, b: bitstring) = array_extend(a, b).
-
-(* --- auto-declared externals referenced by extraction/lib.pvl (deduped) --- *)
-(*****************************************************************)
-(* missingdecl.pvl — UNDEFINED externals referenced by lib.pvl   *)
-(*                                                               *)
-(* DIAGNOSTIC, not part of the model. Each symbol below is       *)
-(* referenced by lib.pvl but has no definition (and is not in    *)
-(* primitives.pvl). Supply a real one by hand, or by extracting  *)
-(* the crate that owns it (e.g. a separately-extracted           *)
-(* dependency). Declared WITHOUT `[data]` because the real       *)
-(* nature (one-way fun / data constructor / letfun) is unknown.  *)
-(* GOAL: this file is EMPTY.                                     *)
-(*****************************************************************)
-fun core__option__Impl__ok_or(bitstring, bitstring): bitstring.
-fun hax_lib__assume(bitstring): bitstring.
-fun hax_lib__prop__constructors__from_bool(bitstring): bitstring.
-fun libcrux_ml_kem__ind_cca__incremental__types__Impl_6__len(bitstring): bitstring.
-fun libcrux_ml_kem__mlkem768__incremental__pk1_len(bitstring): bitstring.

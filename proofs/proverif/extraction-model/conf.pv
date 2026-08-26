@@ -58,6 +58,6 @@ query i: time, j: time, x: principal, y: principal, ep: nat, ep_: nat, sk: bitst
 process System()
 
 (* EXPECTPV
-RESULT event(CompletedA(x_23,y,ep_9,sk))@i && attacker(sk) ==> event(CompromisedKeysA(x_23,y,ep_9)) || event(CompromisedKeysB(y,x_23,ep_9)) || (ep_9 ≥ ep_ && event(CompromisedAuthA(x_23,y,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthA(y,x_23,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(x_23,y,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(y,x_23,ep_))@j && i > j) is true.
-RESULT event(CompletedB(x_23,y,ep_9,sk))@i && attacker(sk) ==> event(CompromisedKeysB(x_23,y,ep_9)) || event(CompromisedKeysA(y,x_23,ep_9)) || (ep_9 ≥ ep_ && event(CompromisedAuthA(x_23,y,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthA(y,x_23,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(x_23,y,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(y,x_23,ep_))@j && i > j) is true.
+RESULT event(CompletedA(x_21,y,ep_9,sk))@i && attacker(sk) ==> event(CompromisedKeysA(x_21,y,ep_9)) || event(CompromisedKeysB(y,x_21,ep_9)) || (ep_9 ≥ ep_ && event(CompromisedAuthA(x_21,y,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthA(y,x_21,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(x_21,y,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(y,x_21,ep_))@j && i > j) is true.
+RESULT event(CompletedB(x_21,y,ep_9,sk))@i && attacker(sk) ==> event(CompromisedKeysB(x_21,y,ep_9)) || event(CompromisedKeysA(y,x_21,ep_9)) || (ep_9 ≥ ep_ && event(CompromisedAuthA(x_21,y,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthA(y,x_21,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(x_21,y,ep_))@j && i > j) || (ep_9 ≥ ep_ && event(CompromisedAuthB(y,x_21,ep_))@j && i > j) is true.
 END *)

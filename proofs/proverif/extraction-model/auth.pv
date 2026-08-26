@@ -37,6 +37,6 @@ query x: principal, y: principal, ep: nat, ep_: nat, sk: bitstring, hd: bitstrin
 process System()
 
 (* EXPECTPV
-RESULT event(CompletedB(y,x_23,ep_9,sk)) ==> event(StartedA(x_23,y,ep_9,hd)) || (ep_9 ≥ ep_ && (event(CompromisedAuthA(x_23,y,ep_)) || event(CompromisedAuthA(y,x_23,ep_)) || event(CompromisedAuthB(y,x_23,ep_)) || event(CompromisedAuthB(x_23,y,ep_)))) is true.
-RESULT event(CompletedA(x_23,y,ep_9,sk)) ==> event(StartedB(y,x_23,ep_9,hd)) || (ep_9 ≥ ep_ && (event(CompromisedAuthA(x_23,y,ep_)) || event(CompromisedAuthA(y,x_23,ep_)) || event(CompromisedAuthB(y,x_23,ep_)) || event(CompromisedAuthB(x_23,y,ep_)))) is true.
+RESULT event(CompletedB(y,x_21,ep_9,sk)) ==> event(StartedA(x_21,y,ep_9,hd)) || (ep_9 ≥ ep_ && (event(CompromisedAuthA(x_21,y,ep_)) || event(CompromisedAuthA(y,x_21,ep_)) || event(CompromisedAuthB(y,x_21,ep_)) || event(CompromisedAuthB(x_21,y,ep_)))) is true.
+RESULT event(CompletedA(x_21,y,ep_9,sk)) ==> event(StartedB(y,x_21,ep_9,hd)) || (ep_9 ≥ ep_ && (event(CompromisedAuthA(x_21,y,ep_)) || event(CompromisedAuthA(y,x_21,ep_)) || event(CompromisedAuthB(y,x_21,ep_)) || event(CompromisedAuthB(x_21,y,ep_)))) is true.
 END *)

@@ -57,7 +57,7 @@ letfun dk_hs(s: bitstring) = spqr__v1__unchunked__send_ek__HeaderSent__HeaderSen
 letfun es_c1(s: bitstring) = spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__es(s).
 
 letfun epochsecret_secret(es: bitstring) = spqr__EpochSecret__EpochSecret__secret_kw(es).
-letfun epoch_succ(e: bitstring) = rust_primitives__hax__machine_int__add(e, nat_lit(1)).
+letfun epoch_succ(e: bitstring) = rust_primitives__hax__machine_int__add(e, nat_1).
 
 free tag_hdr: bitstring.
 free tag_ek: bitstring.
@@ -103,7 +103,7 @@ event CompromisedAuthB(principal, principal, nat).
 (* ===================== Requestor: one full epoch as EK generator ===================== *)
 let Requestor() =
     get AStates(a, b, st0) in                       (* KeysUnsampled(ep, auth) *)
-    let nat_lit(ep) = epoch_ku(st0) in
+    let ep = nat2native(epoch_ku(st0)) in
     new rng: bitstring;
     let rust_primitives__hax__Tuple2__Tuple2(rng1, t1) = ek_send_header(st0, rng) in
     let rust_primitives__hax__Tuple3__Tuple3(st1, hdr, hmac) = t1 in   (* HeaderSent: auth, dk *)
@@ -118,14 +118,14 @@ let Requestor() =
     in(c, (=tag_ct2, ct2: bitstring, mac: bitstring));
     let rust_primitives__hax__Tuple2__Tuple2(st4, esec) = ek_recv_ct2(st3, ct2, mac) in
     let spqr__EpochSecret__EpochSecret(eep, ka) = esec in
-    let nat_lit(cep) = eep in
+    let cep = nat2native(eep) in
     event CompletedA(a, b, cep, ka);
     if cep < max_epoch() then insert BStates(a, b, st4, no_secret).
 
 (* ===================== Responder: one full epoch as CT generator ===================== *)
 let Responder() =
     get BStates(b, a, st0, sec0) in                 (* NoHeaderReceived(ep, auth) *)
-    let nat_lit(ep) = epoch_nh(st0) in
+    let ep = nat2native(epoch_nh(st0)) in
     insert RespAuth(b, a, ep, auth_nh(st0));        (* pre-update authenticator *)
     in(c, (=tag_hdr, hdr: bitstring, mac: bitstring));
     event StartedB(b, a, ep, hdr);
