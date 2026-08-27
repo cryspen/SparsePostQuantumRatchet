@@ -10,7 +10,7 @@ rust-version = "1.83.0"
 [dependencies]
 curve25519-dalek = { version = "4.1.3", features = ["rand_core"] }
 displaydoc = "0.2"
-hax-lib = { git = "https://github.com/cryspen/hax.git", rev = "1a99a1948d5931026fd0be4e322fbd1b7149927b" }
+hax-lib = { git = "https://github.com/cryspen/hax.git", rev = "5cdb74443a1eeebd34f7bae057ead44bc8a25107" }
 hkdf = "0.12"
 libcrux-hmac = "0.0.6"
 libcrux-ml-kem = { version = "0.0.8", default-features = false, features = ["incremental", "mlkem768"] }

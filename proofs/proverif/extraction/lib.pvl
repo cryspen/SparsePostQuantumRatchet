@@ -16,14 +16,14 @@
   ideal-functionality boundary.
 *)
 
-(* src: src/encoding/polynomial.rs:13 spqr__encoding__polynomial__PolynomialError *)
+(* src: src/encoding/polynomial.rs:13:0-20:1 spqr__encoding__polynomial__PolynomialError *)
 fun spqr__encoding__polynomial__PolynomialError__MessageLengthEven(): bitstring [data].
 fun spqr__encoding__polynomial__PolynomialError__MessageLengthTooLong(): bitstring [data].
 fun spqr__encoding__polynomial__PolynomialError__SerializationInvalid(): bitstring [data].
-(* src: src/serialize.rs:7 spqr__serialize__Error *)
+(* src: src/serialize.rs:7:0-12:1 spqr__serialize__Error *)
 fun spqr__serialize__Error__Deserialization(): bitstring [data].
 fun spqr__serialize__Error__EncodingDecoding(): bitstring [data].
-(* src: src/encoding.rs:9 spqr__encoding__EncodingError *)
+(* src: src/encoding.rs:9:0-16:1 spqr__encoding__EncodingError *)
 fun spqr__encoding__EncodingError__PolynomialError(bitstring): bitstring [data].
 reduc forall v_0: bitstring;
   spqr__encoding__EncodingError__PolynomialError__0(
@@ -31,14 +31,14 @@ reduc forall v_0: bitstring;
   ) = v_0.
 fun spqr__encoding__EncodingError__ChunkIndexDecodingError(): bitstring [data].
 fun spqr__encoding__EncodingError__ChunkDataDecodingError(): bitstring [data].
-(* src: src/authenticator.rs:11 spqr__authenticator__Error *)
+(* src: src/authenticator.rs:11:0-24:1 spqr__authenticator__Error *)
 fun spqr__authenticator__Error__InvalidCtMac(): bitstring [data].
 fun spqr__authenticator__Error__InvalidHdrMac(): bitstring [data].
 fun spqr__authenticator__Error__AuthenticatorRootKeyPresent(): bitstring [data].
 fun spqr__authenticator__Error__AuthenticatorRootKeyMissing(): bitstring [data].
 fun spqr__authenticator__Error__AuthenticatorMacKeyPresent(): bitstring [data].
 fun spqr__authenticator__Error__AuthenticatorMacKeyMissing(): bitstring [data].
-(* src: src/authenticator.rs:27 spqr__authenticator__Authenticator *)
+(* src: src/authenticator.rs:27:0-30:1 spqr__authenticator__Authenticator *)
 fun spqr__authenticator__Authenticator__Authenticator(bitstring, bitstring): bitstring [data].
 reduc forall v_0: bitstring, v_1: bitstring;
   spqr__authenticator__Authenticator__Authenticator__root_key(
@@ -48,15 +48,13 @@ reduc forall v_0: bitstring, v_1: bitstring;
   spqr__authenticator__Authenticator__Authenticator__mac_key(
     spqr__authenticator__Authenticator__Authenticator(v_0, v_1)
   ) = v_1.
-(* src: src/authenticator.rs:34 spqr__authenticator__Impl_3__MACSIZE *)
-const spqr__authenticator__Impl_3__MACSIZE: bitstring.
-(* src: src/authenticator.rs:39 spqr__authenticator__Impl_3__new_kw *)
+(* src: src/authenticator.rs:39:8-39:65 spqr__authenticator__Impl_3__new_kw *)
 letfun spqr__authenticator__Impl_3__new_kw(root_key: bitstring, ep: bitstring) =
   auth_new(root_key, ep).
-(* src: src/authenticator.rs:55 spqr__authenticator__Impl_3__update *)
+(* src: src/authenticator.rs:55:8-55:67 spqr__authenticator__Impl_3__update *)
 letfun spqr__authenticator__Impl_3__update(self: bitstring, ep: bitstring, k: bitstring) =
   auth_update(self, ep, k).
-(* src: src/authenticator.rs:75 spqr__authenticator__Impl_3__verify_ct *)
+(* src: src/authenticator.rs:75:8-77:9 spqr__authenticator__Impl_3__verify_ct *)
 letfun spqr__authenticator__Impl_3__verify_ct(
   self: bitstring,
   ep: bitstring,
@@ -64,10 +62,10 @@ letfun spqr__authenticator__Impl_3__verify_ct(
   expected_mac: bitstring
 ) =
   let (=expected_mac) = mac_ct_f(self, ep, ct) in rust_primitives__hax__Tuple0__Tuple0 else bitstring_err().
-(* src: src/authenticator.rs:91 spqr__authenticator__Impl_3__mac_ct *)
+(* src: src/authenticator.rs:91:8-91:65 spqr__authenticator__Impl_3__mac_ct *)
 letfun spqr__authenticator__Impl_3__mac_ct(self: bitstring, ep: bitstring, ct: bitstring) =
   mac_ct_f(self, ep, ct).
-(* src: src/authenticator.rs:113 spqr__authenticator__Impl_3__verify_hdr *)
+(* src: src/authenticator.rs:113:8-115:9 spqr__authenticator__Impl_3__verify_hdr *)
 letfun spqr__authenticator__Impl_3__verify_hdr(
   self: bitstring,
   ep: bitstring,
@@ -75,11 +73,11 @@ letfun spqr__authenticator__Impl_3__verify_hdr(
   expected_mac: bitstring
 ) =
   let (=expected_mac) = mac_hdr_f(self, ep, hdr) in rust_primitives__hax__Tuple0__Tuple0 else bitstring_err().
-(* src: src/authenticator.rs:129 spqr__authenticator__Impl_3__mac_hdr *)
+(* src: src/authenticator.rs:129:8-129:67 spqr__authenticator__Impl_3__mac_hdr *)
 letfun spqr__authenticator__Impl_3__mac_hdr(self: bitstring, ep: bitstring, hdr: bitstring) =
   mac_hdr_f(self, ep, hdr).
 fun extern__derive_scka_secret(bitstring, bitstring): bitstring.
-(* src: src/kdf.rs:21 spqr__kdf__derive_scka_secret *)
+(* src: src/kdf.rs:21:33-21:51 spqr__kdf__derive_scka_secret *)
 (*  Derive the per-epoch SCKA secret from a KEM shared secret, with *)
 (*  epoch-indexed domain separation. Both the CT generator (`send_ct1`) and the *)
 (*  EK generator (`recv_ct2`) call this on the same shared secret, so they *)
@@ -89,13 +87,7 @@ fun extern__derive_scka_secret(bitstring, bitstring): bitstring.
 (*  `extern__derive_scka_secret(secret, epoch)`. *)
 letfun spqr__kdf__derive_scka_secret(kem_ss: bitstring, epoch: bitstring) =
   extern__derive_scka_secret(kem_ss, epoch).
-(* src: src/incremental_mlkem768.rs:11 spqr__incremental_mlkem768__CIPHERTEXT2_SIZE *)
-const spqr__incremental_mlkem768__CIPHERTEXT2_SIZE: bitstring.
-(* src: src/incremental_mlkem768.rs:13 spqr__incremental_mlkem768__HEADER_SIZE *)
-const spqr__incremental_mlkem768__HEADER_SIZE: bitstring.
-(* src: src/incremental_mlkem768.rs:15 spqr__incremental_mlkem768__ENCAPSULATION_KEY_SIZE *)
-const spqr__incremental_mlkem768__ENCAPSULATION_KEY_SIZE: bitstring.
-(* src: src/incremental_mlkem768.rs:22 spqr__incremental_mlkem768__Keys *)
+(* src: src/incremental_mlkem768.rs:22:0-26:1 spqr__incremental_mlkem768__Keys *)
 fun spqr__incremental_mlkem768__Keys__Keys(bitstring, bitstring, bitstring): bitstring [data].
 reduc forall v_0: bitstring, v_1: bitstring, v_2: bitstring;
   spqr__incremental_mlkem768__Keys__Keys__ek(
@@ -109,34 +101,34 @@ reduc forall v_0: bitstring, v_1: bitstring, v_2: bitstring;
   spqr__incremental_mlkem768__Keys__Keys__hdr(
     spqr__incremental_mlkem768__Keys__Keys(v_0, v_1, v_2)
   ) = v_2.
-(* src: src/incremental_mlkem768.rs:32 spqr__incremental_mlkem768__ek_matches_header *)
+(* src: src/incremental_mlkem768.rs:32:4-32:58 spqr__incremental_mlkem768__ek_matches_header *)
 letfun spqr__incremental_mlkem768__ek_matches_header(ek: bitstring, hdr: bitstring) =
   ek_matches(ek, hdr).
-(* src: src/incremental_mlkem768.rs:44 spqr__incremental_mlkem768__generate *)
+(* src: src/incremental_mlkem768.rs:44:4-46:5 spqr__incremental_mlkem768__generate *)
 (*  Generate a new keypair and associated header. *)
 letfun spqr__incremental_mlkem768__generate(rng: bitstring) =
   let hax_temp_output = (new spqr_dk: bitstring; spqr__incremental_mlkem768__Keys__Keys(dk2enckey(spqr_dk), spqr_dk, dk2seed(spqr_dk))) in
   rust_primitives__hax__Tuple2__Tuple2(rng, hax_temp_output).
-(* src: src/incremental_mlkem768.rs:67 spqr__incremental_mlkem768__encaps1 *)
+(* src: src/incremental_mlkem768.rs:67:4-69:5 spqr__incremental_mlkem768__encaps1 *)
 (*  Encapsulate with header to get initial ciphertext. *)
 letfun spqr__incremental_mlkem768__encaps1(hdr: bitstring, rng: bitstring) =
   let hax_temp_output = (new spqr_r: bitstring; new spqr_ss: bitstring; rust_primitives__hax__Tuple3__Tuple3(pkenc1(spqr_r, hdr, spqr_ss), spqr_es(spqr_r), spqr_ss)) in
   rust_primitives__hax__Tuple2__Tuple2(rng, hax_temp_output).
-(* src: src/incremental_mlkem768.rs:98 spqr__incremental_mlkem768__encaps2 *)
+(* src: src/incremental_mlkem768.rs:98:4-98:106 spqr__incremental_mlkem768__encaps2 *)
 (*  Encapsulate with header and EK. *)
 letfun spqr__incremental_mlkem768__encaps2(ek: bitstring, es: bitstring) =
   let spqr_es(spqr_r) = es in pkenc2(spqr_r, ek) else bitstring_err().
-(* src: src/incremental_mlkem768.rs:190 spqr__incremental_mlkem768__decaps *)
+(* src: src/incremental_mlkem768.rs:190:4-190:58 spqr__incremental_mlkem768__decaps *)
 (*  Decapsulate ciphertext to get shared secret. *)
 letfun spqr__incremental_mlkem768__decaps(dk: bitstring, ct1: bitstring, ct2: bitstring) =
   pkdec(dk, ct1, ct2).
-(* src: src/lib.rs:49 spqr__EpochSecret *)
+(* src: src/lib.rs:49:0-52:1 spqr__EpochSecret *)
 fun spqr__EpochSecret__EpochSecret(bitstring, bitstring): bitstring [data].
 reduc forall v_0: bitstring, v_1: bitstring;
   spqr__EpochSecret__EpochSecret__epoch(spqr__EpochSecret__EpochSecret(v_0, v_1)) = v_0.
 reduc forall v_0: bitstring, v_1: bitstring;
   spqr__EpochSecret__EpochSecret__secret_kw(spqr__EpochSecret__EpochSecret(v_0, v_1)) = v_1.
-(* src: src/lib.rs:96 spqr__Error *)
+(* src: src/lib.rs:96:0-129:1 spqr__Error *)
 fun spqr__Error__StateDecode(): bitstring [data].
 fun spqr__Error__NotImplemented(): bitstring [data].
 fun spqr__Error__MsgDecode(): bitstring [data].
@@ -170,9 +162,9 @@ reduc forall v_0: bitstring, v_1: bitstring;
 fun spqr__Error__InvalidParams(bitstring): bitstring [data].
 reduc forall v_0: bitstring; spqr__Error__InvalidParams__0(spqr__Error__InvalidParams(v_0)) = v_0.
 fun spqr__Error__ChainNotAvailable(): bitstring [data].
-(* src: src/lib.rs:144 spqr__Impl_3__from *)
+(* src: src/lib.rs:144:4-146:5 spqr__Impl_3__from *)
 letfun spqr__Impl_3__from(u_v: bitstring) = spqr__Error__MacVerifyFailed().
-(* src: src/v1/unchunked/send_ct.rs:44 spqr__v1__unchunked__send_ct__NoHeaderReceived *)
+(* src: src/v1/unchunked/send_ct.rs:44:0-47:1 spqr__v1__unchunked__send_ct__NoHeaderReceived *)
 fun spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(
   bitstring,
   bitstring
@@ -185,7 +177,7 @@ reduc forall v_0: bitstring, v_1: bitstring;
   spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth(
     spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(v_0, v_1)
   ) = v_1.
-(* src: src/v1/unchunked/send_ct.rs:51 spqr__v1__unchunked__send_ct__HeaderReceived *)
+(* src: src/v1/unchunked/send_ct.rs:51:0-56:1 spqr__v1__unchunked__send_ct__HeaderReceived *)
 fun spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(
   bitstring,
   bitstring,
@@ -203,7 +195,7 @@ reduc forall v_0: bitstring, v_1: bitstring, v_2: bitstring;
   spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived__hdr(
     spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(v_0, v_1, v_2)
   ) = v_2.
-(* src: src/v1/unchunked/send_ct.rs:60 spqr__v1__unchunked__send_ct__Ct1Sent *)
+(* src: src/v1/unchunked/send_ct.rs:60:0-69:1 spqr__v1__unchunked__send_ct__Ct1Sent *)
 fun spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(
   bitstring,
   bitstring,
@@ -231,7 +223,7 @@ reduc forall v_0: bitstring, v_1: bitstring, v_2: bitstring, v_3: bitstring, v_4
   spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1(
     spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent(v_0, v_1, v_2, v_3, v_4)
   ) = v_4.
-(* src: src/v1/unchunked/send_ct.rs:73 spqr__v1__unchunked__send_ct__Ct1SentEkReceived *)
+(* src: src/v1/unchunked/send_ct.rs:73:0-82:1 spqr__v1__unchunked__send_ct__Ct1SentEkReceived *)
 fun spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(
   bitstring,
   bitstring,
@@ -259,7 +251,7 @@ reduc forall v_0: bitstring, v_1: bitstring, v_2: bitstring, v_3: bitstring, v_4
   spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived__ct1(
     spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(v_0, v_1, v_2, v_3, v_4)
   ) = v_4.
-(* src: src/v1/unchunked/send_ct.rs:85 spqr__v1__unchunked__send_ct__Ct2Sent *)
+(* src: src/v1/unchunked/send_ct.rs:85:0-88:1 spqr__v1__unchunked__send_ct__Ct2Sent *)
 fun spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent(bitstring, bitstring): bitstring [data].
 reduc forall v_0: bitstring, v_1: bitstring;
   spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__epoch(
@@ -269,13 +261,13 @@ reduc forall v_0: bitstring, v_1: bitstring;
   spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent__auth(
     spqr__v1__unchunked__send_ct__Ct2Sent__Ct2Sent(v_0, v_1)
   ) = v_1.
-(* src: src/v1/unchunked/send_ct.rs:92 spqr__v1__unchunked__send_ct__Impl__new_kw *)
+(* src: src/v1/unchunked/send_ct.rs:92:4-97:5 spqr__v1__unchunked__send_ct__Impl__new_kw *)
 letfun spqr__v1__unchunked__send_ct__Impl__new_kw(auth_key: bitstring) =
   spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived(
     nat_1,
     spqr__authenticator__Impl_3__new_kw(alloc__slice__Impl__to_vec(auth_key), nat_1)
   ).
-(* src: src/v1/unchunked/send_ct.rs:100 spqr__v1__unchunked__send_ct__Impl__recv_header *)
+(* src: src/v1/unchunked/send_ct.rs:100:4-113:5 spqr__v1__unchunked__send_ct__Impl__recv_header *)
 letfun spqr__v1__unchunked__send_ct__Impl__recv_header(
   self: bitstring,
   epoch: bitstring,
@@ -306,7 +298,7 @@ letfun spqr__v1__unchunked__send_ct__Impl__recv_header(
       spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth(self),
       hdr
     ).
-(* src: src/v1/unchunked/send_ct.rs:120 spqr__v1__unchunked__send_ct__Impl_1__send_ct1 *)
+(* src: src/v1/unchunked/send_ct.rs:120:4-141:5 spqr__v1__unchunked__send_ct__Impl_1__send_ct1 *)
 letfun spqr__v1__unchunked__send_ct__Impl_1__send_ct1(self: bitstring, rng: bitstring) =
   let spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(
     epoch: bitstring,
@@ -334,7 +326,7 @@ letfun spqr__v1__unchunked__send_ct__Impl_1__send_ct1(self: bitstring, rng: bits
       spqr__EpochSecret__EpochSecret(epoch, secret_kw_1)
     )
   )) else bitstring_err()) else bitstring_err()) else bitstring_err().
-(* src: src/v1/unchunked/send_ct.rs:147 spqr__v1__unchunked__send_ct__Impl_2__recv_ek *)
+(* src: src/v1/unchunked/send_ct.rs:147:4-169:5 spqr__v1__unchunked__send_ct__Impl_2__recv_ek *)
 letfun spqr__v1__unchunked__send_ct__Impl_2__recv_ek(
   self: bitstring,
   epoch: bitstring,
@@ -365,7 +357,7 @@ letfun spqr__v1__unchunked__send_ct__Impl_2__recv_ek(
       spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1(self)
     )
     else bitstring_err().
-(* src: src/v1/unchunked/send_ct.rs:175 spqr__v1__unchunked__send_ct__Impl_3__send_ct2 *)
+(* src: src/v1/unchunked/send_ct.rs:175:4-193:5 spqr__v1__unchunked__send_ct__Impl_3__send_ct2 *)
 letfun spqr__v1__unchunked__send_ct__Impl_3__send_ct2(self: bitstring) =
   let spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(
     epoch: bitstring,
@@ -383,7 +375,7 @@ letfun spqr__v1__unchunked__send_ct__Impl_3__send_ct2(self: bitstring) =
       alloc__vec__Impl_2__extend_from_slice(ct1, ct2)
     )
   )) else bitstring_err().
-(* src: src/v1/unchunked/send_ek.rs:38 spqr__v1__unchunked__send_ek__KeysUnsampled *)
+(* src: src/v1/unchunked/send_ek.rs:38:0-41:1 spqr__v1__unchunked__send_ek__KeysUnsampled *)
 fun spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(
   bitstring,
   bitstring
@@ -396,7 +388,7 @@ reduc forall v_0: bitstring, v_1: bitstring;
   spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth(
     spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(v_0, v_1)
   ) = v_1.
-(* src: src/v1/unchunked/send_ct.rs:199 spqr__v1__unchunked__send_ct__Impl_4__recv_next_epoch *)
+(* src: src/v1/unchunked/send_ct.rs:199:4-206:5 spqr__v1__unchunked__send_ct__Impl_4__recv_next_epoch *)
 letfun spqr__v1__unchunked__send_ct__Impl_4__recv_next_epoch(
   self: bitstring,
   next_epoch: bitstring
@@ -421,7 +413,7 @@ letfun spqr__v1__unchunked__send_ct__Impl_4__recv_next_epoch(
     rust_primitives__hax__machine_int__add(epoch, nat_1),
     auth
   )) else bitstring_err().
-(* src: src/v1/unchunked/send_ek.rs:45 spqr__v1__unchunked__send_ek__HeaderSent *)
+(* src: src/v1/unchunked/send_ek.rs:45:0-52:1 spqr__v1__unchunked__send_ek__HeaderSent *)
 fun spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(
   bitstring,
   bitstring,
@@ -444,7 +436,7 @@ reduc forall v_0: bitstring, v_1: bitstring, v_2: bitstring, v_3: bitstring;
   spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__dk(
     spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent(v_0, v_1, v_2, v_3)
   ) = v_3.
-(* src: src/v1/unchunked/send_ek.rs:56 spqr__v1__unchunked__send_ek__EkSent *)
+(* src: src/v1/unchunked/send_ek.rs:56:0-61:1 spqr__v1__unchunked__send_ek__EkSent *)
 fun spqr__v1__unchunked__send_ek__EkSent__EkSent(bitstring, bitstring, bitstring): bitstring [data].
 reduc forall v_0: bitstring, v_1: bitstring, v_2: bitstring;
   spqr__v1__unchunked__send_ek__EkSent__EkSent__epoch(
@@ -458,7 +450,7 @@ reduc forall v_0: bitstring, v_1: bitstring, v_2: bitstring;
   spqr__v1__unchunked__send_ek__EkSent__EkSent__dk(
     spqr__v1__unchunked__send_ek__EkSent__EkSent(v_0, v_1, v_2)
   ) = v_2.
-(* src: src/v1/unchunked/send_ek.rs:65 spqr__v1__unchunked__send_ek__EkSentCt1Received *)
+(* src: src/v1/unchunked/send_ek.rs:65:0-72:1 spqr__v1__unchunked__send_ek__EkSentCt1Received *)
 fun spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(
   bitstring,
   bitstring,
@@ -481,13 +473,13 @@ reduc forall v_0: bitstring, v_1: bitstring, v_2: bitstring, v_3: bitstring;
   spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received__ct1(
     spqr__v1__unchunked__send_ek__EkSentCt1Received__EkSentCt1Received(v_0, v_1, v_2, v_3)
   ) = v_3.
-(* src: src/v1/unchunked/send_ek.rs:76 spqr__v1__unchunked__send_ek__Impl__new_kw *)
+(* src: src/v1/unchunked/send_ek.rs:76:4-81:5 spqr__v1__unchunked__send_ek__Impl__new_kw *)
 letfun spqr__v1__unchunked__send_ek__Impl__new_kw(auth_key: bitstring) =
   spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(
     nat_1,
     spqr__authenticator__Impl_3__new_kw(alloc__slice__Impl__to_vec(auth_key), nat_1)
   ).
-(* src: src/v1/unchunked/send_ek.rs:84 spqr__v1__unchunked__send_ek__Impl__send_header *)
+(* src: src/v1/unchunked/send_ek.rs:84:4-100:5 spqr__v1__unchunked__send_ek__Impl__send_header *)
 letfun spqr__v1__unchunked__send_ek__Impl__send_header(self: bitstring, rng: bitstring) =
   let rust_primitives__hax__Tuple2__Tuple2(
     tmp0: bitstring,
@@ -510,7 +502,7 @@ letfun spqr__v1__unchunked__send_ek__Impl__send_header(self: bitstring, rng: bit
       )
     )
   )) else bitstring_err().
-(* src: src/v1/unchunked/send_ek.rs:106 spqr__v1__unchunked__send_ek__Impl_1__send_ek *)
+(* src: src/v1/unchunked/send_ek.rs:106:4-115:5 spqr__v1__unchunked__send_ek__Impl_1__send_ek *)
 letfun spqr__v1__unchunked__send_ek__Impl_1__send_ek(self: bitstring) =
   rust_primitives__hax__Tuple2__Tuple2(
     spqr__v1__unchunked__send_ek__EkSent__EkSent(
@@ -520,7 +512,7 @@ letfun spqr__v1__unchunked__send_ek__Impl_1__send_ek(self: bitstring) =
     ),
     spqr__v1__unchunked__send_ek__HeaderSent__HeaderSent__ek(self)
   ).
-(* src: src/v1/unchunked/send_ek.rs:121 spqr__v1__unchunked__send_ek__Impl_2__recv_ct1 *)
+(* src: src/v1/unchunked/send_ek.rs:121:4-133:5 spqr__v1__unchunked__send_ek__Impl_2__recv_ct1 *)
 letfun spqr__v1__unchunked__send_ek__Impl_2__recv_ct1(
   self: bitstring,
   epoch: bitstring,
@@ -545,7 +537,7 @@ letfun spqr__v1__unchunked__send_ek__Impl_2__recv_ct1(
     spqr__v1__unchunked__send_ek__EkSent__EkSent__dk(self),
     ct1
   ).
-(* src: src/v1/unchunked/send_ek.rs:139 spqr__v1__unchunked__send_ek__Impl_3__recv_ct2 *)
+(* src: src/v1/unchunked/send_ek.rs:139:4-169:5 spqr__v1__unchunked__send_ek__Impl_3__recv_ct2 *)
 letfun spqr__v1__unchunked__send_ek__Impl_3__recv_ct2(
   self: bitstring,
   ct2: bitstring,

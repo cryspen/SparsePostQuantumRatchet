@@ -20,7 +20,7 @@ set -euo pipefail
 # --- Pinned toolchain provenance (keep in sync with REPRODUCING.md) ----------
 HAX_REPO="https://github.com/cryspen/hax.git"
 HAX_BRANCH="proverif-rust-backend"
-HAX_COMMIT="a881e92f344f75e1eb78ff2aaf43284589a4d6c8"   # proverif-rust-backend (cargo-hax-v0.3.7-277-ga881e92f3): nat2native bridge prelude
+HAX_COMMIT="5cdb74443a1eeebd34f7bae057ead44bc8a25107"   # proverif-rust-backend (cargo-hax-v0.3.7-280-g5cdb74443): nat2native bridge prelude
 # ----------------------------------------------------------------------------
 
 DEST="${1:-$PWD/.hax-proverif}"
