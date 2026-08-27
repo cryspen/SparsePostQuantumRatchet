@@ -16,7 +16,7 @@ reference model see [`handwritten/spqr-cka.pv`](handwritten/spqr-cka.pv).
 
 | Component | Version / pin |
 |---|---|
-| hax | `cryspen/hax` @ `28865204ec172234a9e8223b33f7fa52bf542360` (branch `proverif-uniform-bitstring`, `cargo-hax-v0.3.6-540-g28865204`) |
+| hax | `cryspen/hax` @ `a881e92f344f75e1eb78ff2aaf43284589a4d6c8` (branch `proverif-rust-backend`, `cargo-hax-v0.3.7-277-ga881e92f3`) |
 | hax Rust toolchain | `nightly-2025-11-08` (+ `rustc-dev`, `rust-src`; pinned by hax's own `rust-toolchain.toml`, auto-installed by rustup) |
 | hax-lib | 0.3.6 (from the same hax commit; injected at extraction time via `cargo --config`) |
 | ProVerif | 2.05 |
