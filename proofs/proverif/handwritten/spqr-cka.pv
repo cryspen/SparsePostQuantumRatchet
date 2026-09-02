@@ -9,6 +9,18 @@ letfun mac_header(auth: authenticator, ep: nat, ekseed: seed, ek_hash: bitstring
 
 free cka_label: bitstring.
 
+(* Saturation control (sound: nounif only guides ProVerif's resolution order,
+   never the verdict). Typed analogue of the generated model's conf.pv/auth.pv
+   block: deprioritize the attacker *building* symbolic ML-KEM ciphertexts,
+   keys, the authenticator ratchet, MACs and the epoch KDF. *)
+nounif r: ctsecret, s: seed, k: symkey; attacker(pkenc1(r, s, k)) / 30000.
+nounif r: ctsecret, ek: enckey; attacker(pkenc2(r, ek)) / 30000.
+nounif dk: deckey; attacker(dk2enckey(dk)) / 30000.
+nounif dk: deckey; attacker(dk2seed(dk)) / 30000.
+nounif a: authenticator, k: symkey; attacker(auth_update(a, k)) / 30000.
+nounif a: authenticator, m: bitstring; attacker(mac(a, m)) / 30000.
+nounif k: symkey, ctx: bitstring; attacker(kdf(k, ctx)) / 30000.
+
 (* Protocol Data structures *)
 
 type opt_symkey.
@@ -73,7 +85,10 @@ letfun recvCT1(req: eksender, ct1: bitstring) =
 letfun recvCT2(req: eksender, auth: authenticator, ct2: bitstring, ct_mac: bitstring) = 
     let SentEkReceivedCt1(ep, dk, ekseed, ek, ct1) = req in
     let ss = kem_decap(dk, ct1, ct2) in
-    let k = kdf(ss, (h((ekseed,ek)), ep, cka_label)) in
+    (* Epoch key from shared secret + epoch + label only (matches the spec's
+       KDF_OK and Rust kdf::derive_scka_secret). Transcript binding comes from
+       the authenticator MAC chain (mac_header below), NOT the KDF. *)
+    let k = kdf(ss, (ep, cka_label)) in
     let new_auth = auth_update(auth, k) in
     if mac_ct(new_auth, ct1, ct2) = ct_mac then
     (Waiting(ep+1), (new_auth, ep, k))
@@ -97,7 +112,8 @@ letfun sendCT1(rsp: ctsender, auth: authenticator) =
     new r: ctsecret;
     new sk: symkey;
     let ct1 = pkenc1(r, ekseed, sk) in
-    let k = kdf(sk, (ek_hash, ep, cka_label)) in
+    (* Epoch key from shared secret + epoch + label only (see note above). *)
+    let k = kdf(sk, (ep, cka_label)) in
     let new_auth = auth_update(auth, k) in
     (SentCt1(ep, r, ekseed, ek_hash, ct1, k), (new_auth, ct1))
 .
@@ -135,7 +151,15 @@ event CompletedA(principal, principal, nat, symkey).
 event StartedB(principal, principal, nat, seed).
 event CompletedB(principal, principal, nat, symkey).
 
-letfun max_epoch() = 5.
+(* NEPOCHS = 6, 1-based: the protocol runs epochs 1..6 (seeds at epoch 1, guard
+   `ep < max_epoch()` spawns ep+1, so the last epoch is max_epoch()). 1-based
+   matches the published ML-KEM Braid spec (Section 2.6 InitAlice/InitBob set
+   `epoch = 1`) and the Rust source (`send_ek.rs`/`send_ct.rs`: `epoch: 1`). The
+   bound 6 — the same as the extracted ../extraction-model/ — gives the fixed
+   compromise (epochs 1/3/4) two uncompromised successor epochs (5,6) that check
+   healing after the epoch-4 compromise. NEPOCHS=6 covers the paper's
+   secrecy-to-4 (Def 2) and auth-to-5 (Def 3) bounds. *)
+letfun max_epoch() = 6.
 
 let SendEk0() = 
     get AStates(a, b, req, auth) in
@@ -261,37 +285,42 @@ let CompromiseAuthB(a: principal, b: principal, ep: nat) =
 
 (* Reachability Queries *)
 
+(* Epoch 4 (1-based) is requestor B / responder A; epoch 3 is requestor A /
+   responder B (roles swap each epoch). *)
 query ep:nat, ek:seed;
-    event(StartedA(A,B,4,ek));
-    event(StartedB(B,A,4,ek))
+    event(StartedA(B,A,4,ek));
+    event(StartedB(A,B,4,ek))
 .
 
 query ep:nat, sk:symkey;
-    event(CompletedA(A,B,4,sk));
-    event(CompletedB(B,A,4,sk))
+    event(CompletedA(B,A,4,sk));
+    event(CompletedB(A,B,4,sk))
 .
 
 query ep:nat, ek:seed;
-    event(StartedA(B,A,3,ek));
-    event(StartedB(A,B,3,ek))
+    event(StartedA(A,B,3,ek));
+    event(StartedB(B,A,3,ek))
 .
 
 query ep:nat, sk:symkey;
-    event(CompletedA(B,A,3,sk));
-    event(CompletedB(A,B,3,sk))
+    event(CompletedA(A,B,3,sk));
+    event(CompletedB(B,A,3,sk))
 .
 
 (* Confidentiality Queries *)
 
 query i: time, j: time, ep:nat, sk:symkey, ep_:nat, x:principal, y:principal;
-    event(CompletedA(A,B,0,sk)) && attacker(sk);
-    event(CompletedB(B,A,0,sk)) && attacker(sk);
-    event(CompletedA(B,A,1,sk)) && attacker(sk);
-    event(CompletedB(A,B,1,sk)) && attacker(sk);
-    event(CompletedA(A,B,2,sk)) && attacker(sk);
-    event(CompletedB(B,A,2,sk)) && attacker(sk);
-    event(CompletedA(B,A,3,sk)) && attacker(sk);
-    event(CompletedB(A,B,3,sk)) && attacker(sk);
+    (* Concrete per-epoch secrecy probes (epochs 1..4, roles as above).
+       Expected with the fixed compromise KeysA@1 / KeysB@3 / AuthB@4:
+       epoch 1 leaks, epoch 2 holds, epoch 3 leaks, epoch 4 leaks. *)
+    event(CompletedA(A,B,1,sk)) && attacker(sk);
+    event(CompletedB(B,A,1,sk)) && attacker(sk);
+    event(CompletedA(B,A,2,sk)) && attacker(sk);
+    event(CompletedB(A,B,2,sk)) && attacker(sk);
+    event(CompletedA(A,B,3,sk)) && attacker(sk);
+    event(CompletedB(B,A,3,sk)) && attacker(sk);
+    event(CompletedA(B,A,4,sk)) && attacker(sk);
+    event(CompletedB(A,B,4,sk)) && attacker(sk);
 
     event(CompletedA(x,y,ep,sk)) && attacker(sk) ==> 
           event(CompromisedKeysB(y,x,ep));
@@ -307,11 +336,11 @@ query i: time, j: time, ep:nat, sk:symkey, ep_:nat, x:principal, y:principal;
     event(CompletedB(x,y,ep,sk)) && attacker(sk) ==> 
             (event(CompromisedKeysB(x,y,ep)) || event(CompromisedKeysA(y,x,ep)));
 
-    (* An epoch key can be known to the attacker if either the states in that
-       epoch were compromised, or the MAC key or some prior epoch was compromised.
-       Compromising later keys has no effect. This encodes Forward Secrecy. *)
-    (* Furthermore, since we compromise all authentication keys in phase 1,
-       this also encodes post-compromise security *)
+    (* An epoch key can be known to the attacker only if the states in that epoch
+       were compromised, or the authenticator at some epoch <= ep was compromised
+       at some time t' < t (the `@j, j < i` ordering). A later compromise (j > i)
+       has no effect. This matches the paper's Def 2 and encodes both forward
+       secrecy and post-compromise security. *)
     
    
     event(CompletedA(x,y,ep,sk))@i && attacker(sk) ==> 
@@ -349,29 +378,62 @@ query x: principal, y: principal, ep, ep_:nat, ek:seed, sk:symkey;
 
 process
     new authAB: authenticator;
-    insert AStates(A, B, NeedToSample(0), authAB);
-    insert BStates(B, A, Waiting(0), authAB);
+    (* 1-based epochs 1..6 (matches the ML-KEM Braid spec `epoch = 1` at init and
+       the extracted ../extraction-model/model.pvl). Roles swap each epoch
+       (epoch 1: A req / B resp; epoch 2: B req / A resp; ...; odd epoch = A req).
+       Fixed compromise (mirrors ../extraction-model/model.pvl):
+         KeysA(A,B,1) : epoch-1 requestor A's KEM keys
+         KeysB(B,A,3) : epoch-3 responder  B's KEM keys
+         AuthB(A,B,4) : epoch-4 responder  A's authenticator
+       Epochs 5-6 are uncompromised; FS/PCS healing after the epoch-4 compromise
+       is checked there. *)
+    insert AStates(A, B, NeedToSample(1), authAB);
+    insert BStates(B, A, Waiting(1), authAB);
     (!SendEkProc() | !SendCtProc() |
-   (* Compromise Scenarios: comment out different options below to experiment *)
+   (* Compromise Scenarios: comment out different options below to experiment.
+      For a per-epoch option, (a,b) must be the (requestor,peer) for KeysA/AuthA
+      and (responder,peer) for KeysB/AuthB at that epoch (see role swap above). *)
 
    (* Compromise Private Keys *)
-   
-     CompromiseKeysA(A,B,0)  | (* CompromiseKeysB(B,A,0) | 
-     CompromiseKeysA(B,A,1)  | CompromiseKeysB(A,B,1) | 
-     CompromiseKeysA(A,B,2)  | *) CompromiseKeysB(B,A,2) | 
-     (* CompromiseKeysA(B,A,3)  | CompromiseKeysB(A,B,3) |
-     CompromiseKeysA(B,A,4)  | CompromiseKeysB(A,B,4) | *)
-   
-     
+
+     CompromiseKeysA(A,B,1)  | (* CompromiseKeysA(A,B,3) | CompromiseKeysA(B,A,2) | CompromiseKeysA(B,A,4) |
+     CompromiseKeysB(B,A,1)  | CompromiseKeysB(A,B,2) | CompromiseKeysB(A,B,4) | *)
+     CompromiseKeysB(B,A,3)  |
+
+
    (* Compromise MAC Keys *)
-   
-     (* CompromiseAuthA(A,B,0)  | CompromiseAuthB(B,A,0) | 
-     CompromiseAuthA(B,A,1)  | CompromiseAuthB(A,B,1) |
-     CompromiseAuthA(A,B,2)  | CompromiseAuthB(B,A,2) |
-     CompromiseAuthA(B,A,3)  | CompromiseAuthB(A,B,3) |
-     CompromiseAuthA(B,A,4)  |*) CompromiseAuthB(A,B,4) |
- 
-   (* Post-Compromise Secrecy: Passively Compromise MAC Keys *after* all epochs are done *)
-     (phase 1; (out(c,authAB) |
-                (in (c,(x:principal, y:principal, ep:nat));
-		    (CompromiseAuthA(x,y,ep) | CompromiseAuthB(x,y,ep))))))
+
+     (* CompromiseAuthA(A,B,1)  | CompromiseAuthA(A,B,3) | CompromiseAuthA(B,A,2) | CompromiseAuthA(B,A,4) |
+     CompromiseAuthB(B,A,1)  | CompromiseAuthB(A,B,2) | CompromiseAuthB(B,A,3) | *)
+     CompromiseAuthB(A,B,4) )
+
+(* EXPECTPV
+RESULT not event(StartedA(B[],A[],4,ek_14)) is false.
+RESULT not event(StartedB(A[],B[],4,ek_14)) is false.
+RESULT not event(CompletedA(B[],A[],4,sk_1)) is false.
+RESULT not event(CompletedB(A[],B[],4,sk_1)) is false.
+RESULT not event(StartedA(A[],B[],3,ek_14)) is false.
+RESULT not event(StartedB(B[],A[],3,ek_14)) is false.
+RESULT not event(CompletedA(A[],B[],3,sk_1)) is false.
+RESULT not event(CompletedB(B[],A[],3,sk_1)) is false.
+RESULT not (event(CompletedA(A[],B[],1,sk_1)) && attacker(sk_1)) is false.
+RESULT not (event(CompletedB(B[],A[],1,sk_1)) && attacker(sk_1)) is false.
+RESULT not (event(CompletedA(B[],A[],2,sk_1)) && attacker(sk_1)) is true.
+RESULT not (event(CompletedB(A[],B[],2,sk_1)) && attacker(sk_1)) is true.
+RESULT not (event(CompletedA(A[],B[],3,sk_1)) && attacker(sk_1)) is false.
+RESULT not (event(CompletedB(B[],A[],3,sk_1)) && attacker(sk_1)) is false.
+RESULT not (event(CompletedA(B[],A[],4,sk_1)) && attacker(sk_1)) is false.
+RESULT not (event(CompletedB(A[],B[],4,sk_1)) && attacker(sk_1)) is false.
+RESULT event(CompletedA(x,y,ep_18,sk_1)) && attacker(sk_1) ==> event(CompromisedKeysB(y,x,ep_18)) is false.
+RESULT event(CompletedA(x,y,ep_18,sk_1)) && attacker(sk_1) ==> event(CompromisedKeysA(x,y,ep_18)) is false.
+RESULT event(CompletedB(x,y,ep_18,sk_1)) && attacker(sk_1) ==> event(CompromisedKeysB(x,y,ep_18)) is false.
+RESULT event(CompletedB(x,y,ep_18,sk_1)) && attacker(sk_1) ==> event(CompromisedKeysA(y,x,ep_18)) is false.
+RESULT event(CompletedA(x,y,ep_18,sk_1)) && attacker(sk_1) ==> event(CompromisedKeysA(x,y,ep_18)) || event(CompromisedKeysB(y,x,ep_18)) is false.
+RESULT event(CompletedB(x,y,ep_18,sk_1)) && attacker(sk_1) ==> event(CompromisedKeysB(x,y,ep_18)) || event(CompromisedKeysA(y,x,ep_18)) is false.
+RESULT event(CompletedA(x,y,ep_18,sk_1))@i && attacker(sk_1) ==> event(CompromisedKeysA(x,y,ep_18)) || event(CompromisedKeysB(y,x,ep_18)) || (ep_18 ≥ ep_ && event(CompromisedAuthA(y,x,ep_))@j && i > j) || (ep_18 ≥ ep_ && event(CompromisedAuthA(x,y,ep_))@j && i > j) || (ep_18 ≥ ep_ && event(CompromisedAuthB(x,y,ep_))@j && i > j) || (ep_18 ≥ ep_ && event(CompromisedAuthB(y,x,ep_))@j && i > j) is true.
+RESULT event(CompletedB(x,y,ep_18,sk_1))@i && attacker(sk_1) ==> event(CompromisedKeysB(x,y,ep_18)) || event(CompromisedKeysA(y,x,ep_18)) || (ep_18 ≥ ep_ && event(CompromisedAuthA(x,y,ep_))@j && i > j) || (ep_18 ≥ ep_ && event(CompromisedAuthA(y,x,ep_))@j && i > j) || (ep_18 ≥ ep_ && event(CompromisedAuthB(x,y,ep_))@j && i > j) || (ep_18 ≥ ep_ && event(CompromisedAuthB(y,x,ep_))@j && i > j) is true.
+RESULT event(CompletedB(y,x,ep_18,sk_1)) ==> event(StartedA(x,y,ep_18,ek_14)) is false.
+RESULT event(CompletedB(y,x,ep_18,sk_1)) ==> event(StartedA(x,y,ep_18,ek_14)) || (ep_18 ≥ ep_ && (event(CompromisedAuthA(x,y,ep_)) || event(CompromisedAuthA(y,x,ep_)) || event(CompromisedAuthB(y,x,ep_)) || event(CompromisedAuthB(x,y,ep_)))) is true.
+RESULT event(CompletedA(x,y,ep_18,sk_1)) ==> event(StartedB(y,x,ep_18,ek_14)) is false.
+RESULT event(CompletedA(x,y,ep_18,sk_1)) ==> event(StartedB(y,x,ep_18,ek_14)) || (ep_18 ≥ ep_ && (event(CompromisedAuthA(x,y,ep_)) || event(CompromisedAuthA(y,x,ep_)) || event(CompromisedAuthB(y,x,ep_)) || event(CompromisedAuthB(x,y,ep_)))) is true.
+END *)

@@ -1,0 +1,61 @@
+(* SPQR extracted model — negative-control / sanity queries.
+
+   Purpose: confirm the security results from conf.pv are NOT vacuous, i.e. that
+   the compromise scenario in model.pvl actually bites. A confidentiality query
+   "attacker(sk) ==> compromised..." is trivially true if the attacker can never
+   derive ANY secret; these queries check the contrapositive directly.
+
+   Run (NEPOCHS=4):
+     python3 hax.py verify-proverif epochs=4 sanity.pv
+
+   model.pvl compromise: KeysA(A,B,1), KeysB(B,A,3), AuthB(A,B,4).
+   Roles per epoch (see model.pvl):
+     ep1: req A / resp B    ep2: req B / resp A
+     ep3: req A / resp B    ep4: req B / resp A
+
+   Each query asks "is a completed session whose epoch secret the attacker also
+   knows reachable?". ProVerif reports it as `not (...) is false` when REACHABLE
+   (the secret leaked) and `... is true` when UNREACHABLE (the secret held). *)
+
+(* Saturation control (sound: nounif only guides resolution order, never the
+   verdict). Same set as conf.pv/auth.pv/reach.pv — needed for the epoch-2
+   secrecy query (which requires full saturation) to terminate at higher NEPOCHS. *)
+nounif spqr_r: bitstring, hdr: bitstring, ss: bitstring;
+    attacker(pkenc1(spqr_r, hdr, ss)) / 30000.
+nounif spqr_r: bitstring, ek: bitstring;
+    attacker(pkenc2(spqr_r, ek)) / 30000.
+nounif dk: bitstring; attacker(dk2enckey(dk)) / 30000.
+nounif dk: bitstring; attacker(dk2seed(dk)) / 30000.
+nounif a: bitstring, e: bitstring, k: bitstring; attacker(auth_update(a, e, k)) / 30000.
+nounif rk: bitstring, e: bitstring; attacker(auth_new(rk, e)) / 30000.
+nounif a: bitstring, e: bitstring, ct: bitstring; attacker(mac_ct_f(a, e, ct)) / 30000.
+nounif a: bitstring, e: bitstring, h: bitstring; attacker(mac_hdr_f(a, e, h)) / 30000.
+nounif ss: bitstring, e: bitstring; attacker(extern__derive_scka_secret(ss, e)) / 30000.
+
+(* (1) epoch 1: KEM keys compromised -> secret MUST leak. *)
+query sk: bitstring; event(CompletedA(A, B, 1, sk)) && attacker(sk).
+
+(* (2) epoch 3: KEM keys compromised -> secret MUST leak. *)
+query sk: bitstring; event(CompletedB(B, A, 3, sk)) && attacker(sk).
+
+(* (3) epoch 2: nothing compromised -> secret MUST hold.
+   This is the non-vacuous secrecy witness: epoch 2 stays secret even though both
+   its neighbours (1 and 3) leak — forward secrecy and PCS are real here. *)
+query sk: bitstring; event(CompletedA(B, A, 2, sk)) && attacker(sk).
+
+(* (4) epoch 4: only the AUTHENTICATOR is compromised (not the KEM keys) -> the
+   secret STILL leaks, via active MITM: with the MAC key the attacker forges
+   mac_hdr_f/mac_ct_f on substituted KEM material it generated, so it decaps the
+   responder's ciphertext itself. A genuine attack (the authenticator functions
+   have no reduc, so the key is never extracted directly); conf.pv's
+   CompromisedAuth* disjunct is what accounts for it. *)
+query sk: bitstring; event(CompletedB(A, B, 4, sk)) && attacker(sk).
+
+process System()
+
+(* EXPECTPV
+RESULT not (event(CompletedA(A[],B[],1,sk)) && attacker(sk)) is false.
+RESULT not (event(CompletedB(B[],A[],3,sk)) && attacker(sk)) is false.
+RESULT not (event(CompletedA(B[],A[],2,sk)) && attacker(sk)) is true.
+RESULT not (event(CompletedB(A[],B[],4,sk)) && attacker(sk)) is false.
+END *)

@@ -136,7 +136,7 @@ version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "657f625ff361906f779745d08375ae3cc9fef87a35fba5f22874cf773010daf4"
 dependencies = [
- "hax-lib",
+ "hax-lib 0.3.6",
  "pastey",
  "rand 0.9.1",
 ]
@@ -332,7 +332,17 @@ version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "543f93241d32b3f00569201bfce9d7a93c92c6421b23c77864ac929dc947b9fc"
 dependencies = [
- "hax-lib-macros",
+ "hax-lib-macros 0.3.6",
+ "num-bigint",
+ "num-traits",
+]
+
+[[package]]
+name = "hax-lib"
+version = "0.3.7"
+source = "git+https://github.com/cryspen/hax.git?rev=1a99a1948d5931026fd0be4e322fbd1b7149927b#1a99a1948d5931026fd0be4e322fbd1b7149927b"
+dependencies = [
+ "hax-lib-macros 0.3.7",
  "num-bigint",
  "num-traits",
 ]
@@ -343,8 +353,19 @@ version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8755751e760b11021765bb04cb4a6c4e24742688d9f3aa14c2079638f537b0f"
 dependencies = [
- "hax-lib-macros-types",
+ "hax-lib-macros-types 0.3.6",
  "proc-macro-error2",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "hax-lib-macros"
+version = "0.3.7"
+source = "git+https://github.com/cryspen/hax.git?rev=1a99a1948d5931026fd0be4e322fbd1b7149927b#1a99a1948d5931026fd0be4e322fbd1b7149927b"
+dependencies = [
+ "hax-lib-macros-types 0.3.7",
  "proc-macro2",
  "quote",
  "syn",
@@ -355,6 +376,18 @@ name = "hax-lib-macros-types"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f177c9ae8ea456e2f71ff3c1ea47bf4464f772a05133fcbba56cd5ba169035a2"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "uuid",
+]
+
+[[package]]
+name = "hax-lib-macros-types"
+version = "0.3.7"
+source = "git+https://github.com/cryspen/hax.git?rev=1a99a1948d5931026fd0be4e322fbd1b7149927b#1a99a1948d5931026fd0be4e322fbd1b7149927b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -481,7 +514,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1b5db005ff8001e026b73a6842ee81bbef8ec5ff0e1915a67ae65fd2a9fafa5"
 dependencies = [
  "core-models",
- "hax-lib",
+ "hax-lib 0.3.6",
 ]
 
 [[package]]
@@ -500,7 +533,7 @@ version = "0.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a14ab3e477de9df6ee1273a114018ff62c4996ca9220070c4e5cb1743f94a67d"
 dependencies = [
- "hax-lib",
+ "hax-lib 0.3.6",
  "libcrux-intrinsics",
  "libcrux-platform",
  "libcrux-secrets",
@@ -523,7 +556,7 @@ version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ce650f3041b44ba40d4263852347d007cd2cd9d1cc856a6f6c8b2e10c3fd40b"
 dependencies = [
- "hax-lib",
+ "hax-lib 0.3.6",
 ]
 
 [[package]]
@@ -543,7 +576,7 @@ version = "0.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1ae0b7d0e1cc4793a609fd0ff2ca3b3a3fabae523770c619a3d4bc86417b0d7"
 dependencies = [
- "hax-lib",
+ "hax-lib 0.3.6",
  "libcrux-intrinsics",
  "libcrux-platform",
  "libcrux-traits",
@@ -1082,7 +1115,7 @@ dependencies = [
  "displaydoc",
  "env_logger",
  "galois_field_2pm",
- "hax-lib",
+ "hax-lib 0.3.7",
  "hex",
  "hkdf",
  "hmac",

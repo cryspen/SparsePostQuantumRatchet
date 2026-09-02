@@ -1,12 +1,28 @@
 name: proverif
 
+# Two-tier ProVerif CI:
+#   * verify  (every push/PR): run ProVerif against the COMMITTED extraction
+#     snapshot (proofs/proverif/extraction/lib.pvl) + vendored model files,
+#     asserting each query's `(* EXPECTPV ... *)` verdicts. Fast — no hax engine.
+#   * extract (nightly + manual): rebuild the hax ProVerif backend from
+#     cryspen/hax@proverif-rust-backend, RE-EXTRACT lib.pvl, fail if it drifts
+#     from the committed snapshot, then verify. Catches engine/source drift.
+#     Heavy (builds the OCaml hax-engine + Rust cargo-hax), so it is not per-push.
+
 on:
   push:
+  pull_request:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  proofs:
+  verify:
     runs-on: "ubuntu-latest"
-
     steps:
       - uses: actions/checkout@v4
 
@@ -14,9 +30,64 @@ jobs:
       - run: opam init
       - run: opam install -y proverif
 
-      - name: proverif proofs
+      - name: proverif proofs (extracted + hand-written; verdicts vs EXPECTPV)
         run: |
           eval $(opam env)
-          proverif -lib cryptolib.pvl spqr-cka.pv
-          proverif -lib cryptolib.pvl spqr-dr.pv
-        working-directory: ./proofs/proverif
+          # `check-proverif` covers all targets: the extracted model
+          # (reach/auth/conf/sanity) AND the hand-written spqr-cka / spqr-dr.
+          python3 hax.py check-proverif epochs=4
+
+  extract:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout hax ProVerif backend
+        uses: actions/checkout@v4
+        with:
+          repository: cryspen/hax
+          ref: proverif-rust-backend
+          path: hax-engine
+
+      - name: System deps (opam, jq, node, proverif)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y opam jq nodejs libgtk2.0-dev
+          opam init -y --disable-sandboxing --bare
+          opam install -y proverif
+
+      - name: Rust toolchain (pinned by hax)
+        run: |
+          rustup toolchain install "$(grep -oE 'nightly-[0-9-]+' hax-engine/rust-toolchain.toml | head -1)" \
+            --component rustc-dev --component rust-src --component llvm-tools-preview
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: hax-engine
+
+      - name: Cache opam
+        uses: actions/cache@v4
+        with:
+          path: ~/.opam
+          key: opam-hax-proverif-${{ runner.os }}-${{ hashFiles('hax-engine/engine/**/dune-project') }}
+
+      - name: Build the hax backend + install the OCaml engine into a switch
+        run: |
+          opam switch list --short | grep -qx hax-proverif || opam switch create hax-proverif 5.3.0 --yes
+          ( cd hax-engine && cargo build --release --workspace -p cargo-hax -p hax-driver -p hax-rust-engine )
+          export OPAMASSUMEDEPEXTS=1
+          opam pin add --switch=hax-proverif --yes --kind=path hax-engine ./hax-engine/engine
+          opam reinstall --switch=hax-proverif --yes --assume-depexts hax-engine \
+            || opam install --switch=hax-proverif --yes --assume-depexts hax-engine
+
+      - name: Re-extract + drift check + verify
+        env:
+          HAX_PROVERIF_DIR: ${{ github.workspace }}/hax-engine
+        run: |
+          python3 hax.py extract-proverif
+          shasum -a 256 -c proofs/proverif/extraction/lib.pvl.sha256
+          git diff --exit-code -- proofs/proverif/extraction/lib.pvl \
+            || { echo "::error::extraction drifted from committed lib.pvl — re-snapshot it"; exit 1; }
+          eval $(opam env --switch=hax-proverif)
+          python3 hax.py check-proverif epochs=4

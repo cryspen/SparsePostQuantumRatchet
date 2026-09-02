@@ -10,7 +10,7 @@ rust-version = "1.83.0"
 [dependencies]
 curve25519-dalek = { version = "4.1.3", features = ["rand_core"] }
 displaydoc = "0.2"
-hax-lib = "0.3.6"
+hax-lib = { git = "https://github.com/cryspen/hax.git", rev = "1a99a1948d5931026fd0be4e322fbd1b7149927b" }
 hkdf = "0.12"
 libcrux-hmac = "0.0.6"
 libcrux-ml-kem = { version = "0.0.8", default-features = false, features = ["incremental", "mlkem768"] }
@@ -56,4 +56,15 @@ cpufeatures = "0.2"
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = [
     'cfg(hax)',
+    # Set automatically by hax only during `into proverif` extraction; gates the
+    # ProVerif-specific annotations (pv_extern / proverif::replace_body). Never
+    # set in normal builds, so the annotations are inert there.
+    'cfg(hax_backend_proverif)',
 ] }
+
+# NOTE: ProVerif extraction needs the in-tree dev hax-lib for the `pv_extern` /
+# `proverif::replace_body` macros, which are not yet on crates.io. The
+# annotations are gated on `cfg(hax_backend_proverif)` (set only by hax during
+# `into proverif`), NOT a cargo feature — so `cargo build`/`test --all-features`
+# never see them. `hax.py extract-proverif` injects the dev hax-lib via
+# `cargo --config` (not a committed `[patch.crates-io]`), keeping CI portable.
