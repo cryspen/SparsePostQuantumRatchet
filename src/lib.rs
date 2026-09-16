@@ -28,8 +28,8 @@ use crate::proto::pq_ratchet as pqrpb;
 pub use crate::proto::pq_ratchet::{Direction, Version};
 // Re-export error types that are part of the public Error enum
 pub use crate::authenticator::Error as AuthenticatorError;
-pub use crate::encoding::polynomial::PolynomialError;
 pub use crate::encoding::EncodingError;
+pub use crate::encoding::polynomial::PolynomialError;
 pub use crate::serialize::Error as SerializationError;
 use prost::Message;
 use rand::{CryptoRng, Rng};
@@ -360,16 +360,28 @@ pub fn recv(state: &SerializedState, msg: &SerializedMessage) -> Result<Recv, Er
     let prenegotiated_state_pb = decode_state(state)?;
     let state_pb = match msg_version(msg) {
         None => {
-            // They have presented a version we don't support; it's too high for us,
-            // so ignore it and keep sending our current version's format.
-            return Ok(Recv {
-                state: state.to_vec(),
-                key: None,
-            });
+            // v0 has both set to none always, hence the check for inner.is_none().
+            if prenegotiated_state_pb.version_negotiation.is_some()
+                || prenegotiated_state_pb.inner.is_none()
+            {
+                // They have presented a version we don't support; it's too high for us
+                // so ignore it and keep sending our current version's format.
+                // We can't send a key yet, since we haven't negotiated our version.
+                return Ok(Recv {
+                    state: state.to_vec(),
+                    key: None,
+                });
+            } else {
+                // We've already negotiated - don't allow another version.
+                return Err(Error::VersionMismatch);
+            }
         }
         Some(v) => match (v as u8).cmp(&(state_version(&prenegotiated_state_pb) as u8)) {
             Ordering::Equal | Ordering::Greater => {
-                // Our versions are equal; proceed with existing state
+                // Proceed with existing state - note that this will clear version_negotiation
+                // as part of returning later on, so we will lock in our version here.
+                // Clearing version_negotiation here would be erroneous, though, since
+                // we may need it to initiate our chain later on.
                 prenegotiated_state_pb
             }
             Ordering::Less => {
@@ -484,6 +496,7 @@ mod lib_test {
     use rand::Rng;
     use rand::TryRngCore;
     use rand_core::OsRng;
+    use std::assert_matches;
 
     use super::*;
 
@@ -1168,6 +1181,38 @@ mod lib_test {
             alex_pq_state = state;
             assert_eq!(alex_key, blake_key);
         }
+        Ok(())
+    }
+
+    #[test]
+    fn disallow_downgrade_due_to_unsupported_version() -> Result<(), Error> {
+        let mut rng = OsRng.unwrap_err();
+
+        let alex_pq_state = initial_state(Params {
+            version: Version::MAX,
+            min_version: Version::V1,
+            direction: Direction::A2B,
+            auth_key: &[41u8; 32],
+            chain_params: ChainParams::default(),
+        })?;
+        let blake_pq_state = initial_state(Params {
+            version: Version::MAX,
+            min_version: Version::V0,
+            direction: Direction::B2A,
+            auth_key: &[41u8; 32],
+            chain_params: ChainParams::default(),
+        })?;
+        let Send { msg: msg_a1, .. } = send(&alex_pq_state, &mut rng)?;
+        let Recv {
+            state: blake_pq_state,
+            ..
+        } = recv(&blake_pq_state, &msg_a1)?;
+        // Blake has now fully negotiated his version, and he should send keys
+        // even if he now receives a higher version number.
+        assert_matches!(
+            recv(&blake_pq_state, &b"\xff".to_vec()).map(|_| ()),
+            Err(Error::VersionMismatch)
+        );
         Ok(())
     }
 }

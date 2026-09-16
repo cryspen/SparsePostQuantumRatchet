@@ -333,6 +333,7 @@ impl Poly {
         // For Protocol V1 the polynomials that get serialized will always have
         // coefficients.len() <= MAX_STORED_POLYNOMIAL_DEGREE_V1 + 1
         let mut out = Vec::<u8>::with_capacity(self.coefficients.len() * 2);
+        #[allow(clippy::needless_range_loop)]
         for i in 0..self.coefficients.len() {
             hax_lib::loop_invariant!(|i: usize| out.len() == 2 * i);
             let c = self.coefficients[i];

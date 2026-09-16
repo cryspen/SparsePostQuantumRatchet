@@ -399,6 +399,7 @@ impl Chain {
                 self.links.pop_front();
                 epoch_index -= 1;
             }
+            #[allow(clippy::needless_range_loop)]
             for i in 0..epoch_index {
                 hax_lib::assume!(i < self.links.len());
                 self.links[i].send.clear_next();
@@ -463,8 +464,8 @@ mod test {
     use super::*;
     use crate::{Direction, EpochSecret, Error};
     use proptest::prelude::*;
-    use rand::seq::SliceRandom;
     use rand::TryRngCore;
+    use rand::seq::SliceRandom;
 
     #[test]
     fn directions_match() {
