@@ -414,6 +414,9 @@ impl Chain {
     }
 
     pub fn recv_key(&mut self, epoch: Epoch, index: u32) -> Result<Vec<u8>, Error> {
+        if epoch == 0 && index == 0 {
+            return Ok(vec![]);
+        }
         let epoch_index = self.epoch_idx(epoch)?;
         self.links[epoch_index].recv.key(index, &self.params)
     }
@@ -464,8 +467,8 @@ mod test {
     use super::*;
     use crate::{Direction, EpochSecret, Error};
     use proptest::prelude::*;
-    use rand::TryRngCore;
     use rand::seq::SliceRandom;
+    use rand::TryRngCore;
 
     #[test]
     fn directions_match() {
