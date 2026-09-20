@@ -260,7 +260,6 @@ pub fn current_version(state: &SerializedState) -> Result<CurrentVersion, Error>
     })
 }
 
-#[hax_lib::fstar::verification_status(lax)]
 pub fn send<R: Rng + CryptoRng>(state: &SerializedState, rng: &mut R) -> Result<Send, Error> {
     let state_pb = decode_state(state)?;
     match state_pb.inner {

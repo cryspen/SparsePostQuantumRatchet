@@ -27,7 +27,7 @@ arch-independent) as CI sees them. No `Core_arch` reference remains anywhere in 
 extraction, so no host-specific intrinsic model is needed.
 
 Hatch counts in `src/`: 31 `assume!`, 0 `v_assume`, 16 `#[hax_lib::opaque]`,
-1 `#[hax_lib::exclude]`, 1 `verification_status(lax)`,
+1 `#[hax_lib::exclude]`, 0 `verification_status(lax)`,
 1 `verification_status(panic_free)`. Three of the opaque sites are new in `gf.rs`:
 two intrinsic leaves carrying full postconditions (they displace an unmodelled
 intrinsic) and one CPU-feature oracle.
@@ -63,6 +63,12 @@ intrinsic) and one CPU-feature oracle.
   `map_err(|_| Error::VersionMismatch)?`. The panic is in fact unreachable
   (`current_version` is 1 there, so `msg.version` is 0), but F* could not discharge
   it inside a function that large, and `msg.version` is attacker-supplied.
+- `lib.rs`: `send` is no longer `verification_status(lax)`. The obligation it was
+  waiting on was `msg.epoch - 1` (W6), which increment 0 had already made total with
+  `checked_sub`; the two `assert!`s on the serialized message are discharged by
+  `Message::serialize`'s existing `ensures`. Dropping the attribute was the whole
+  change. `assume!(key.is_none())` in the chainless branch is still there and is now
+  the only thing propping up that path's `assert!`.
 - `kdf.rs`: `hkdf_to_vec` de-opaqued. Its body is `vec![0u8; okm_len]` followed by
   `hkdf_to_slice`, whose `ensures` preserves length, so `res.len() >= okm_len` is
   provable; only `hkdf_to_slice` (which calls the `hkdf`/`sha2` crates) is genuinely
