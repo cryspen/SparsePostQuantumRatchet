@@ -125,11 +125,8 @@ impl ops::Sub<&GF16> for GF16 {
 #[hax_lib::attributes]
 impl ops::MulAssign<&GF16> for GF16 {
     fn mul_assign(&mut self, other: &Self) {
-        #[cfg(all(
-            not(hax),
-            any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64")
-        ))]
-        if check_accelerated::TOKEN.get() {
+        #[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64"))]
+        if use_accelerated() {
             self.value = accelerated::mul(self.value, other.value);
             return;
         }
@@ -214,11 +211,8 @@ pub fn parallel_mult(a: GF16, into: &mut [GF16]) {
 }
 
 fn mul2_u16(a: u16, b1: u16, b2: u16) -> (u16, u16) {
-    #[cfg(all(
-        not(hax),
-        any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64")
-    ))]
-    if check_accelerated::TOKEN.get() {
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64"))]
+    if use_accelerated() {
         return accelerated::mul2(a, b1, b2);
     }
     (unaccelerated::mul(a, b1), unaccelerated::mul(a, b2))
@@ -237,6 +231,11 @@ mod accelerated {
 
     #[inline]
     #[target_feature(enable = "pclmulqdq")]
+    #[hax_lib::opaque]
+    #[hax_lib::ensures(|result| fstar!(r#"
+        let open Spec.GF16 in
+        to_bv result._1 == poly_mul (to_bv a) (to_bv b1) /\
+        to_bv result._2 == poly_mul (to_bv a) (to_bv b2)"#))]
     unsafe fn mul2_unreduced(a: u16, b1: u16, b2: u16) -> (u32, u32) {
         let a = arch::_mm_set_epi64x(0, a as i64);
         let b = arch::_mm_set_epi64x(0, ((b2 as i64) << 32) | (b1 as i64));
@@ -272,15 +271,21 @@ mod accelerated {
 
     #[inline]
     #[target_feature(enable = "neon,aes")]
-    unsafe fn mul2_unreduced(a: u16, b1: u16, b2: u16) -> u128 {
-        aarch64::vmull_p64(a as u64, ((b1 as u64) << 32) | (b2 as u64))
+    #[hax_lib::opaque]
+    #[hax_lib::ensures(|result| fstar!(r#"
+        let open Spec.GF16 in
+        to_bv result._1 == poly_mul (to_bv a) (to_bv b1) /\
+        to_bv result._2 == poly_mul (to_bv a) (to_bv b2)"#))]
+    unsafe fn mul2_unreduced(a: u16, b1: u16, b2: u16) -> (u32, u32) {
+        let clmul = aarch64::vmull_p64(a as u64, ((b1 as u64) << 32) | (b2 as u64));
+        ((clmul >> 32) as u32, clmul as u32)
     }
 
     pub fn mul2(a: u16, b1: u16, b2: u16) -> (u16, u16) {
-        let unreduced_product = unsafe { mul2_unreduced(a, b1, b2) };
+        let unreduced_products = unsafe { mul2_unreduced(a, b1, b2) };
         (
-            super::reduce::poly_reduce((unreduced_product >> 32) as u32),
-            super::reduce::poly_reduce(unreduced_product as u32),
+            super::reduce::poly_reduce(unreduced_products.0),
+            super::reduce::poly_reduce(unreduced_products.1),
         )
     }
 }
@@ -356,10 +361,8 @@ mod accelerated {
 }
 */
 
-#[cfg(all(
-    not(hax),
-    any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64")
-))]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64"))]
+#[hax_lib::exclude]
 mod check_accelerated {
     #[cfg(target_arch = "aarch64")]
     cpufeatures::new!(use_accelerated, "aes"); // `aes` implies PMULL
@@ -370,6 +373,12 @@ mod check_accelerated {
 
     pub(crate) static TOKEN: LazyLock<use_accelerated::InitToken> =
         LazyLock::new(use_accelerated::init);
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64"))]
+#[hax_lib::opaque]
+fn use_accelerated() -> bool {
+    check_accelerated::TOKEN.get()
 }
 
 mod unaccelerated {

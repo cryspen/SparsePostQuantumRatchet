@@ -434,7 +434,7 @@ pub fn recv(state: &SerializedState, msg: &SerializedMessage) -> Result<Recv, Er
             let v: Version = msg
                 .version
                 .try_into()
-                .expect("should support all lower versions");
+                .map_err(|_| Error::VersionMismatch)?;
             #[cfg(not(hax))]
             log::info!("spqr negotiating version down to {v:?}");
             pqrpb::PqRatchetState {

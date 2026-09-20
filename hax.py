@@ -44,6 +44,8 @@ class extractAction(argparse.Action):
             "-i",
             include_str,
             "fstar",
+            "--z3rlimit",
+            "300",
             "--interfaces",
             interface_include,
         ]
