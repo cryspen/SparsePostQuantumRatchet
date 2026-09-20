@@ -196,7 +196,7 @@ impl Message {
         into
     }
 
-    #[hax_lib::ensures(|res| if let Ok((msg, _index, at)) = res { msg.epoch > 0 && at <= from.len() } else { true })]
+    #[hax_lib::ensures(|res| if let Ok(msg) = res { msg.epoch > 0 } else { true })]
     pub fn deserialize(epoch: Epoch, from: &[u8]) -> Result<Self, Error> {
         if from.is_empty() {
             return Err(Error::MsgDecode);
