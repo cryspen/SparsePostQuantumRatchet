@@ -124,6 +124,10 @@ impl ops::Sub<&GF16> for GF16 {
 
 #[hax_lib::attributes]
 impl ops::MulAssign<&GF16> for GF16 {
+    #[hax_lib::ensures(|result| fstar!(r#"
+        to_gf self_e_future ==
+        Spec.GF16.gf16_mul (to_gf self_) (to_gf other)
+    "#))]
     fn mul_assign(&mut self, other: &Self) {
         #[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64"))]
         if use_accelerated() {
@@ -136,6 +140,10 @@ impl ops::MulAssign<&GF16> for GF16 {
 
 #[hax_lib::attributes]
 impl ops::MulAssign for GF16 {
+    #[hax_lib::ensures(|result| fstar!(r#"
+        to_gf self_e_future ==
+        Spec.GF16.gf16_mul (to_gf self_) (to_gf other)
+    "#))]
     fn mul_assign(&mut self, other: Self) {
         self.mul_assign(&other);
     }
@@ -144,6 +152,10 @@ impl ops::MulAssign for GF16 {
 #[hax_lib::attributes]
 impl ops::Mul for GF16 {
     type Output = Self;
+    #[hax_lib::ensures(|result| fstar!(r#"
+        to_gf result ==
+        Spec.GF16.gf16_mul (to_gf self_) (to_gf other)
+    "#))]
     fn mul(self, other: Self) -> Self {
         let mut out = self;
         out *= &other;
@@ -154,6 +166,10 @@ impl ops::Mul for GF16 {
 #[hax_lib::attributes]
 impl ops::Mul<&GF16> for GF16 {
     type Output = Self;
+    #[hax_lib::ensures(|result| fstar!(r#"
+        to_gf result ==
+        Spec.GF16.gf16_mul (to_gf self_) (to_gf other)
+    "#))]
     fn mul(self, other: &Self) -> Self {
         let mut out = self;
         out *= other;
@@ -210,6 +226,10 @@ pub fn parallel_mult(a: GF16, into: &mut [GF16]) {
     }
 }
 
+#[hax_lib::ensures(|result| fstar!(r#"
+    let open Spec.GF16 in
+    to_bv result._1 == gf16_mul (to_bv a) (to_bv b1) /\
+    to_bv result._2 == gf16_mul (to_bv a) (to_bv b2)"#))]
 fn mul2_u16(a: u16, b1: u16, b2: u16) -> (u16, u16) {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64"))]
     if use_accelerated() {
@@ -225,6 +245,9 @@ mod accelerated {
     #[cfg(target_arch = "x86_64")]
     use core::arch::x86_64 as arch;
 
+    #[hax_lib::ensures(|result| fstar!(r#"
+        let open Spec.GF16 in
+        to_bv result == gf16_mul (to_bv a) (to_bv b)"#))]
     pub fn mul(a: u16, b: u16) -> u16 {
         mul2(a, b, 0).0
     }
@@ -252,6 +275,10 @@ mod accelerated {
         (b1out, b2out)
     }
 
+    #[hax_lib::ensures(|result| fstar!(r#"
+        let open Spec.GF16 in
+        to_bv result._1 == gf16_mul (to_bv a) (to_bv b1) /\
+        to_bv result._2 == gf16_mul (to_bv a) (to_bv b2)"#))]
     pub fn mul2(a: u16, b1: u16, b2: u16) -> (u16, u16) {
         let unreduced_products = unsafe { mul2_unreduced(a, b1, b2) };
         (
@@ -265,6 +292,9 @@ mod accelerated {
 mod accelerated {
     use core::arch::aarch64;
 
+    #[hax_lib::ensures(|result| fstar!(r#"
+        let open Spec.GF16 in
+        to_bv result == gf16_mul (to_bv a) (to_bv b)"#))]
     pub fn mul(a: u16, b: u16) -> u16 {
         mul2(a, b, 0).0
     }
@@ -281,6 +311,10 @@ mod accelerated {
         ((clmul >> 32) as u32, clmul as u32)
     }
 
+    #[hax_lib::ensures(|result| fstar!(r#"
+        let open Spec.GF16 in
+        to_bv result._1 == gf16_mul (to_bv a) (to_bv b1) /\
+        to_bv result._2 == gf16_mul (to_bv a) (to_bv b2)"#))]
     pub fn mul2(a: u16, b1: u16, b2: u16) -> (u16, u16) {
         let unreduced_products = unsafe { mul2_unreduced(a, b1, b2) };
         (
@@ -295,6 +329,9 @@ mod accelerated {
 mod accelerated {
     use core::arch::arm;
 
+    #[hax_lib::ensures(|result| fstar!(r#"
+        let open Spec.GF16 in
+        to_bv result == gf16_mul (to_bv a) (to_bv b)"#))]
     pub fn mul(a: u16, b: u16) -> u16 {
         mul2(a, b, 0).0
     }
