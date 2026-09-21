@@ -260,6 +260,14 @@ pub fn current_version(state: &SerializedState) -> Result<CurrentVersion, Error>
     })
 }
 
+#[hax_lib::ensures(|res| fstar!(r#"
+    match res with
+    | Core_models.Result.Result_Ok r ->
+      (match r.f_key with
+       | Core_models.Option.Option_Some k ->
+         b2t (Alloc.Vec.impl_1__len k >. mk_usize 0)
+       | _ -> True)
+    | _ -> True"#))]
 pub fn send<R: Rng + CryptoRng>(state: &SerializedState, rng: &mut R) -> Result<Send, Error> {
     let state_pb = decode_state(state)?;
     match state_pb.inner {
@@ -323,6 +331,11 @@ pub fn send<R: Rng + CryptoRng>(state: &SerializedState, rng: &mut R) -> Result<
     }
 }
 
+#[hax_lib::ensures(|res| fstar!(r#"
+    match res with
+    | Core_models.Option.Option_Some k ->
+      b2t (Alloc.Vec.impl_1__len k >. mk_usize 0)
+    | _ -> True"#))]
 fn message_key(k: Vec<u8>) -> MessageKey {
     // hax does not like `filter`
     if k.is_empty() {
