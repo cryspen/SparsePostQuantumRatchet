@@ -296,7 +296,11 @@ pub fn send<R: Rng + CryptoRng>(state: &SerializedState, rng: &mut R) -> Result<
                     if let Some(epoch_secret) = key {
                         chain.add_epoch(epoch_secret);
                     }
-                    let (index, msg_key) = chain.send_key(msg.epoch - 1)?;
+                    // A well-formed v1 state has epoch >= 1 (the initial epoch is 1);
+                    // epoch 0 only arises from a malformed decoded state, so reject it
+                    // rather than underflowing.
+                    let msg_key_epoch = msg.epoch.checked_sub(1).ok_or(Error::StateDecode)?;
+                    let (index, msg_key) = chain.send_key(msg_key_epoch)?;
                     (index, msg_key, Some(chain.into_pb()))
                 }
             };
@@ -430,7 +434,7 @@ pub fn recv(state: &SerializedState, msg: &SerializedMessage) -> Result<Recv, Er
             let v: Version = msg
                 .version
                 .try_into()
-                .expect("should support all lower versions");
+                .map_err(|_| Error::VersionMismatch)?;
             #[cfg(not(hax))]
             log::info!("spqr negotiating version down to {v:?}");
             pqrpb::PqRatchetState {

@@ -141,11 +141,10 @@ fn encode_chunk(c: &Chunk, into: &mut SerializedMessage) {
 fn decode_chunk(from: &[u8], at: &mut usize) -> Result<Chunk, Error> {
     let index = decode_varint(from, at)?;
     let start = *at;
-    hax_lib::assume!(*at < usize::MAX - 32);
-    *at += 32;
-    if *at > from.len() || index > 65535 {
+    if from.len() - start < 32 || index > 65535 {
         return Err(Error::MsgDecode);
     }
+    *at = start + 32;
     Ok(Chunk {
         index: index as u16,
         data: from[start..*at].try_into().expect("correct size"),
