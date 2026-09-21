@@ -1,6 +1,65 @@
 module Spec.GF16
 open Core_models
 
+/// SPQR's specification of GF(2^16), the field the Reed-Solomon encoder in
+/// `src/encoding/` computes over. This is a *specification*, not a model of an
+/// external library: nothing outside SPQR implements it, and `src/encoding/gf.rs`
+/// is verified against it.
+///
+/// # Relation to HACL*'s `Spec.GaloisField`
+///
+/// The reference formalization of binary Galois fields in this ecosystem is
+/// <https://github.com/hacl-star/hacl-star/blob/main/specs/Spec.GaloisField.fst>
+/// (present locally under `$HACL_HOME/specs/`, though only `$HACL_HOME/lib` is
+/// on the include path). The correspondence is:
+///
+/// | | HACL* `Spec.GaloisField` | this module |
+/// |---|---|---|
+/// | field | `field = GF: t:inttype{unsigned t} -> irred:uint_t t -> field` | `class galois_field { n; norm; irred; lemma_norm_* }` |
+/// | element | `felem f = uint_t f.t SEC` -- a machine integer | `bv n = x:Seq.seq bool{length x == n}` |
+/// | addition | `fadd a b = a ^. b` | `gf_add` = pointwise `bool_xor` on lifted bit vectors |
+/// | multiplication | `fmul` -- shift-and-add, reduction interleaved per step | `gf_mul x y = poly_reduce (poly_mul x y)` -- carry-less product, then reduce |
+/// | irreducible poly | `irred : uint_t t`, the *low n bits*; the x^n term is implicit in `fmul`'s `carry_mask` | `irred : bv (n+1)`, carrying the x^n term explicitly |
+/// | bit order | `get_ith_bit x i` takes bit 0 as the most significant | index 0 is the least significant (`poly_mul_x_k` shifts toward higher indices) |
+///
+/// For GF(2^16) with the polynomial x^16 + x^12 + x^3 + x + 1, HACL* would
+/// write `gf U16 (u16 0x100B)`; this module writes the full 17-bit `0x1100B`
+/// because `irred` has type `bv (n+1)`.
+///
+/// Two deliberate departures from HACL*:
+///
+/// 1. **Bit vectors rather than machine integers.** `gf.rs` multiplies with
+///    `pclmulqdq`/`vmull_p64` and a separate Barrett-style `poly_reduce`, so the
+///    implementation genuinely has an unreduced intermediate wider than the
+///    field. `to_bv` plus a `bv (n+n)` intermediate lets `mul2_unreduced` and
+///    `poly_reduce` carry independent postconditions. HACL*'s `fmul` reduces
+///    inside the loop and so cannot be factored that way.
+/// 2. **`norm` as a field of the class** rather than a derived function, so that
+///    `poly_reduce`'s postcondition (`y == norm x`) is stated once and shared by
+///    both the accelerated and unaccelerated backends.
+///
+/// # Status: the GF16 instance is admitted
+///
+/// `gf16` below fills `norm` and all four `lemma_norm_*` obligations with
+/// `admit()`. In F*, an `admit()` in one field admits the verification
+/// condition for the *whole* record, which has two consequences worth being
+/// explicit about:
+///
+/// - `norm` is an arbitrary unconstrained function, so `poly_reduce`'s
+///   `y == norm x` says nothing, and `gf16_mul` is not known to be
+///   multiplication in GF(2^16). Every `to_bv result == gf16_mul ...`
+///   postcondition in `gf.rs` is therefore consistent but uninformative.
+/// - `irred = to_bv (mk_i16 0x1100b)` does not typecheck on its own terms and
+///   only passes under that admit: `0x1100b` is 69643, outside `i16`'s range,
+///   so it violates `mk_int`'s `n:range_t t`; and `to_bv (mk_i16 _)` has type
+///   `bv 16` where the field requires `bv 17`.
+///
+/// Discharging this means defining `norm` as reduction modulo `irred`, stating
+/// `irred` directly as a `bv 17`, and proving the four `lemma_norm_*`. The two
+/// purely algebraic facts underneath -- that 0x1100B is irreducible over GF(2),
+/// and the inverse law -- are better done in Lean/Mathlib and imported as named
+/// assumptions than admitted here.
+
 (** Boolean Operations **)
 
 let bool_xor (x:bool) (y:bool) : bool = 
