@@ -122,6 +122,12 @@ let bv_eq_intro #n (x y: bv n) :
 let lemma_lift_id (#n:nat) (x: bv n) : Lemma (lift x n == x) =
   bv_eq_intro (lift x n) x
 
+(* Splitting a bit vector at index k into its low k coefficients and the rest *)
+
+let bv_take (#n:nat) (x: bv n) (k:nat{k <= n}) : bv k = createi k (fun i -> x.[i])
+
+let bv_drop (#n:nat) (x: bv n) (k:nat{k <= n}) : bv (n-k) = createi (n-k) (fun i -> x.[i+k])
+
 (** Galois Field Arithmetic **)
 
 (* Addition and Subtraction *)
@@ -165,6 +171,10 @@ let lemma_mul_x_k_zero (#n:nat) (x: bv n) : Lemma (poly_mul_x_k x 0 == x) =
 let lemma_mul_x_k_compose (#n:nat) (x: bv n) (j k:nat)
   : Lemma (poly_mul_x_k (poly_mul_x_k x j) k == poly_mul_x_k x (j+k)) =
   bv_eq_intro (poly_mul_x_k (poly_mul_x_k x j) k) (poly_mul_x_k x (j+k))
+
+let lemma_split (#n:nat) (x: bv n) (k:nat{k <= n})
+  : Lemma (x == gf_add (lift (bv_take x k) n) (poly_mul_x_k (bv_drop x k) k)) =
+  bv_eq_intro x (gf_add (lift (bv_take x k) n) (poly_mul_x_k (bv_drop x k) k))
 
 let rec poly_mul_i #n (x: bv n) (y: bv n) (i: nat{i <= n})
   : Tot (bv (n+n)) (decreases i) =
@@ -246,6 +256,13 @@ let lemma_red_add (#n:nat) (p: bv (n+1)) (#m #o:nat) (x: bv m) (y: bv o)
   lemma_red_lift p y k;
   lemma_red_xor p lx ly;
   lemma_gf_add_bv_xor (red p x) (red p y)
+
+let lemma_red_split (#n:nat) (p: bv (n+1)) (#m:nat) (x: bv m) (k:nat{k <= m})
+  : Lemma (red p x ==
+           gf_add (red p (bv_take x k)) (red p (poly_mul_x_k (bv_drop x k) k))) =
+  lemma_split x k;
+  lemma_red_add p (lift (bv_take x k) m) (poly_mul_x_k (bv_drop x k) k);
+  lemma_red_lift p (bv_take x k) m
 
 (* Reduction commutes with multiplication by X, and hence by X^k. *)
 
@@ -386,8 +403,31 @@ let up_cast_lemma (#t:inttype{unsigned t})
                   (#t':inttype{unsigned t' /\ bits t' >= bits t})
                   (x:int_t t{range (v x) t'}):
   Lemma (to_bv (cast (x <: int_t t) <: int_t t') == lift (to_bv x) (bits t')) =
-  assert (Rust_primitives.Integers.cast #t #t' x == Rust_primitives.Integers.cast_mod #t #t' x);
   bv_eq_intro (to_bv (cast (x <: int_t t) <: int_t t')) (lift (to_bv x) (bits t'))
+
+(* Right shift, truncating cast and low-bit mask, for the byte-wise reduction *)
+
+let shift_right_lemma (#t:inttype{unsigned t}) #t' (x: int_t t) (y: int_t t'):
+  Lemma
+    (requires (v y >= 0 /\ v y < bits t))
+    (ensures to_bv ( x  >>! y) ==
+             createi (bits t) (fun i -> if i + v y < bits t then (to_bv x).[i + v y] else false)) =
+  bv_eq_intro (to_bv (x >>! y))
+              (createi (bits t) (fun i -> if i + v y < bits t then (to_bv x).[i + v y] else false))
+
+let cast_truncate_lemma (#t:inttype) (#t':inttype{bits t' <= bits t}) (x: int_t t):
+  Lemma (to_bv (cast (x <: int_t t) <: int_t t') == bv_take (to_bv x) (bits t')) =
+  bv_eq_intro (to_bv (cast (x <: int_t t) <: int_t t')) (bv_take (to_bv x) (bits t'))
+
+let mask_lemma (#t:inttype) (n:nat{pow2 n - 1 <= maxint t}) (x: int_t t):
+  Lemma (to_bv (x &. mk_int #t (pow2 n - 1)) ==
+         createi (bits t) (fun i -> if i < n then (to_bv x).[i] else false)) =
+  let aux (j:usize{v j < bits t})
+    : Lemma (get_bit (mk_int #t (pow2 n - 1)) j == (if v j < n then 1 else 0)) =
+    Rust_primitives.BitVectors.get_bit_pow2_minus_one #t n j in
+  Classical.forall_intro aux;
+  bv_eq_intro (to_bv (x &. mk_int #t (pow2 n - 1)))
+              (createi (bits t) (fun i -> if i < n then (to_bv x).[i] else false))
 
 (* Lemmas linking integer arithmetic to bit-vector operations *)
 
