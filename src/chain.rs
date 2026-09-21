@@ -88,7 +88,6 @@ impl ChainParamsPB {
         } else {
             max_ooo
         } as usize;
-        hax_lib::assume!(max_ooo < 390451572);
         max_ooo * 11 / 10 + 1
     }
 
@@ -155,7 +154,7 @@ impl KeyHistory {
         }
     }
 
-    #[hax_lib::requires(_params.trim_size() < 119304647 && self.data.len() <= KeyHistory::KEY_SIZE * _params.trim_size())]
+    #[hax_lib::requires(self.data.len() <= usize::MAX - KeyHistory::KEY_SIZE)]
     fn add(&mut self, k: (u32, [u8; 32]), _params: &pqrpb::ChainParams) {
         self.data.extend_from_slice(&k.0.to_be_bytes()[..]);
         self.data.extend_from_slice(&k.1[..]);
@@ -246,7 +245,7 @@ impl ChainEpochDirection {
     }
 
     #[hax_lib::requires(next.len() == 32 && *ctr < u32::MAX)]
-    #[hax_lib::ensures(|_| *future(ctr) == ctr + 1)]
+    #[hax_lib::ensures(|_| *future(ctr) == ctr + 1 && future(next).len() == next.len())]
     fn next_key_internal(next: &mut [u8], ctr: &mut u32) -> (u32, [u8; 32]) {
         assert_eq!(next.len(), 32);
         *ctr += 1;
@@ -287,36 +286,25 @@ impl ChainEpochDirection {
         if self.next.len() != 32 {
             return Err(Error::StateDecode);
         }
-        hax_lib::assume!(
-            params.max_ooo_keys_or_default() < 390451572 && self.ctr <= u32::MAX - 390451572
-        );
         if at > self.ctr.saturating_add(params.max_ooo_keys_or_default()) {
             // We're about to make all currently-held keys obsolete - just remove
             // them all.
             self.prev.clear();
         }
         while at > self.ctr + 1 {
-            hax_lib::loop_invariant!(self.ctr < u32::MAX);
+            hax_lib::loop_invariant!(self.ctr < u32::MAX && self.next.len() == 32);
             hax_lib::loop_decreases!(u32::MAX - self.ctr);
-            hax_lib::assume!(self.next.len() == 32);
             let k = Self::next_key_internal(&mut self.next, &mut self.ctr);
-            hax_lib::assume!(
-                params.max_ooo_keys_or_default() < 390451572 && self.ctr <= u32::MAX - 390451572
-            );
             // Only add keys into our history if we're not going to immediately GC them.
-            if self.ctr.saturating_add(params.max_ooo_keys_or_default()) >= at {
-                hax_lib::assume!(
-                    params.trim_size() < 119304647
-                        && self.prev.data.len() <= KeyHistory::KEY_SIZE * params.trim_size()
-                );
+            if self.ctr.saturating_add(params.max_ooo_keys_or_default()) >= at
+                && self.prev.data.len() <= usize::MAX - KeyHistory::KEY_SIZE
+            {
                 self.prev.add(k, params);
             }
         }
         // After we've potentially added some new keys, see if there's any we
         // want to throw away.
         self.prev.gc(self.ctr, params);
-
-        hax_lib::assume!(self.next.len() == 32);
 
         Ok(Self::next_key_internal(&mut self.next, &mut self.ctr)
             .1
