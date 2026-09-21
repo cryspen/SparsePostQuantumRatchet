@@ -82,7 +82,12 @@ impl ChainParamsPB {
     /// When the size of our key history exceeds this amount, we run a
     /// garbage collection on it.
     fn trim_size(&self) -> usize {
-        let max_ooo = self.max_ooo_keys_or_default() as usize;
+        let max_ooo = self.max_ooo_keys_or_default();
+        let max_ooo = if max_ooo > MAX_OOO_KEYS_LIMIT {
+            MAX_OOO_KEYS_LIMIT
+        } else {
+            max_ooo
+        } as usize;
         hax_lib::assume!(max_ooo < 390451572);
         max_ooo * 11 / 10 + 1
     }
@@ -161,8 +166,9 @@ impl KeyHistory {
         if self.data.len() >= params.trim_size() * Self::KEY_SIZE {
             // We assume that k.0 is the highest key index we've ever seen, and base
             // our trimming on that.
-            assert!(current_key >= params.max_ooo_keys_or_default());
-            let trim_horizon = &(current_key - params.max_ooo_keys_or_default()).to_be_bytes()[..];
+            let trim_horizon = &current_key
+                .saturating_sub(params.max_ooo_keys_or_default())
+                .to_be_bytes()[..];
 
             // This does a single O(n) pass over our list, dropping all keys less than
             // our computed trim horizon.
@@ -381,14 +387,14 @@ impl Chain {
         })
     }
 
-    pub fn add_epoch(&mut self, epoch_secret: EpochSecret) {
-        // This assume could be turned into a precondition but it uses private fields
-        hax_lib::assume!(
-            self.current_epoch < u64::MAX
-                && epoch_secret.epoch == self.current_epoch + 1
-                && self.links.len() < usize::MAX
-        );
-        assert!(epoch_secret.epoch == self.current_epoch + 1);
+    pub fn add_epoch(&mut self, epoch_secret: EpochSecret) -> Result<(), Error> {
+        let next_epoch = self
+            .current_epoch
+            .checked_add(1)
+            .ok_or(Error::EpochOutOfRange(self.current_epoch))?;
+        if epoch_secret.epoch != next_epoch || self.links.len() == usize::MAX {
+            return Err(Error::EpochOutOfRange(epoch_secret.epoch));
+        }
         let mut genr8r = [0u8; 96];
         kdf::hkdf_to_slice(
             &self.next_root,
@@ -402,6 +408,7 @@ impl Chain {
             send: Self::ced_for_direction(&genr8r, &self.dir),
             recv: Self::ced_for_direction(&genr8r, &self.dir.switch()),
         });
+        Ok(())
     }
 
     #[hax_lib::ensures(|res| if let Ok(v) = res {v < self.links.len()} else {true})]
@@ -438,10 +445,12 @@ impl Chain {
                 self.links[i].send.clear_next();
             }
         }
-        hax_lib::assume!(
-            self.links[epoch_index].send.next.len() == 32
-                && self.links[epoch_index].send.ctr < u32::MAX
-        );
+        if self.links[epoch_index].send.next.len() != 32 {
+            return Err(Error::StateDecode);
+        }
+        if self.links[epoch_index].send.ctr == u32::MAX {
+            return Err(Error::KeyJump(u32::MAX, u32::MAX));
+        }
         Ok(self.links[epoch_index].send.next_key())
     }
 
@@ -516,11 +525,13 @@ mod test {
         a2b.add_epoch(EpochSecret {
             epoch: 1,
             secret: vec![2],
-        });
+        })
+        .unwrap();
         b2a.add_epoch(EpochSecret {
             epoch: 1,
             secret: vec![2],
-        });
+        })
+        .unwrap();
         let sk2 = a2b.send_key(1).unwrap();
         assert_eq!(sk2.0, 1);
         assert_eq!(sk2.1, b2a.recv_key(1, 1).unwrap());
@@ -591,7 +602,8 @@ mod test {
         a2b.add_epoch(EpochSecret {
             epoch: 1,
             secret: vec![2],
-        });
+        })
+        .unwrap();
         a2b.send_key(1).unwrap();
         assert!(matches!(
             a2b.send_key(0).unwrap_err(),
@@ -812,5 +824,32 @@ mod test {
             }),
         };
         assert!(matches!(Chain::from_pb(pb), Err(Error::InvalidParams(_))));
+    }
+
+    #[test]
+    fn gc_no_underflow_when_ctr_below_max_ooo() {
+        let entries = 2201usize;
+        let ed = pqrpb::chain::epoch::EpochDirection {
+            ctr: 0,
+            next: vec![7u8; 32],
+            prev: vec![0u8; entries * KeyHistory::KEY_SIZE],
+        };
+        let pb = pqrpb::Chain {
+            direction: Direction::A2B.into(),
+            current_epoch: 0,
+            send_epoch: 0,
+            next_root: vec![0u8; 32],
+            links: vec![pqrpb::chain::Epoch {
+                send: Some(pqrpb::chain::epoch::EpochDirection {
+                    ctr: 0,
+                    next: vec![7u8; 32],
+                    prev: vec![],
+                }),
+                recv: Some(ed),
+            }],
+            params: Some(ChainParams::default().into_pb()),
+        };
+        let mut c = Chain::from_pb(pb).expect("state should decode");
+        assert!(c.recv_key(0, 100).is_ok());
     }
 }

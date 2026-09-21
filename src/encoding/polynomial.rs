@@ -682,11 +682,11 @@ impl PolyEncoder {
         }
     }
 
-    #[hax_lib::ensures(|res| hax_lib::implies(msg.len() % 2 == 0 && msg.len() <= (1 << 16) * NUM_POLYS, res.is_ok()))]
+    #[hax_lib::ensures(|res| hax_lib::implies(msg.len() % 2 == 0 && msg.len() <= 2 * MAX_PTS_NEEDED_V1, res.is_ok()))]
     fn encode_bytes_base(msg: &[u8]) -> Result<Self, super::EncodingError> {
         if msg.len() % 2 != 0 {
             return Err(PolynomialError::MessageLengthEven.into());
-        } else if msg.len() > (1 << 16) * NUM_POLYS {
+        } else if msg.len() > 2 * MAX_PTS_NEEDED_V1 {
             return Err(PolynomialError::MessageLengthTooLong.into());
         }
         let mut pts: [Point; NUM_POLYS] = core::array::from_fn(|_| Point {
@@ -745,7 +745,7 @@ impl PolyEncoder {
 
 #[hax_lib::attributes]
 impl Encoder for PolyEncoder {
-    #[hax_lib::ensures(|res| hax_lib::implies(msg.len() % 2 == 0 && msg.len() <= (1 << 16) * NUM_POLYS, res.is_ok()))]
+    #[hax_lib::ensures(|res| hax_lib::implies(msg.len() % 2 == 0 && msg.len() <= 2 * MAX_PTS_NEEDED_V1, res.is_ok()))]
     fn encode_bytes(msg: &[u8]) -> Result<Self, super::EncodingError> {
         Self::encode_bytes_base(msg)
     }
