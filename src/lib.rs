@@ -260,7 +260,6 @@ pub fn current_version(state: &SerializedState) -> Result<CurrentVersion, Error>
     })
 }
 
-#[hax_lib::fstar::verification_status(lax)]
 pub fn send<R: Rng + CryptoRng>(state: &SerializedState, rng: &mut R) -> Result<Send, Error> {
     let state_pb = decode_state(state)?;
     match state_pb.inner {
@@ -510,9 +509,19 @@ fn decode_state(s: &SerializedState) -> Result<pqrpb::PqRatchetState, Error> {
 
 const MAX_VARINT_BYTES_LEN: usize = 10;
 
+#[hax_lib::requires(into.len() <= usize::MAX - MAX_VARINT_BYTES_LEN)]
+#[hax_lib::ensures(|_| into.len() <= future(into).len()
+    && future(into).len() <= into.len() + MAX_VARINT_BYTES_LEN
+    && (into.len() == 0 || future(into)[0] == into[0]))]
 fn encode_varint(mut a: u64, into: &mut SerializedMessage) {
+    #[cfg(hax)]
+    let l0 = into.len();
+    #[cfg(hax)]
+    let b0 = if l0 == 0 { 0 } else { into[0] };
     for _i in 0..MAX_VARINT_BYTES_LEN {
-        hax_lib::assume!(into.len() < usize::MAX);
+        hax_lib::loop_invariant!(|i: usize| l0 <= into.len()
+            && into.len() <= l0 + i
+            && (l0 == 0 || into[0] == b0));
         let byte = (a & 0x7F) as u8;
         if a < 0x80 {
             into.push(byte);
