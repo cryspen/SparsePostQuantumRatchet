@@ -78,6 +78,10 @@ pub const MAX_STORED_POLYNOMIAL_DEGREE_V1: usize = 35;
 #[allow(dead_code)]
 pub const MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1: usize = 36;
 
+// The largest pts_needed for Protocol V1: the encapsulation key is the longest
+// encoded value at 1152 bytes, and each point carries two.
+pub const MAX_PTS_NEEDED_V1: usize = 576;
+
 #[derive(Clone, PartialEq)]
 #[hax_lib::attributes]
 pub(crate) struct Poly {
@@ -344,7 +348,10 @@ impl Poly {
     }
 
     pub fn deserialize(serialized: &[u8]) -> Result<Self, PolynomialError> {
-        if serialized.is_empty() || serialized.len() % 2 == 1 {
+        if serialized.is_empty()
+            || serialized.len() % 2 == 1
+            || serialized.len() / 2 > MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1 + 1
+        {
             return Err(PolynomialError::SerializationInvalid);
         }
         let serialized_len = serialized.len();
@@ -612,7 +619,9 @@ impl PolyEncoder {
             #[allow(clippy::needless_range_loop)]
             for i in 0..NUM_POLYS {
                 let pts = &pb.pts[i];
-                if pts.len() % 2 != 0 {
+                if pts.len() % 2 != 0
+                    || pts.len() / 2 > MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1
+                {
                     return Err(PolynomialError::SerializationInvalid);
                 }
                 let mut v = Vec::<GF16>::with_capacity(pts.len());
@@ -806,6 +815,8 @@ impl PolyDecoder {
     fn new_with_poly_count(len_bytes: usize, _polys: usize) -> Result<Self, super::EncodingError> {
         if len_bytes % 2 != 0 {
             return Err(PolynomialError::MessageLengthEven.into());
+        } else if len_bytes > 2 * MAX_PTS_NEEDED_V1 {
+            return Err(PolynomialError::MessageLengthTooLong.into());
         }
         Ok(Self {
             pts_needed: len_bytes / 2,
@@ -842,7 +853,7 @@ impl PolyDecoder {
     pub(crate) fn from_pb(
         pb: proto::pq_ratchet::PolynomialDecoder,
     ) -> Result<Self, PolynomialError> {
-        if pb.pts.len() != 16 {
+        if pb.pts.len() != 16 || pb.pts_needed as usize > MAX_PTS_NEEDED_V1 {
             return Err(PolynomialError::SerializationInvalid);
         }
         let mut out_pts = core::array::from_fn(|_| SortedSet::new());

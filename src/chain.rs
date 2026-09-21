@@ -332,7 +332,7 @@ impl ChainEpochDirection {
         // `prev` is a flat sequence of KEY_SIZE-byte records; a length that is not a
         // multiple of KEY_SIZE is malformed (otherwise `KeyHistory::get` would panic
         // on the out-of-step slice access).
-        if pb.prev.len() % KeyHistory::KEY_SIZE != 0 {
+        if !pb.prev.len().is_multiple_of(KeyHistory::KEY_SIZE) {
             return Err(Error::StateDecode);
         }
         Ok(Self {
