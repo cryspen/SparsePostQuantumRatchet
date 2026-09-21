@@ -38,31 +38,41 @@ open Core_models
 ///    `poly_reduce`'s postcondition (`y == norm x`) is stated once and shared by
 ///    both the accelerated and unaccelerated backends.
 ///
-/// # Status: the GF16 instance is admitted
+/// # Trusted surface
 ///
-/// `gf16` below fills `norm` and all four `lemma_norm_*` obligations with
-/// `admit()`. In F*, an `admit()` in one field admits the verification
-/// condition for the *whole* record, which has two consequences worth being
-/// explicit about:
+/// None. Every declaration in this module is a definition or a proved lemma;
+/// there is no `assume val` and no `admit ()`. In particular:
 ///
-/// - `norm` is an arbitrary unconstrained function, so `poly_reduce`'s
-///   `y == norm x` says nothing, and `gf16_mul` is not known to be
-///   multiplication in GF(2^16). Every `to_bv result == gf16_mul ...`
-///   postcondition in `gf.rs` is therefore consistent but uninformative.
-/// - `irred = to_bv (mk_i16 0x1100b)` does not typecheck on its own terms and
-///   only passes under that admit: `0x1100b` is 69643, outside `i16`'s range,
-///   so it violates `mk_int`'s `n:range_t t`; and `to_bv (mk_i16 _)` has type
+/// - `norm` is `red`, long division by `irred` one leading coefficient at a
+///   time, and the four `lemma_norm_*` obligations of the class are discharged
+///   for it. `gf16_mul` is therefore multiplication in
+///   GF(2)[X]/(x^16 + x^12 + x^3 + x + 1), and the `to_bv result == gf16_mul ...`
+///   postconditions in `gf.rs` say what they appear to say.
+/// - `irred` is a `bv 17` built bit by bit, not `to_bv (mk_i16 0x1100b)`. The
+///   latter never typechecked on its own terms and only passed under the admit:
+///   `0x1100b` is 69643, outside `i16`'s range, and `to_bv (mk_i16 _)` has type
 ///   `bv 16` where the field requires `bv 17`.
+/// - `to_bv` is `Rust_primitives.Integers.get_bit` read into a `Seq.seq bool`,
+///   and the lemmas relating it to `^.`, `|.`, `&.`, `<<!` and `cast` are proved
+///   from the corresponding `get_bit_*` lemmas of hax's proof-libs. `to_bv` is
+///   `opaque_to_smt` so that the interface those lemmas present is the only way
+///   in, as it was when they were assumed.
+/// - `up_cast_lemma` is restricted to unsigned source *and* target types. Stated
+///   for all types it is false -- a signed source is sign-extended, not
+///   zero-extended -- and together with `shift_left_bit_select_lemma` it proved
+///   `False`. Both of its uses (`u16 -> u32`) are unsigned.
 ///
-/// Discharging this means defining `norm` as reduction modulo `irred`, stating
-/// `irred` directly as a `bv 17`, and proving the four `lemma_norm_*`. The two
-/// purely algebraic facts underneath -- that 0x1100B is irreducible over GF(2),
-/// and the inverse law -- are better done in Lean/Mathlib and imported as named
-/// assumptions than admitted here.
+/// What is *not* claimed here is that x^16 + x^12 + x^3 + x + 1 is irreducible
+/// over GF(2). Nothing in `gf.rs` needs it: reduction modulo a monic polynomial
+/// is a ring homomorphism whether or not that polynomial is irreducible, and the
+/// only operation whose correctness would need the field structure -- `div_impl`
+/// / `const_div`, which invert by raising to the power 2^16 - 2 -- carries no
+/// functional postcondition. Adding one means importing irreducibility, which
+/// belongs in Lean/Mathlib as a named assumption rather than an `admit ()` here.
 
 (** Boolean Operations **)
 
-let bool_xor (x:bool) (y:bool) : bool = 
+let bool_xor (x:bool) (y:bool) : bool =
   match (x,y) with
   | (true, true) -> false
   | (false, false) -> false
@@ -78,13 +88,14 @@ let bool_not (x:bool) : bool = not x
 (** Sequence Operations **)
 
 (* The basic definition of a sequence as equivalent to a map function *)
-assume val createi #a (len:nat) (f: (i:nat{i < len}) -> a)
+let createi #a (len:nat) (f: (i:nat{i < len}) -> a)
   : x:Seq.seq a{Seq.length x == len /\ (forall i. Seq.index x i == f i)}
+  = Seq.init len f
 
 let (.[]) #a (x:Seq.seq a) (i:nat{i < Seq.length x}) = Seq.index x i
 
 let map2 #a #b #c (f: a -> b -> c) (x: Seq.seq a) (y: Seq.seq b{Seq.length x == Seq.length y})
-  : r:Seq.seq c{Seq.length r == Seq.length x} = 
+  : r:Seq.seq c{Seq.length r == Seq.length x} =
   createi (Seq.length x) (fun i -> f x.[i] y.[i])
 
 (** Bit Vectors **)
@@ -95,18 +106,21 @@ let zero (#n:nat) : bv n = createi n (fun i -> false)
 
 let lift (#n:nat) (x: bv n) (k:nat{k >= n}) : bv k =
   createi k (fun i -> if i < n then x.[i] else false)
-  
+
 let lower1 (#n:pos) (x: bv n{x.[n-1] = false}) : bv (n-1) =
   createi (n-1) (fun i -> x.[i])
 
 let rec lower (#n:nat) (x: bv n) (k:nat{k <= n /\ (forall j. (j >= k /\ j < n) ==> x.[j] = false)}) : bv k =
     if n = k then x
     else lower (lower1 x) k
-  
+
 let bv_eq_intro #n (x y: bv n) :
   Lemma (requires (forall (i:nat). i < n ==> x.[i] = y.[i]))
         (ensures x == y) =
   Seq.lemma_eq_intro x y
+
+let lemma_lift_id (#n:nat) (x: bv n) : Lemma (lift x n == x) =
+  bv_eq_intro (lift x n) x
 
 (** Galois Field Arithmetic **)
 
@@ -114,10 +128,10 @@ let bv_eq_intro #n (x y: bv n) :
 
 let max i j = if i < j then j else i
 
-let gf_add #n #m (x: bv n) (y: bv m) : bv (max n m) = 
+let gf_add #n #m (x: bv n) (y: bv m) : bv (max n m) =
   map2 bool_xor (lift x (max n m)) (lift y (max n m))
 
-let gf_sub #n #m (x: bv n) (y: bv m) : bv (max n m) = 
+let gf_sub #n #m (x: bv n) (y: bv m) : bv (max n m) =
   gf_add x y
 
 let lemma_add_zero (#n:nat) (x: bv n):
@@ -131,12 +145,28 @@ let lemma_add_lift (#n:nat) (#k:nat{k >= n}) (x: bv n) (y:bv k):
     bv_eq_intro (gf_add x y) (gf_add (lift x k) y);
     bv_eq_intro (gf_add y x) (gf_add y (lift x k))
 
+(* Addition of two bit vectors of the same width. `gf_add` lifts both operands
+   to the wider of the two; at equal widths that is the identity, and the
+   equal-width form is what the reduction proofs below induct over. *)
+
+let bv_xor (#n:nat) (x y: bv n) : bv n = createi n (fun i -> bool_xor x.[i] y.[i])
+
+let lemma_gf_add_bv_xor (#n:nat) (x y: bv n) : Lemma (gf_add x y == bv_xor x y) =
+  bv_eq_intro (gf_add x y) (bv_xor x y)
+
 (* Polynomial (carry-less) Multiplication *)
 
-let poly_mul_x_k #n (x: bv n) (k:nat) : bv (n+k) = 
+let poly_mul_x_k #n (x: bv n) (k:nat) : bv (n+k) =
   createi (n+k) (fun i -> if i < k then false else x.[i-k])
 
-let rec poly_mul_i #n (x: bv n) (y: bv n) (i: nat{i <= n}) 
+let lemma_mul_x_k_zero (#n:nat) (x: bv n) : Lemma (poly_mul_x_k x 0 == x) =
+  bv_eq_intro (poly_mul_x_k x 0) x
+
+let lemma_mul_x_k_compose (#n:nat) (x: bv n) (j k:nat)
+  : Lemma (poly_mul_x_k (poly_mul_x_k x j) k == poly_mul_x_k x (j+k)) =
+  bv_eq_intro (poly_mul_x_k (poly_mul_x_k x j) k) (poly_mul_x_k x (j+k))
+
+let rec poly_mul_i #n (x: bv n) (y: bv n) (i: nat{i <= n})
   : Tot (bv (n+n)) (decreases i) =
   if i = 0 then zero #(n+n)
   else
@@ -147,6 +177,111 @@ let rec poly_mul_i #n (x: bv n) (y: bv n) (i: nat{i <= n})
 
 let poly_mul #n (x y: bv n) : bv (n+n) =
   poly_mul_i x y n
+
+(** Reduction modulo a monic polynomial **)
+
+(* `p : bv (n+1)` stands for the polynomial sum_{i<=n} p.[i] X^i; the reduction
+   below is long division by `p` and is only a *reduction* when `p` is monic,
+   i.e. `p.[n]`. That is the class's obligation on `irred`, not a precondition
+   here.
+
+   `red_step p x` cancels the leading coefficient of `x : bv k` (k > n) by
+   adding `p * X^(k-1-n)`, then drops the coefficient it just cleared. It is
+   written pointwise rather than as `lower1 (gf_add x (poly_mul_x_k p (k-1-n)))`
+   so that dropping the top coefficient needs no side condition -- at k-1 the
+   two definitions agree, and cancellation at index k-1 is what monicity buys. *)
+
+let red_step (#n:nat) (#k:nat{k > n}) (p: bv (n+1)) (x: bv k) : bv (k-1) =
+  createi (k-1) (fun i -> if x.[k-1] && i + n + 1 >= k
+                       then bool_xor x.[i] p.[i + n + 1 - k]
+                       else x.[i])
+
+let rec red (#n:nat) (p: bv (n+1)) (#k:nat) (x: bv k) : Tot (bv n) (decreases k) =
+  if k <= n then lift x n else red p (red_step p x)
+
+let lemma_red_small (#n:nat) (p: bv (n+1)) (#k:nat{k <= n}) (x: bv k)
+  : Lemma (red p x == lift x n) = ()
+
+let lemma_red_idem (#n:nat) (p: bv (n+1)) (x: bv n) : Lemma (red p x == x) =
+  lemma_lift_id x
+
+let lemma_red_step_no_top (#n:nat) (#k:nat{k > n}) (p: bv (n+1)) (x: bv k)
+  : Lemma (requires x.[k-1] == false) (ensures red_step p x == lower1 x) =
+  bv_eq_intro (red_step p x) (lower1 x)
+
+let lemma_red_no_top (#n:nat) (#k:pos) (p: bv (n+1)) (x: bv k)
+  : Lemma (requires x.[k-1] == false) (ensures red p x == red p (lower1 x)) =
+  if k <= n then bv_eq_intro (lift x n) (lift (lower1 x) n)
+  else lemma_red_step_no_top p x
+
+let rec lemma_red_lift (#n:nat) (p: bv (n+1)) (#k:nat) (x: bv k) (j:nat{j >= k})
+  : Lemma (ensures red p (lift x j) == red p x) (decreases j) =
+  if j = k then lemma_lift_id x
+  else begin
+    let y : bv j = lift x j in
+    assert (y.[j-1] == false);
+    lemma_red_no_top p y;
+    bv_eq_intro (lower1 y) (lift x (j-1));
+    lemma_red_lift p x (j-1)
+  end
+
+(* Reduction is additive: it is F2-linear, so it commutes with `bv_xor`. *)
+
+let rec lemma_red_xor (#n:nat) (p: bv (n+1)) (#k:nat) (x y: bv k)
+  : Lemma (ensures red p (bv_xor x y) == bv_xor (red p x) (red p y)) (decreases k) =
+  if k <= n then
+    bv_eq_intro (lift (bv_xor x y) n) (bv_xor (lift x n) (lift y n))
+  else begin
+    bv_eq_intro (red_step p (bv_xor x y)) (bv_xor (red_step p x) (red_step p y));
+    lemma_red_xor p (red_step p x) (red_step p y)
+  end
+
+let lemma_red_add (#n:nat) (p: bv (n+1)) (#m #o:nat) (x: bv m) (y: bv o)
+  : Lemma (red p (gf_add x y) == gf_add (red p x) (red p y)) =
+  let k : nat = max m o in
+  let lx : bv k = lift x k in
+  let ly : bv k = lift y k in
+  bv_eq_intro (gf_add x y) (bv_xor lx ly);
+  lemma_red_lift p x k;
+  lemma_red_lift p y k;
+  lemma_red_xor p lx ly;
+  lemma_gf_add_bv_xor (red p x) (red p y)
+
+(* Reduction commutes with multiplication by X, and hence by X^k. *)
+
+let rec lemma_red_shift1 (#n:nat) (p: bv (n+1)) (#m:nat) (x: bv m)
+  : Lemma (ensures red p (poly_mul_x_k x 1) == red p (poly_mul_x_k (red p x) 1))
+          (decreases m) =
+  if m <= n then begin
+    bv_eq_intro (poly_mul_x_k (lift x n) 1) (lift (poly_mul_x_k x 1) (n+1));
+    lemma_red_lift p (poly_mul_x_k x 1) (n+1)
+  end else begin
+    bv_eq_intro (poly_mul_x_k (red_step p x) 1) (red_step p (poly_mul_x_k x 1));
+    lemma_red_shift1 p (red_step p x)
+  end
+
+let rec lemma_red_shift (#n:nat) (p: bv (n+1)) (#m:nat) (x: bv m) (k:nat)
+  : Lemma (ensures red p (poly_mul_x_k x k) == red p (poly_mul_x_k (red p x) k))
+          (decreases k) =
+  if k = 0 then begin
+    lemma_mul_x_k_zero x;
+    lemma_mul_x_k_zero (red p x);
+    lemma_red_idem p (red p x)
+  end else begin
+    lemma_mul_x_k_compose x (k-1) 1;
+    lemma_mul_x_k_compose (red p x) (k-1) 1;
+    lemma_red_shift1 p (poly_mul_x_k x (k-1));
+    lemma_red_shift p x (k-1);
+    lemma_red_shift1 p (poly_mul_x_k (red p x) (k-1))
+  end
+
+(* A monic polynomial reduces to zero modulo itself: the single `red_step`
+   available at width n+1 cancels every coefficient. *)
+
+let lemma_red_self (#n:nat) (p: bv (n+1))
+  : Lemma (requires p.[n] == true) (ensures red p p == zero #n) =
+  bv_eq_intro (red_step p p) (zero #n);
+  lemma_red_idem p (zero #n)
 
 (* Galois Field Assumptions *)
 
@@ -162,15 +297,15 @@ class galois_field = {
 
 (* Reduction *)
 
-assume val poly_reduce (#gf: galois_field) (#m:nat) (x:bv m)
-           : y:bv n{y == norm x}
+let poly_reduce (#gf: galois_field) (#m:nat) (x:bv m)
+           : y:bv n{y == norm x} = norm x
 
 let gf_mul (#gf: galois_field) (x:bv n) (y: bv n) : bv n =
   poly_reduce (poly_mul x y)
-  
+
 (* Lemmas *)
 let rec lemma_norm_zero (#gf: galois_field) (k:nat):
-  Lemma (gf.norm (zero #k) == zero #gf.n) = 
+  Lemma (gf.norm (zero #k) == zero #gf.n) =
     if k <= gf.n then (
       gf.lemma_norm_lift (zero #k);
       bv_eq_intro (lift (zero #k) n) (zero #n))
@@ -183,13 +318,13 @@ let rec lemma_norm_zero (#gf: galois_field) (k:nat):
     )
 
 let lemma_norm_irred_mul_x_k (#gf: galois_field) (k:nat):
-  Lemma (gf.norm (poly_mul_x_k irred k) == zero #gf.n) = 
+  Lemma (gf.norm (poly_mul_x_k irred k) == zero #gf.n) =
     lemma_norm_mul_x_k irred k;
     bv_eq_intro (poly_mul_x_k zero k) (zero #(n+k));
     lemma_norm_zero #gf (n+k)
 
 let rec lemma_norm_lower (#gf: galois_field) (m:nat) (x:bv m):
-  Lemma 
+  Lemma
     (requires (m >= gf.n /\ (forall j. (j >= n /\ j < m) ==> x.[j] = false)))
     (ensures (gf.norm (lower x n) == gf.norm x)) =
     if n = m then ()
@@ -200,46 +335,100 @@ let rec lemma_norm_lower (#gf: galois_field) (m:nat) (x:bv m):
 
 (** Integers as Bit Vectors **)
 
-(* Mappings between machine integers and int ops to bit vectors *)
+(* `to_bv` reads a machine integer's two's-complement bit pattern, least
+   significant bit at index 0, out of hax's `Rust_primitives.Integers.get_bit`.
+   It is `opaque_to_smt` -- like `get_bit` itself -- so that the lemmas below
+   remain the only way to relate it to integer operations. *)
 
-assume val to_bv #t (u: int_t t) : bv (bits t)
-// Concretely: to_bv u -> createi (bits t) (fun i -> (v u / pow2 i) % 2 = 0)
+[@@ "opaque_to_smt"]
+let to_bv #t (u: int_t t) : bv (bits t) =
+  createi (bits t) (fun i -> get_bit u (sz i) = 1)
 
-(* Axioms about integer operations *)
+let lemma_to_bv_index #t (u: int_t t) (i:nat{i < bits t})
+  : Lemma ((to_bv u).[i] == (get_bit u (sz i) = 1))
+          [SMTPat ((to_bv u).[i])] =
+  reveal_opaque (`%to_bv) (to_bv #t)
 
-assume val zero_lemma #t:
-  Lemma (to_bv ( mk_int #t 0 ) == zero #(bits t))
+(* Lemmas relating integer operations to bit-vector operations *)
 
-assume val xor_lemma #t (x: int_t t) (y: int_t t):
-  Lemma (to_bv ( x  ^. y) == map2 bool_xor (to_bv x) (to_bv y))
+let zero_lemma #t:
+  Lemma (to_bv ( mk_int #t 0 ) == zero #(bits t)) =
+  let aux (i:usize{v i < bits t}) : Lemma (get_bit (mk_int #t 0) i == 0) =
+    Rust_primitives.BitVectors.get_bit_pow2_minus_one #t 0 i in
+  Classical.forall_intro aux;
+  bv_eq_intro (to_bv (mk_int #t 0)) (zero #(bits t))
 
-assume val or_lemma #t (x: int_t t) (y: int_t t):
-  Lemma (to_bv ( x  |. y) == map2 bool_or (to_bv x) (to_bv y))
+let xor_lemma #t (x: int_t t) (y: int_t t):
+  Lemma (to_bv ( x  ^. y) == map2 bool_xor (to_bv x) (to_bv y)) =
+  bv_eq_intro (to_bv (x ^. y)) (map2 bool_xor (to_bv x) (to_bv y))
 
-assume val and_lemma #t (x: int_t t) (y: int_t t):
-  Lemma (to_bv ( x  &. y) == map2 bool_and (to_bv x) (to_bv y))
+let or_lemma #t (x: int_t t) (y: int_t t):
+  Lemma (to_bv ( x  |. y) == map2 bool_or (to_bv x) (to_bv y)) =
+  bv_eq_intro (to_bv (x |. y)) (map2 bool_or (to_bv x) (to_bv y))
 
-assume val shift_left_lemma #t #t' (x: int_t t) (y: int_t t'):
-  Lemma 
+let and_lemma #t (x: int_t t) (y: int_t t):
+  Lemma (to_bv ( x  &. y) == map2 bool_and (to_bv x) (to_bv y)) =
+  bv_eq_intro (to_bv (x &. y)) (map2 bool_and (to_bv x) (to_bv y))
+
+let shift_left_lemma #t #t' (x: int_t t) (y: int_t t'):
+  Lemma
     (requires (v y >= 0 /\ v y < bits t))
     (ensures to_bv ( x  <<! y) ==
-             createi (bits t) (fun i -> if i < v y then false else (to_bv x).[i - v y]))
+             createi (bits t) (fun i -> if i < v y then false else (to_bv x).[i - v y])) =
+  bv_eq_intro (to_bv (x <<! y))
+              (createi (bits t) (fun i -> if i < v y then false else (to_bv x).[i - v y]))
 
-assume val up_cast_lemma #t (#t':inttype{bits t' >= bits t}) (x:int_t t):
-  Lemma (to_bv (cast (x <: int_t t) <: int_t t') == lift (to_bv x) (bits t'))
+(* Zero-extension. Stated for *unsigned* source and target only: a signed source
+   is sign-extended, so the general form is false, and taken together with
+   `shift_left_bit_select_lemma` it proves `False`. Both uses are u16 -> u32. *)
 
+let up_cast_lemma (#t:inttype{unsigned t})
+                  (#t':inttype{unsigned t' /\ bits t' >= bits t})
+                  (x:int_t t{range (v x) t'}):
+  Lemma (to_bv (cast (x <: int_t t) <: int_t t') == lift (to_bv x) (bits t')) =
+  assert (Rust_primitives.Integers.cast #t #t' x == Rust_primitives.Integers.cast_mod #t #t' x);
+  bv_eq_intro (to_bv (cast (x <: int_t t) <: int_t t')) (lift (to_bv x) (bits t'))
 
-(* Lemmas lining integer arithmetic to bit-vector operations *)
+(* Lemmas linking integer arithmetic to bit-vector operations *)
 
-assume val shift_left_bit_select_lemma #t #t' (x: int_t t) (i: int_t t'{v i >= 0 /\ v i < bits t}):
-  Lemma (((x &. (mk_int #t 1 <<! i)) == mk_int #t 0) <==> 
-         ((to_bv x).[v i] == false))
+let lemma_maxint_pos (t:inttype) : Lemma (maxint t >= 1) =
+  FStar.Math.Lemmas.pow2_le_compat (bits t) 1;
+  FStar.Math.Lemmas.pow2_le_compat (bits t - 1) 1
+
+let lemma_bit_zero #t (j: usize{v j < bits t}) : Lemma (get_bit (mk_int #t 0) j == 0) =
+  assert_norm (pow2 0 - 1 == 0);
+  Rust_primitives.BitVectors.get_bit_pow2_minus_one #t 0 j
+
+let lemma_bit_mask #t #t' (x: int_t t) (i: int_t t'{v i >= 0 /\ v i < bits t})
+                          (j: usize{v j < bits t})
+  : Lemma (get_bit (x &. (mk_int #t 1 <<! i)) j ==
+           (if v j = v i then get_bit x j else 0)) =
+  lemma_maxint_pos t;
+  assert_norm (pow2 1 - 1 == 1);
+  if v j >= v i
+  then Rust_primitives.BitVectors.get_bit_pow2_minus_one #t 1 (sz (v j - v i))
+  else ()
+
+let shift_left_bit_select_lemma #t #t' (x: int_t t) (i: int_t t'{v i >= 0 /\ v i < bits t}):
+  Lemma (((x &. (mk_int #t 1 <<! i)) == mk_int #t 0) <==>
+         ((to_bv x).[v i] == false)) =
+  let m : int_t t = mk_int #t 1 <<! i in
+  Classical.forall_intro (lemma_bit_mask x i);
+  Classical.forall_intro (lemma_bit_zero #t);
+  introduce (x &. m) == mk_int #t 0 ==> (to_bv x).[v i] == false
+  with _. (lemma_bit_mask x i (sz (v i)); lemma_bit_zero #t (sz (v i)));
+  introduce (to_bv x).[v i] == false ==> (x &. m) == mk_int #t 0
+  with _. lemma_int_t_eq_via_bits (x &. m) (mk_int #t 0)
 
 (* GF16 Lemmas *)
 
-assume val up_cast_shift_left_lemma (x: u16) (shift: u32{v shift < 16}):
+let up_cast_shift_left_lemma (x: u16) (shift: u32{v shift < 16}):
   Lemma (to_bv ((cast x <: u32) <<! shift) ==
-         lift (poly_mul_x_k (to_bv x) (v shift)) 32)
+         lift (poly_mul_x_k (to_bv x) (v shift)) 32) =
+  up_cast_lemma #U16 #U32 x;
+  shift_left_lemma #U32 #U32 (cast x <: u32) shift;
+  bv_eq_intro (to_bv ((cast x <: u32) <<! shift))
+              (lift (poly_mul_x_k (to_bv x) (v shift)) 32)
 
 let xor_is_gf_add_lemma #t (x y: int_t t):
     Lemma (to_bv (x ^. y) == gf_add (to_bv x) (to_bv y)) =
@@ -249,32 +438,41 @@ let xor_is_gf_add_lemma #t (x y: int_t t):
 
 (* GF16 Implementation *)
 
+(* x^16 + x^12 + x^3 + x + 1, i.e. 0x1100b == 2^16 + 2^12 + 2^3 + 2^1 + 2^0.
+   See the table this constant is taken from, cited at `gf.rs`'s `POLY`. *)
+
+let gf16_poly : bv (16+1) =
+  createi 17 (fun i -> i = 0 || i = 1 || i = 3 || i = 12 || i = 16)
+
+let gf16_norm (#k:nat) (x: bv k) : bv 16 = red #16 gf16_poly x
+
+let gf16_irred : p:bv (16+1){p.[16] /\ gf16_norm p == zero #16} =
+  lemma_red_self #16 gf16_poly;
+  gf16_poly
+
+let gf16_lemma_norm_lower1 (#m:pos) (x: bv m)
+  : Lemma (x.[m-1] = false ==> gf16_norm x == gf16_norm (lower1 x)) =
+  if x.[m-1] = false then lemma_red_no_top #16 #m gf16_poly x else ()
+
+let gf16_lemma_norm_lift (#m:nat{m <= 16}) (x: bv m)
+  : Lemma (gf16_norm x == lift x 16) = lemma_red_small #16 gf16_poly x
+
+let gf16_lemma_norm_add (#m #o:nat) (x: bv m) (y: bv o)
+  : Lemma (gf16_norm (gf_add x y) = gf_add (gf16_norm x) (gf16_norm y)) =
+  lemma_red_add #16 gf16_poly x y
+
+let gf16_lemma_norm_mul_x_k (#m:nat) (x: bv m) (k:nat)
+  : Lemma (gf16_norm (poly_mul_x_k x k) == gf16_norm (poly_mul_x_k (gf16_norm x) k)) =
+  lemma_red_shift #16 gf16_poly x k
+
 instance gf16: galois_field = {
   n = 16;
-  irred = to_bv (mk_i16 0x1100b);
-  norm = admit();
-  lemma_norm_lower1 = (fun x -> admit());
-  lemma_norm_lift = (fun x -> admit());
-  lemma_norm_add = (fun x -> fun y -> admit());
-  lemma_norm_mul_x_k = (fun x -> fun k -> admit())
+  norm = gf16_norm;
+  irred = gf16_irred;
+  lemma_norm_lower1 = gf16_lemma_norm_lower1;
+  lemma_norm_lift = gf16_lemma_norm_lift;
+  lemma_norm_add = gf16_lemma_norm_add;
+  lemma_norm_mul_x_k = gf16_lemma_norm_mul_x_k
 }
 
 let gf16_mul = gf_mul #gf16
-
-(*
-let rec clmul_aux #n1 #n2 (x: bv n1) (y: bv n2) (i: nat{i <= n2}): 
-  Tot (bv (n1+n2)) (decreases (n2 - i)) =
-  if i = n2 then zero
-  else 
-    let next = clmul_aux x y (i+1) in
-    if y.[i] then
-      add (mul_x_k x i) next
-    else next
- *)
-  
-
-  
-(*  
-    bv_intro (add x (zero #n)) x;
-    bv_intro (add (zero #n) x) x
-*)
