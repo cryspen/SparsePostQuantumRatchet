@@ -13,8 +13,9 @@ jobs:
       - name: ⤵ Install and configure hax
         uses: hacspec/hax-actions@main
         with:
-          fstar: v2025.10.06
-          hax_reference: hax-lib-v0.3.7
+          fstar: v2026.03.24
+          hax_repository: github:cryspen/hax
+          hax_reference: d19844c77604038d059f01e0ba8faedc888665f2
 
       - run: sudo apt-get install protobuf-compiler
 
