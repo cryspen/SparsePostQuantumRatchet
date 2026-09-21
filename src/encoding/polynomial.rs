@@ -368,7 +368,6 @@ impl Poly {
             ])));
             i += 2;
         }
-        hax_lib::assume!(coefficients.len() <= MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1 + 1);
         Ok(Self { coefficients })
     }
 }
@@ -633,7 +632,6 @@ impl PolyEncoder {
                     v.push(GF16::new(u16::from_be_bytes([pts[j], pts[j + 1]])));
                     j += 2;
                 }
-                hax_lib::assume!(v.len() <= MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1);
                 out[i] = Point { value: v };
             }
             EncoderState::Points(out)
@@ -653,7 +651,6 @@ impl PolyEncoder {
     #[hax_lib::opaque] // iterators
     fn point_at(&mut self, poly: usize, idx: usize) -> GF16 {
         if let EncoderState::Points(ref pts) = self.s {
-            hax_lib::assume!(pts.len() == 16);
             if idx < pts[poly].value.len() {
                 return pts[poly].value[idx];
             }
@@ -673,23 +670,12 @@ impl PolyEncoder {
                         y: *y,
                     })
                     .collect::<Vec<Pt>>();
-                hax_lib::assume!(
-                    pt_vec.len() == 0
-                        || pt_vec.len() == 1
-                        || pt_vec.len() == 3
-                        || pt_vec.len() == 5
-                        || pt_vec.len() == 30
-                        || pt_vec.len() == 34
-                        || pt_vec.len() == 36
-                );
                 let res = Poly::from_complete_points(&pt_vec);
-                hax_lib::assume!(res.is_ok());
                 polys[i] = res.expect("pt_vec should be complete")
             }
             self.s = EncoderState::Polys(polys);
         }
         if let EncoderState::Polys(ref polys) = self.s {
-            hax_lib::assume!(polys.len() == 16);
             polys[poly].compute_at(GF16::new(idx as u16))
         } else {
             panic!("if we reach here, we should have polys");
@@ -772,8 +758,9 @@ impl Encoder for PolyEncoder {
 }
 
 #[derive(Clone)]
+#[hax_lib::attributes]
 pub struct PolyDecoder {
-    // When using MLKEM-768 pts_needed <= 576
+    #[hax_lib::refine(pts_needed <= MAX_PTS_NEEDED_V1)]
     pub pts_needed: usize,
     // polys == (size of an encoding chunk)/(size of a field element)
     //polys: usize,
@@ -801,6 +788,7 @@ impl PolyDecoder {
         self.pts_needed
     }
 
+    #[hax_lib::ensures(|res| res <= MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1)]
     fn necessary_points(&self, poly: usize) -> usize {
         let points_per_poly = self.pts_needed / 16;
         let points_remaining = self.pts_needed % 16;
@@ -811,7 +799,7 @@ impl PolyDecoder {
         }
     }
 
-    #[hax_lib::ensures(|res| hax_lib::implies(len_bytes % 2 == 0, res.is_ok() && res.unwrap().pts_needed == len_bytes / 2))]
+    #[hax_lib::ensures(|res| hax_lib::implies(len_bytes % 2 == 0 && len_bytes <= 2 * MAX_PTS_NEEDED_V1, res.is_ok() && res.unwrap().pts_needed == len_bytes / 2))]
     fn new_with_poly_count(len_bytes: usize, _polys: usize) -> Result<Self, super::EncodingError> {
         if len_bytes % 2 != 0 {
             return Err(PolynomialError::MessageLengthEven.into());
@@ -893,7 +881,7 @@ impl PolyDecoder {
 
 #[hax_lib::attributes]
 impl Decoder for PolyDecoder {
-    #[hax_lib::ensures(|res| hax_lib::implies(len_bytes % 2 == 0, res.is_ok() && res.unwrap().pts_needed == len_bytes / 2))]
+    #[hax_lib::ensures(|res| hax_lib::implies(len_bytes % 2 == 0 && len_bytes <= 2 * MAX_PTS_NEEDED_V1, res.is_ok() && res.unwrap().pts_needed == len_bytes / 2))]
     fn new(len_bytes: usize) -> Result<Self, super::EncodingError> {
         Self::new_with_poly_count(len_bytes, 16)
     }
@@ -935,10 +923,16 @@ impl Decoder for PolyDecoder {
         if self.is_complete {
             return None;
         }
-        let mut points_vecs = Vec::with_capacity(self.pts.len());
+        let mut points_vecs: Vec<&[Pt]> = Vec::with_capacity(self.pts.len());
         let mut ret_none = false;
         for i in 0..(self.pts.len()) {
-            hax_lib::loop_invariant!(|i: usize| points_vecs.len() <= i);
+            hax_lib::loop_invariant!(|i: usize| hax_lib::prop::constructors::and(
+                (points_vecs.len() <= i && (ret_none || points_vecs.len() == i)).into(),
+                hax_lib::forall(|j: usize| hax_lib::implies(
+                    j < points_vecs.len(),
+                    points_vecs[j].len() <= MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1
+                ))
+            ));
             let pts = &self.pts[i];
             if pts.len() < self.necessary_points(i) {
                 ret_none = true;
@@ -967,12 +961,7 @@ impl Decoder for PolyDecoder {
                 hax_lib::assume!(i < self.pts[poly].len()); // TODO Needs a postcondition on binary_search
                 self.pts[poly][i].y
             } else {
-                hax_lib::assume!(poly < polys.len());
                 if polys[poly].is_none() {
-                    hax_lib::assume!(poly < points_vecs.len());
-                    hax_lib::assume!(
-                        points_vecs[poly].len() <= MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1
-                    );
                     polys[poly] = Some(Poly::lagrange_interpolate(points_vecs[poly]));
                 }
                 polys[poly]

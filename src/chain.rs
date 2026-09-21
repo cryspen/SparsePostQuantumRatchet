@@ -384,7 +384,9 @@ impl Chain {
     pub fn add_epoch(&mut self, epoch_secret: EpochSecret) {
         // This assume could be turned into a precondition but it uses private fields
         hax_lib::assume!(
-            self.current_epoch < u64::MAX && epoch_secret.epoch == self.current_epoch + 1
+            self.current_epoch < u64::MAX
+                && epoch_secret.epoch == self.current_epoch + 1
+                && self.links.len() < usize::MAX
         );
         assert!(epoch_secret.epoch == self.current_epoch + 1);
         let mut genr8r = [0u8; 96];
@@ -403,7 +405,7 @@ impl Chain {
     }
 
     #[hax_lib::ensures(|res| if let Ok(v) = res {v < self.links.len()} else {true})]
-    fn epoch_idx(&mut self, epoch: Epoch) -> Result<usize, Error> {
+    fn epoch_idx(&self, epoch: Epoch) -> Result<usize, Error> {
         if epoch > self.current_epoch {
             return Err(Error::EpochOutOfRange(epoch));
         }
@@ -423,19 +425,21 @@ impl Chain {
         if self.send_epoch != epoch {
             self.send_epoch = epoch;
             while epoch_index > EPOCHS_TO_KEEP_PRIOR_TO_SEND_EPOCH {
+                hax_lib::loop_invariant!(epoch_index < self.links.len());
                 hax_lib::loop_decreases!(epoch_index);
                 self.links.pop_front();
                 epoch_index -= 1;
             }
+            #[cfg(hax)]
+            let links_len = self.links.len();
             #[allow(clippy::needless_range_loop)]
             for i in 0..epoch_index {
-                hax_lib::assume!(i < self.links.len());
+                hax_lib::loop_invariant!(|_: usize| self.links.len() == links_len);
                 self.links[i].send.clear_next();
             }
         }
         hax_lib::assume!(
-            epoch_index < self.links.len()
-                && self.links[epoch_index].send.next.len() == 32
+            self.links[epoch_index].send.next.len() == 32
                 && self.links[epoch_index].send.ctr < u32::MAX
         );
         Ok(self.links[epoch_index].send.next_key())

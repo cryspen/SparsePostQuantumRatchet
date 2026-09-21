@@ -54,8 +54,6 @@ pub fn encaps1<R: Rng + CryptoRng>(
     let mut state = vec![0u8; incremental::encaps_state_len()];
     let mut ss = vec![0u8; libcrux_ml_kem::SHARED_SECRET_SIZE];
     let ct1 = incremental::encapsulate1(hdr.as_slice(), randomness, &mut state, &mut ss);
-    hax_lib::assume!(ct1.is_ok());
-    hax_lib::assume!(state.len() == 2080 && ss.len() == 32);
     (
         ct1.expect("should only fail based on sizes, all sizes should be correct")
             .value
