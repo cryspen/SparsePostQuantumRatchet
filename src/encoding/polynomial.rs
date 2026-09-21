@@ -162,11 +162,11 @@ impl Poly {
 
         #[allow(clippy::needless_range_loop)]
         for i in 0..offset {
-            hax_lib::loop_invariant!(|_: usize| p.coefficients.len() == offset + 1);
+            hax_lib::loop_invariant!(|_: usize| p.coefficients.len() == offset + 1
+                && p.coefficients[offset] == GF16::ONE);
             let pi = pts[i];
             p.mult_xdiff_assign_trailing(offset - i, pi.x);
         }
-        #[cfg(not(hax))]
         debug_assert_eq!(p.coefficients[pts.len()], GF16::ONE);
         p
     }
@@ -180,10 +180,17 @@ impl Poly {
     /// This allows us to build up a polynomial from its *largest* coefficient, and thus avoid
     /// sliding coefficients in the vector as we go.
     #[hax_lib::requires(0 < start && start <= self.coefficients.len())]
+    #[hax_lib::ensures(|_| future(self).coefficients.len() == self.coefficients.len()
+        && future(self).coefficients[self.coefficients.len() - 1]
+            == self.coefficients[self.coefficients.len() - 1])]
     fn mult_xdiff_assign_trailing(&mut self, start: usize, difference: GF16) {
         let l = self.coefficients.len();
+        #[cfg(hax)]
+        let top = self.coefficients[l - 1];
         for i in start..l {
-            hax_lib::loop_invariant!(|_: usize| self.coefficients.len() == l);
+            hax_lib::loop_invariant!(
+                |_: usize| self.coefficients.len() == l && self.coefficients[l - 1] == top
+            );
             let delta = self.coefficients[i] * difference;
             self.coefficients[i - 1] -= delta;
         }
