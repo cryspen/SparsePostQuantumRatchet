@@ -472,8 +472,8 @@ impl<const N: usize> PolyConst<N> {
         Self { coefficients: xp }
     }
 
+    #[hax_lib::requires(N <= MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1 + 1)]
     fn to_poly(&self) -> Poly {
-        hax_lib::assume!(N <= MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1 + 1);
         Poly {
             coefficients: self.coefficients.to_vec(),
         }
@@ -693,9 +693,14 @@ impl PolyEncoder {
             value: Vec::<GF16>::with_capacity(msg.len() / 2),
         });
         for (i, c) in msg.chunks_exact(2).enumerate() {
-            hax_lib::loop_invariant!(|_: usize| pts.len() >= NUM_POLYS);
+            hax_lib::loop_invariant!(|i: usize| hax_lib::prop::constructors::and(
+                (pts.len() >= NUM_POLYS).into(),
+                hax_lib::forall(|j: usize| hax_lib::implies(
+                    j < NUM_POLYS,
+                    pts[j].value.len() <= i / NUM_POLYS + if j < i % NUM_POLYS { 1 } else { 0 }
+                ))
+            ));
             let poly = i % pts.len();
-            hax_lib::assume!(pts[poly].value.len() < MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1);
             pts[poly]
                 .value
                 .push(GF16::new(((c[0] as u16) << 8) + (c[1] as u16)));
@@ -824,7 +829,7 @@ impl PolyDecoder {
         for i in 0..self.pts.len() {
             hax_lib::loop_invariant!(|i: usize| out.pts.len() == i);
             let pts = &self.pts[i];
-            hax_lib::assume!(pts.len() <= 2 * MAX_STORED_POLYNOMIAL_DEGREE_V1 + 1);
+            hax_lib::assume!(pts.len() <= 2 * MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1);
             let mut v = Vec::<u8>::with_capacity(4 * pts.len());
             for i in 0..pts.len() {
                 hax_lib::loop_invariant!(|i: usize| v.len() == i * 4);
@@ -958,7 +963,6 @@ impl Decoder for PolyDecoder {
                 y: GF16::ZERO,
             };
             let y = if let Ok(i) = self.pts[poly].binary_search(&pt) {
-                hax_lib::assume!(i < self.pts[poly].len()); // TODO Needs a postcondition on binary_search
                 self.pts[poly][i].y
             } else {
                 if polys[poly].is_none() {

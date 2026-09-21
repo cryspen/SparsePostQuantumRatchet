@@ -55,3 +55,37 @@ val impl_10__push (#v_T: Type0) {| i1: Core_models.Cmp.t_Ord v_T |} (self: t_Sor
     : Prims.Pure (t_SortedSet v_T & (usize & Core_models.Option.t_Option v_T))
       Prims.l_True
       (fun _ -> Prims.l_True)
+
+/// `<[T]>::binary_search` returns an index that is in bounds.
+///
+/// std: "If the value is found then `Result::Ok` is returned, containing the
+/// index of the matching element."
+/// <https://doc.rust-lang.org/std/primitive.slice.html#method.binary_search>
+///
+/// hax's `Core_models.Slice.impl__binary_search'` is an upstream `assume val`
+/// with `Prims.l_True` on both sides, so the bound has to be stated somewhere.
+/// It belongs here rather than at the call site: `SortedSet` reaches the slice
+/// through its two `Deref`s and `Vec::as_slice`, which is the only form the
+/// extraction produces, and `polynomial.rs::decoded_message` is the only
+/// caller.
+val lemma_binary_search_ok_in_bounds
+      (#v_T: Type0)
+      {| i1: Core_models.Cmp.t_Ord v_T |}
+      (self: Alloc.Vec.t_Vec v_T Alloc.Alloc.t_Global)
+      (x: v_T)
+    : Lemma
+      (match
+          Core_models.Slice.impl__binary_search #v_T
+            #i1
+            (Alloc.Vec.impl_1__as_slice #v_T #Alloc.Alloc.t_Global self <: t_Slice v_T)
+            x
+        with
+        | Core_models.Result.Result_Ok i ->
+          v i < v (Alloc.Vec.impl_1__len #v_T #Alloc.Alloc.t_Global self <: usize)
+        | _ -> True)
+      [
+        SMTPat (Core_models.Slice.impl__binary_search #v_T
+              #i1
+              (Alloc.Vec.impl_1__as_slice #v_T #Alloc.Alloc.t_Global self <: t_Slice v_T)
+              x)
+      ]
