@@ -160,6 +160,17 @@ let bv_xor (#n:nat) (x y: bv n) : bv n = createi n (fun i -> bool_xor x.[i] y.[i
 let lemma_gf_add_bv_xor (#n:nat) (x y: bv n) : Lemma (gf_add x y == bv_xor x y) =
   bv_eq_intro (gf_add x y) (bv_xor x y)
 
+let lemma_bool_xor_eq (a b: bool) : Lemma (bool_xor a b == false <==> a == b) = ()
+
+let lemma_add_cancel (#n:nat) (x y: bv n)
+  : Lemma (requires gf_add x y == zero #n) (ensures x == y) =
+  lemma_gf_add_bv_xor x y;
+  let aux (i:nat{i < n}) : Lemma (x.[i] == y.[i]) =
+    assert ((bv_xor x y).[i] == (zero #n).[i]);
+    lemma_bool_xor_eq x.[i] y.[i] in
+  Classical.forall_intro aux;
+  bv_eq_intro x y
+
 (* Polynomial (carry-less) Multiplication *)
 
 let poly_mul_x_k #n (x: bv n) (k:nat) : bv (n+k) =
@@ -300,6 +311,22 @@ let lemma_red_self (#n:nat) (p: bv (n+1))
   bv_eq_intro (red_step p p) (zero #n);
   lemma_red_idem p (zero #n)
 
+let rec lemma_red_zero (#n:nat) (p: bv (n+1)) (k:nat)
+  : Lemma (ensures red p (zero #k) == zero #n) (decreases k) =
+  if k <= n then bv_eq_intro (lift (zero #k) n) (zero #n)
+  else begin
+    lemma_red_no_top p (zero #k);
+    bv_eq_intro (lower1 (zero #k)) (zero #(k-1));
+    lemma_red_zero p (k-1)
+  end
+
+let lemma_red_self_mul_x_k (#n:nat) (p: bv (n+1)) (k:nat)
+  : Lemma (requires p.[n] == true) (ensures red p (poly_mul_x_k p k) == zero #n) =
+  lemma_red_shift p p k;
+  lemma_red_self p;
+  bv_eq_intro (poly_mul_x_k (zero #n) k) (zero #(n+k));
+  lemma_red_zero p (n+k)
+
 (* Galois Field Assumptions *)
 
 class galois_field = {
@@ -415,9 +442,11 @@ let shift_right_lemma (#t:inttype{unsigned t}) #t' (x: int_t t) (y: int_t t'):
   bv_eq_intro (to_bv (x >>! y))
               (createi (bits t) (fun i -> if i + v y < bits t then (to_bv x).[i + v y] else false))
 
+#push-options "--z3rlimit 100"
 let cast_truncate_lemma (#t:inttype) (#t':inttype{bits t' <= bits t}) (x: int_t t):
   Lemma (to_bv (cast (x <: int_t t) <: int_t t') == bv_take (to_bv x) (bits t')) =
   bv_eq_intro (to_bv (cast (x <: int_t t) <: int_t t')) (bv_take (to_bv x) (bits t'))
+#pop-options
 
 let mask_lemma (#t:inttype) (n:nat{pow2 n - 1 <= maxint t}) (x: int_t t):
   Lemma (to_bv (x &. mk_int #t (pow2 n - 1)) ==
@@ -485,6 +514,74 @@ let gf16_poly : bv (16+1) =
   createi 17 (fun i -> i = 0 || i = 1 || i = 3 || i = 12 || i = 16)
 
 let gf16_norm (#k:nat) (x: bv k) : bv 16 = red #16 gf16_poly x
+
+(* The 32-bit constant the reduction shifts is the polynomial, zero-extended *)
+
+#push-options "--z3rlimit 200"
+let lemma_poly_bit (i:nat{i < 32})
+  : Lemma ((to_bv (mk_u32 0x1100b)).[i] == (lift gf16_poly 32).[i]) =
+  reveal_opaque (`%to_bv) (to_bv #U32);
+  reveal_opaque (`%get_bit) (get_bit #U32);
+  if i = 0 then assert_norm (get_bit_nat 69643 0 == 1)
+  else if i = 1 then assert_norm (get_bit_nat 69643 1 == 1)
+  else if i = 2 then assert_norm (get_bit_nat 69643 2 == 0)
+  else if i = 3 then assert_norm (get_bit_nat 69643 3 == 1)
+  else if i = 4 then assert_norm (get_bit_nat 69643 4 == 0)
+  else if i = 5 then assert_norm (get_bit_nat 69643 5 == 0)
+  else if i = 6 then assert_norm (get_bit_nat 69643 6 == 0)
+  else if i = 7 then assert_norm (get_bit_nat 69643 7 == 0)
+  else if i = 8 then assert_norm (get_bit_nat 69643 8 == 0)
+  else if i = 9 then assert_norm (get_bit_nat 69643 9 == 0)
+  else if i = 10 then assert_norm (get_bit_nat 69643 10 == 0)
+  else if i = 11 then assert_norm (get_bit_nat 69643 11 == 0)
+  else if i = 12 then assert_norm (get_bit_nat 69643 12 == 1)
+  else if i = 13 then assert_norm (get_bit_nat 69643 13 == 0)
+  else if i = 14 then assert_norm (get_bit_nat 69643 14 == 0)
+  else if i = 15 then assert_norm (get_bit_nat 69643 15 == 0)
+  else if i = 16 then assert_norm (get_bit_nat 69643 16 == 1)
+  else if i = 17 then assert_norm (get_bit_nat 69643 17 == 0)
+  else if i = 18 then assert_norm (get_bit_nat 69643 18 == 0)
+  else if i = 19 then assert_norm (get_bit_nat 69643 19 == 0)
+  else if i = 20 then assert_norm (get_bit_nat 69643 20 == 0)
+  else if i = 21 then assert_norm (get_bit_nat 69643 21 == 0)
+  else if i = 22 then assert_norm (get_bit_nat 69643 22 == 0)
+  else if i = 23 then assert_norm (get_bit_nat 69643 23 == 0)
+  else if i = 24 then assert_norm (get_bit_nat 69643 24 == 0)
+  else if i = 25 then assert_norm (get_bit_nat 69643 25 == 0)
+  else if i = 26 then assert_norm (get_bit_nat 69643 26 == 0)
+  else if i = 27 then assert_norm (get_bit_nat 69643 27 == 0)
+  else if i = 28 then assert_norm (get_bit_nat 69643 28 == 0)
+  else if i = 29 then assert_norm (get_bit_nat 69643 29 == 0)
+  else if i = 30 then assert_norm (get_bit_nat 69643 30 == 0)
+  else if i = 31 then assert_norm (get_bit_nat 69643 31 == 0)
+  else ()
+
+let lemma_poly_to_bv ()
+  : Lemma (to_bv (mk_u32 0x1100b) == lift gf16_poly 32) =
+  Classical.forall_intro lemma_poly_bit;
+  bv_eq_intro (to_bv (mk_u32 0x1100b)) (lift gf16_poly 32)
+#pop-options
+
+let lemma_poly_shifted (i: u32{v i <= 15})
+  : Lemma (to_bv ((mk_u32 0x1100b) <<! i) == lift (poly_mul_x_k gf16_poly (v i)) 32) =
+  lemma_poly_to_bv ();
+  shift_left_lemma (mk_u32 0x1100b) i;
+  bv_eq_intro (to_bv ((mk_u32 0x1100b) <<! i)) (lift (poly_mul_x_k gf16_poly (v i)) 32)
+
+(* Reducing the high half of irred * X^i yields its low half: the single step
+   the byte-wise reduction table is built from. *)
+
+let lemma_reduce_step (i:nat{i <= 15})
+  : Lemma (gf16_norm (poly_mul_x_k (bv_drop (lift (poly_mul_x_k gf16_poly i) 32) 16) 16) ==
+           bv_take (lift (poly_mul_x_k gf16_poly i) 32) 16) =
+  let p32 : bv 32 = lift (poly_mul_x_k gf16_poly i) 32 in
+  lemma_red_split #16 gf16_poly p32 16;
+  lemma_red_lift #16 gf16_poly (poly_mul_x_k gf16_poly i) 32;
+  lemma_red_self_mul_x_k #16 gf16_poly i;
+  lemma_red_idem #16 gf16_poly (bv_take p32 16);
+  lemma_add_cancel (bv_take p32 16)
+                   (gf16_norm (poly_mul_x_k (bv_drop p32 16) 16))
+
 
 let gf16_irred : p:bv (16+1){p.[16] /\ gf16_norm p == zero #16} =
   lemma_red_self #16 gf16_poly;
