@@ -44,17 +44,52 @@ let impl_13 (#v_T: Type0) (#[FStar.Tactics.Typeclasses.tcresolve ()] i1: Core_mo
     f_deref = fun (self: t_SortedSet v_T) -> self.f_set
   }
 
-/// `SortedSet::new()`
+/// The elements of a `SortedSet`, reached through its two `Deref`s. Both
+/// records are concrete here, so this is a projection, not an assumption.
+unfold
+let set_seq (#v_T: Type0) {| i1: Core_models.Cmp.t_Ord v_T |} (self: t_SortedSet v_T)
+    : Seq.seq v_T = (self.f_set.f_vec)._0
+
+/// `SortedSet::new()` -- `Vec::new()`, so the set is empty.
+/// <https://docs.rs/sorted-vec/0.8.6/sorted_vec/struct.SortedSet.html#method.new>
 val impl_10__new: #v_T: Type0 -> {| i1: Core_models.Cmp.t_Ord v_T |} -> Prims.unit
-  -> Prims.Pure (t_SortedSet v_T) Prims.l_True (fun _ -> Prims.l_True)
+  -> Prims.Pure (t_SortedSet v_T) Prims.l_True (fun out -> Seq.length (set_seq out) == 0)
 
 /// `SortedSet::push`, returning the element's index and the equal element it
-/// displaced, if any. Sortedness and deduplication are not stated.
-/// <https://docs.rs/sorted-vec/0.8/sorted_vec/struct.SortedSet.html#method.push>
+/// displaced, if any.
+/// <https://docs.rs/sorted-vec/0.8.6/sorted_vec/struct.SortedSet.html#method.push>
+///
+/// The crate documents `push` only as "same as replace, except performance is
+/// O(1) when the element belongs at the back", and `replace` as "insert an
+/// element into sorted position, returning the order index at which it was
+/// placed. If an existing item was found it will be returned." Neither says
+/// which of two `Ordering::Equal` elements survives, which is the whole
+/// semantics for a type whose `Ord` reads fewer fields than it has. Read off
+/// 0.8.6's `SortedSet::push` (src/lib.rs:388-417): the `Equal`-to-last path
+/// pops and pushes, and the `< last` path delegates to `replace`, which
+/// `mem::swap`s at the index `binary_search` found. Both therefore retain the
+/// *new* element and hand back the old one, and the length is unchanged. The
+/// sibling `extend`/`find_or_insert` go the other way, so the clause below is
+/// specific to `push`.
+///
+/// Sortedness and deduplication hold but are deliberately not stated: they are
+/// only meaningful relative to an input that already has them, which would
+/// make this a `requires` that SPQR has no way to discharge while
+/// `PolyDecoder::from_pb` is opaque.
 val impl_10__push (#v_T: Type0) {| i1: Core_models.Cmp.t_Ord v_T |} (self: t_SortedSet v_T) (element: v_T)
     : Prims.Pure (t_SortedSet v_T & (usize & Core_models.Option.t_Option v_T))
       Prims.l_True
-      (fun _ -> Prims.l_True)
+      (fun out ->
+        let set, (idx, displaced) = out in
+        let before = set_seq self in
+        let after = set_seq set in
+        v idx < Seq.length after /\
+        Seq.index after (v idx) == element /\
+        (match displaced with
+          | Core_models.Option.Option_None -> Seq.length after == Seq.length before + 1
+          | Core_models.Option.Option_Some old ->
+            Seq.length after == Seq.length before /\
+            Core_models.Cmp.f_cmp #v_T #i1 old element == Core_models.Cmp.Ordering_Equal))
 
 /// `<[T]>::binary_search` returns an index that is in bounds.
 ///
