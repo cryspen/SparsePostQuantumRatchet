@@ -110,14 +110,15 @@ const MAX_OOO_KEYS_LIMIT: u32 = 1 << 24;
 struct KeyHistory {
     // Keys are stored as [u8; 4][u8; 32], where the first is the index as a BE32
     // and the second is the key.
-    // data.len() <= KEY_SIZE*TRIM_SIZE
+    // data.len() % KEY_SIZE == 0. `gc` trims down from KEY_SIZE*TRIM_SIZE rather
+    // than holding the length below it.
     data: Vec<u8>,
 }
 
 /// ChainEpochDirection keeps track of keys related to either half of send/recv.
 struct ChainEpochDirection {
     ctr: u32,
-    // next.len() == 32
+    // next.len() == 32, or next is empty (`clear_next`).
     next: Vec<u8>,
     prev: KeyHistory,
 }
@@ -133,8 +134,12 @@ pub struct Chain {
     dir: Direction,
     current_epoch: Epoch,
     send_epoch: Epoch,
-    links: VecDeque<ChainEpoch>, // stores [link[current_epoch-N] .. link[current_epoch]]
-    // next_root.len() == 32
+    // [link[current_epoch-N] .. link[current_epoch]] as built by `new`/`add_epoch`;
+    // `from_pb` reads links and current_epoch as independent fields and does not
+    // relate them.
+    links: VecDeque<ChainEpoch>,
+    // 32 bytes as built by `new`/`add_epoch`; `from_pb` takes it unvalidated. It is
+    // only an HKDF salt, which accepts any length.
     next_root: Vec<u8>,
     params: pqrpb::ChainParams,
 }

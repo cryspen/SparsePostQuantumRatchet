@@ -777,17 +777,14 @@ pub struct PolyDecoder {
     // polys == (size of an encoding chunk)/(size of a field element)
     //polys: usize,
 
-    // A set of points ordered and equality-checked by the X value. When using
-    // MLKEM-768, the size of the sorted set will not exceed
-    // 2*MAX_STORED_POLYNOMIAL_DEGREE_V1 + 1
+    // A set of points ordered and equality-checked by the X value.
     //
-    // It can get this large because when we will only add a new chunk if it has
-    // index less than the degree of the polynomial plus 1 (to allow decoding
-    // without interpolation) or if we do not have enough chunks yet. Thus it is
-    // possible for us to receive MAX_STORED_POLYNOMIAL_DEGREE_V1 chunks with
-    // index > MAX_STORED_POLYNOMIAL_DEGREE_V1+1 and also receive all
-    // MAX_STORED_POLYNOMIAL_DEGREE_V1 + 1 chunks with index below
-    // MAX_STORED_POLYNOMIAL_DEGREE_V1+1 before decoding the message.
+    // `add_chunk` admits a point when its index is below `necessary_points` (so the
+    // message can be decoded without interpolating) or when the set is still shorter
+    // than `necessary_points`. Each branch contributes at most
+    // MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1 points, bounding a set filled by
+    // `add_chunk` at twice that. `from_pb` reads the sets out of the decoded state
+    // and does not enforce the bound.
     pts: [SortedSet<Pt>; 16],
     is_complete: bool,
 }
