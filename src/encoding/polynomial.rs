@@ -836,7 +836,7 @@ impl PolyDecoder {
         for i in 0..self.pts.len() {
             hax_lib::loop_invariant!(|i: usize| out.pts.len() == i);
             let pts = &self.pts[i];
-            hax_lib::assume!(pts.len() <= 2 * MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1);
+            hax_lib::assume!(pts.len() <= usize::MAX / 4);
             let mut v = Vec::<u8>::with_capacity(4 * pts.len());
             for i in 0..pts.len() {
                 hax_lib::loop_invariant!(|i: usize| v.len() == i * 4);
