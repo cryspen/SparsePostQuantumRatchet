@@ -731,6 +731,63 @@ mod test {
         }
     }
 
+    /// `mul2_unreduced` is `#[hax_lib::opaque]` on both accelerated backends, so
+    /// its `poly_mul` postcondition is trusted rather than proved -- and every
+    /// `gf16_mul` claim in the crate reduces to it. Nothing else compares the two
+    /// paths: `mul` above exercises whichever one this CPU selected.
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64"))]
+    #[test]
+    fn accelerated_matches_unaccelerated() {
+        if !use_accelerated() {
+            // Calling into `accelerated` without the CPU feature is undefined,
+            // so there is nothing to compare here.
+            eprintln!("SKIPPED: no accelerated GF16 path on this CPU");
+            return;
+        }
+        let mut rng = rand::rng();
+        let mut probes: Vec<u16> = vec![
+            0, 1, 2, 3, 0x000f, 0x0100, 0x1000, 0x4000, 0x7fff, 0x8000, 0xfffe, 0xffff,
+        ];
+        for _i in 0..8 {
+            probes.push(rng.next_u32() as u16);
+        }
+
+        // Every b against each probe: exercises every reduction table entry.
+        for &a in probes.iter() {
+            for b in 0..=u16::MAX {
+                assert_eq!(
+                    accelerated::mul(a, b),
+                    unaccelerated::mul(a, b),
+                    "mul a={a:#06x} b={b:#06x}"
+                );
+            }
+        }
+
+        // mul2 packs both lanes into one intrinsic call, so check the lanes
+        // separately rather than trusting mul to have covered them.
+        for &a in probes.iter() {
+            for &b1 in probes.iter() {
+                for &b2 in probes.iter() {
+                    assert_eq!(
+                        accelerated::mul2(a, b1, b2),
+                        (unaccelerated::mul(a, b1), unaccelerated::mul(a, b2)),
+                        "mul2 a={a:#06x} b1={b1:#06x} b2={b2:#06x}"
+                    );
+                }
+            }
+        }
+        for _i in 0..20_000 {
+            let a = rng.next_u32() as u16;
+            let b1 = rng.next_u32() as u16;
+            let b2 = rng.next_u32() as u16;
+            assert_eq!(
+                accelerated::mul2(a, b1, b2),
+                (unaccelerated::mul(a, b1), unaccelerated::mul(a, b2)),
+                "mul2 a={a:#06x} b1={b1:#06x} b2={b2:#06x}"
+            );
+        }
+    }
+
     #[test]
     fn div() {
         let mut rng = rand::rng();
