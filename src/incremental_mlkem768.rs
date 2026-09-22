@@ -76,6 +76,39 @@ pub fn encaps2(ek: &EncapsulationKey, es: &EncapsulationState) -> Ciphertext2 {
     ct2.value.to_vec()
 }
 
+/// Whether `encapsulate2` can safely consume this encapsulation state.
+///
+/// `encapsulate2` deserializes `es[1536..2048]` as error2's 256 i16
+/// coefficients and adds a decompressed message value to each without first
+/// range-checking them, so a coefficient near i16::MAX overflows its i16
+/// arithmetic.  Every coefficient a correct `encapsulate1` writes is a
+/// CBD(𝜂2 = 2) sample and so lies in [-2, 2]; a state written by the portable
+/// backend before libcrux:pr/1276 is in that range only after the byte swap
+/// `potentially_fix_state_incorrectly_encoded_by_libcrux_issue_1275` applies.
+#[hax_lib::requires(es.len() == 2080)]
+pub(crate) fn encapsulation_state_is_usable(es: &EncapsulationState) -> bool {
+    error2_coefficients_in_range(es, false) || error2_coefficients_in_range(es, true)
+}
+
+#[allow(clippy::manual_range_contains)] // Hax does not support RangeInclusive::contains.
+#[hax_lib::requires(es.len() == 2080)]
+fn error2_coefficients_in_range(es: &EncapsulationState, swap: bool) -> bool {
+    let mut ok = true;
+    let mut i: usize = 1536;
+    while i < 2048 {
+        hax_lib::loop_invariant!(i >= 1536 && i <= 2048 && i % 2 == 0);
+        hax_lib::loop_decreases!(2048 - i);
+        let c = if swap {
+            i16::from_le_bytes([es[i + 1], es[i]])
+        } else {
+            i16::from_le_bytes([es[i], es[i + 1]])
+        };
+        ok = ok && c >= -2 && c <= 2;
+        i += 2;
+    }
+    ok
+}
+
 /// Due to https://github.com/cryspen/libcrux/issues/1275, state may
 /// contain incorrect endian-ness.  We need to fix this locally before
 /// using it.  Luckily, this is doable by checking that the values in
@@ -182,5 +215,29 @@ mod test {
         let ct2 = encaps2(&keys.ek, &es);
         let ss2 = decaps(&keys.dk, &ct1, &ct2);
         assert_eq!(ss1, ss2);
+    }
+
+    #[test]
+    fn encapsulation_state_range_check() {
+        let mut rng = OsRng.unwrap_err();
+        let keys = generate(&mut rng);
+        let (_, es, _) = encaps1(&keys.hdr, &mut rng);
+        assert!(encapsulation_state_is_usable(&es));
+
+        // The pre-libcrux:pr/1276 portable encoding: in range only once swapped.
+        let mut swapped = es.clone();
+        for i in (1536..2048).step_by(2) {
+            swapped.swap(i, i + 1);
+        }
+        assert!(encapsulation_state_is_usable(&swapped));
+
+        // An error2 coefficient outside [-2, 2] overflows encapsulate2's i16
+        // arithmetic, in either byte order.
+        for at in [1536, 1538, 2046] {
+            let mut bad = es.clone();
+            bad[at] = 0xFF;
+            bad[at + 1] = 0x7F;
+            assert!(!encapsulation_state_is_usable(&bad), "at {at}");
+        }
     }
 }
