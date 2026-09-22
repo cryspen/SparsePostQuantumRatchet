@@ -75,27 +75,22 @@ val impl_KeyPairCompressedBytes__pk2 (self: t_KeyPairCompressedBytes)
 /// `validate_pk_bytes(pk1, pk2)`
 /// <https://docs.rs/libcrux-ml-kem/0.0.10/libcrux_ml_kem/mlkem768/incremental/fn.validate_pk_bytes.html>
 ///
-/// `Ok` requires passing a length check (`pk1.len() != 64 || pk2.len() != 1152`
-/// gives `InvalidInputLength`), which is what the postcondition states.
+/// `Ok` requires three things, and none of them is stated. Nothing in SPQR
+/// consumes a fact about this call -- `ek_matches_header`'s result only steers
+/// a branch, and `recv_ek` takes `ek.len() == 1152` as its own precondition --
+/// so any postcondition here would be granted for free and discharge nothing.
 ///
-/// It also requires `H(pk2 || pk1[0..32]) == pk1[32..64]` and a domain check on
-/// `t`, either of which gives `InvalidPublicKey`. That hash equality is the key
-/// binding `ek_matches_header` relies on to decide whether an attacker-supplied
-/// encapsulation key belongs to the header it arrived with. It is *not* stated:
-/// saying it needs a SHA3-256 symbol in the model, and no SPQR proof consumes
-/// it, so it would be a trusted assumption added for nothing.
+/// For the record, read off 0.0.10's `incremental.rs:297-339`, `Ok` implies:
+/// `pk1.len() == 64 && pk2.len() == 1152` exactly (the test is `!=`, unlike
+/// `PublicKey1::try_from`'s `<`); `H(pk2 || pk1[0..32]) == pk1[32..64]`, which
+/// is the binding `ek_matches_header` exists to check and which would need a
+/// SHA3-256 symbol here; and that `t` decodes and re-encodes to itself.
 val validate_pk_bytes (pk1 pk2: t_Slice u8)
     : Prims.Pure
       (Core_models.Result.t_Result Prims.unit
           Libcrux_ml_kem.Ind_cca.Incremental.Types.t_Error)
       Prims.l_True
-      (ensures
-        fun res ->
-          Core_models.Result.impl__is_ok #Prims.unit
-            #Libcrux_ml_kem.Ind_cca.Incremental.Types.t_Error
-            res ==>
-          (Core_models.Slice.impl__len #u8 pk1 =. mk_usize 64 /\
-            Core_models.Slice.impl__len #u8 pk2 =. mk_usize 1152))
+      (fun _ -> Prims.l_True)
 
 /// error2's `j`th coefficient, built from its two stored bytes exactly as
 /// `encapsulate2`'s deserialiser reads them. `from_le_bytes` is left
