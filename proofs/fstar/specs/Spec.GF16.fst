@@ -491,13 +491,58 @@ let shift_left_bit_select_lemma #t #t' (x: int_t t) (i: int_t t'{v i >= 0 /\ v i
 
 (* GF16 Lemmas *)
 
-let up_cast_shift_left_lemma (x: u16) (shift: u32{v shift < 16}):
+let up_cast_shift_left_lemma (#t':inttype) (x: u16) (shift: int_t t'{v shift >= 0 /\ v shift < 16}):
   Lemma (to_bv ((cast x <: u32) <<! shift) ==
          lift (poly_mul_x_k (to_bv x) (v shift)) 32) =
   up_cast_lemma #U16 #U32 x;
-  shift_left_lemma #U32 #U32 (cast x <: u32) shift;
+  shift_left_lemma #U32 #t' (cast x <: u32) shift;
   bv_eq_intro (to_bv ((cast x <: u32) <<! shift))
               (lift (poly_mul_x_k (to_bv x) (v shift)) 32)
+
+(* Reading a byte out of a 32-bit word: shift it down and truncate. *)
+
+#push-options "--fuel 0 --ifuel 1 --z3rlimit 50"
+let byte_at_lemma (x: u32) (k: i32{v k >= 0 /\ v k <= 24})
+  : Lemma (to_bv (cast (x >>! k) <: u8) == bv_take (bv_drop (to_bv x) (v k)) 8) =
+  shift_right_lemma #U32 x k;
+  cast_truncate_lemma #U32 #U8 (x >>! k);
+  bv_eq_intro (to_bv (cast (x >>! k) <: u8)) (bv_take (bv_drop (to_bv x) (v k)) 8)
+
+(* `usize` is 32 or 64 bits wide, so routing a u32 through it and truncating to
+   a byte loses nothing, and masking with 0xFF before that truncation is
+   redundant. *)
+
+let lemma_pow2_usize (_:unit) : Lemma (pow2 32 <= pow2 (bits USIZE)) =
+  FStar.Math.Lemmas.pow2_le_compat (bits USIZE) 32
+
+let cast_via_usize_lemma (x: u32) : Lemma ((cast (cast x <: usize) <: u8) == (cast x <: u8)) =
+  lemma_pow2_usize ();
+  FStar.Math.Lemmas.small_mod (v x) (pow2 (bits USIZE))
+
+let cast_mask_byte_lemma (x: usize)
+  : Lemma (v (x &. mk_usize 255) < 256 /\ (cast (x &. mk_usize 255) <: u8) == (cast x <: u8)) =
+  assert_norm (pow2 8 == 256);
+  logand_mask_lemma x 8;
+  FStar.Math.Lemmas.lemma_mod_mod (v x % 256) (v x) 256
+
+let top_byte_index_lemma (x: u32)
+  : Lemma (let j : usize = cast (x >>! mk_i32 24) <: usize in
+           v j < 256 /\ to_bv (cast j <: u8) == bv_drop (to_bv x) 24) =
+  let s = x >>! mk_i32 24 in
+  lemma_pow2_usize ();
+  FStar.Math.Lemmas.small_mod (v s) (pow2 (bits USIZE));
+  cast_via_usize_lemma s;
+  byte_at_lemma x (mk_i32 24);
+  bv_eq_intro (bv_take (bv_drop (to_bv x) 24) 8) (bv_drop (to_bv x) 24)
+
+let mid_byte_index_lemma (x: u32)
+  : Lemma (let j : usize = (cast (x >>! mk_i32 16) <: usize) &. mk_usize 255 in
+           v j < 256 /\ to_bv (cast j <: u8) == bv_take (bv_drop (to_bv x) 16) 8) =
+  let s = x >>! mk_i32 16 in
+  cast_mask_byte_lemma (cast s <: usize);
+  cast_via_usize_lemma s;
+  byte_at_lemma x (mk_i32 16)
+#pop-options
 
 let xor_is_gf_add_lemma #t (x y: int_t t):
     Lemma (to_bv (x ^. y) == gf_add (to_bv x) (to_bv y)) =
@@ -582,6 +627,202 @@ let lemma_reduce_step (i:nat{i <= 15})
   lemma_add_cancel (bv_take p32 16)
                    (gf16_norm (poly_mul_x_k (bv_drop p32 16) 16))
 
+
+(* The byte-wise reduction table
+
+   `gf.rs` reduces a 32-bit product one byte at a time against a table indexed
+   by that byte. `red_byte c` is what entry `c` must hold: the byte stands for
+   the polynomial c * X^16, and the table stores its normal form. *)
+
+let red_byte (c: bv 8) : bv 16 = gf16_norm (poly_mul_x_k c 16)
+
+let lemma_mul_x_k_xor (#n:nat) (x y: bv n) (k:nat)
+  : Lemma (poly_mul_x_k (bv_xor x y) k == bv_xor (poly_mul_x_k x k) (poly_mul_x_k y k)) =
+  bv_eq_intro (poly_mul_x_k (bv_xor x y) k) (bv_xor (poly_mul_x_k x k) (poly_mul_x_k y k))
+
+let lemma_red_byte_xor (a b: bv 8)
+  : Lemma (red_byte (bv_xor a b) == bv_xor (red_byte a) (red_byte b)) =
+  lemma_mul_x_k_xor a b 16;
+  lemma_red_xor #16 gf16_poly (poly_mul_x_k a 16) (poly_mul_x_k b 16)
+
+let lemma_take_xor (#n:nat) (x y: bv n) (k:nat{k <= n})
+  : Lemma (bv_take (bv_xor x y) k == bv_xor (bv_take x k) (bv_take y k)) =
+  bv_eq_intro (bv_take (bv_xor x y) k) (bv_xor (bv_take x k) (bv_take y k))
+
+let lemma_red_byte_zero (_:unit) : Lemma (red_byte (zero #8) == zero #16) =
+  bv_eq_intro (poly_mul_x_k (zero #8) 16) (zero #24);
+  lemma_red_zero #16 gf16_poly 24
+
+let lemma_take_u32_zero (_:unit) : Lemma (bv_take (to_bv (mk_u32 0)) 16 == zero #16) =
+  zero_lemma #U32;
+  bv_eq_intro (bv_take (to_bv (mk_u32 0)) 16) (zero #16)
+
+(* One entry of the table is built by cancelling the bits of `c` from the top
+   down. Cancelling bit `i` adds the polynomial shifted left by `i`, whose high
+   byte is the mask applied to `c` and whose low half accumulates into the
+   entry. *)
+
+let poly_hi_byte (i:nat{i <= 7}) : bv 8 =
+  bv_take (bv_drop (lift (poly_mul_x_k gf16_poly i) 32) 16) 8
+
+let lemma_poly_hi_byte_bits (i:nat{i <= 7}) (j:nat{j < 8})
+  : Lemma ((poly_hi_byte i).[j] == (j = i || j + 4 = i)) =
+  let pmx : bv (17+i) = poly_mul_x_k gf16_poly i in
+  let p : bv 32 = lift pmx 32 in
+  assert ((poly_hi_byte i).[j] == (bv_drop p 16).[j]);
+  assert ((bv_drop p 16).[j] == p.[j+16]);
+  assert (p.[j+16] == (if j+16 < 17+i then pmx.[j+16] else false));
+  if j + 16 < 17 + i then begin
+    assert (j <= i);
+    assert (pmx.[j+16] == gf16_poly.[j+16-i]);
+    assert (gf16_poly.[j+16-i] ==
+            (j+16-i = 0 || j+16-i = 1 || j+16-i = 3 || j+16-i = 12 || j+16-i = 16))
+  end else ()
+
+let lemma_red_byte_hi (i:nat{i <= 7})
+  : Lemma (red_byte (poly_hi_byte i) == bv_take (lift (poly_mul_x_k gf16_poly i) 32) 16) =
+  let p : bv 32 = lift (poly_mul_x_k gf16_poly i) 32 in
+  lemma_reduce_step i;
+  bv_eq_intro (poly_mul_x_k (bv_drop p 16) 16) (lift (poly_mul_x_k (poly_hi_byte i) 16) 32);
+  lemma_red_lift #16 gf16_poly (poly_mul_x_k (poly_hi_byte i) 16) 32
+
+(* The invariant the table-building loop preserves: adding the shifted
+   polynomial to the accumulator and its high byte to `a` leaves
+   `red_byte a + low16 out` unchanged, while clearing bit `i` of `a` and
+   touching no bit above it. *)
+
+let lemma_reduce_byte_step (a: bv 8) (out: bv 32) (i:nat{i <= 7})
+  : Lemma (requires a.[i] == true)
+          (ensures (
+            let p : bv 32 = lift (poly_mul_x_k gf16_poly i) 32 in
+            let a' = bv_xor a (poly_hi_byte i) in
+            let out' = bv_xor out p in
+            gf_add (red_byte a') (bv_take out' 16) ==
+            gf_add (red_byte a) (bv_take out 16) /\
+            a'.[i] == false /\
+            (forall (j:nat). j > i /\ j < 8 ==> a'.[j] == a.[j]))) =
+  let p : bv 32 = lift (poly_mul_x_k gf16_poly i) 32 in
+  let m = poly_hi_byte i in
+  let a' = bv_xor a m in
+  let out' = bv_xor out p in
+  Classical.forall_intro (lemma_poly_hi_byte_bits i);
+  lemma_red_byte_xor a m;
+  lemma_red_byte_hi i;
+  lemma_take_xor out p 16;
+  lemma_gf_add_bv_xor (red_byte a') (bv_take out' 16);
+  lemma_gf_add_bv_xor (red_byte a) (bv_take out 16);
+  bv_eq_intro (bv_xor (red_byte a') (bv_take out' 16))
+              (bv_xor (red_byte a) (bv_take out 16))
+
+(* The same step on the machine integers the loop manipulates *)
+
+let lemma_poly_hi_byte_int (i: u32{v i <= 7})
+  : Lemma (to_bv (cast (((mk_u32 0x1100b) <<! i) >>! mk_i32 16) <: u8) == poly_hi_byte (v i)) =
+  let p32 = (mk_u32 0x1100b) <<! i in
+  lemma_poly_shifted i;
+  shift_right_lemma #U32 p32 (mk_i32 16);
+  cast_truncate_lemma #U32 #U8 (p32 >>! mk_i32 16);
+  bv_eq_intro (to_bv (cast (p32 >>! mk_i32 16) <: u8)) (poly_hi_byte (v i))
+
+let lemma_reduce_step_int (a: u8) (out: u32) (i: u32{v i <= 7})
+  : Lemma (requires (to_bv a).[v i] == true)
+          (ensures (
+            let p = (mk_u32 0x1100b) <<! i in
+            let a' = a ^. (cast (p >>! mk_i32 16) <: u8) in
+            let out' = out ^. p in
+            gf_add (red_byte (to_bv a')) (bv_take (to_bv out') 16) ==
+            gf_add (red_byte (to_bv a)) (bv_take (to_bv out) 16) /\
+            (to_bv a').[v i] == false /\
+            (forall (j:nat). j > v i /\ j < 8 ==> (to_bv a').[j] == (to_bv a).[j]))) =
+  let p = (mk_u32 0x1100b) <<! i in
+  let m : u8 = cast (p >>! mk_i32 16) <: u8 in
+  lemma_poly_hi_byte_int i;
+  lemma_poly_shifted i;
+  xor_lemma a m;
+  bv_eq_intro (to_bv (a ^. m)) (bv_xor (to_bv a) (poly_hi_byte (v i)));
+  xor_lemma out p;
+  bv_eq_intro (to_bv (out ^. p)) (bv_xor (to_bv out) (lift (poly_mul_x_k gf16_poly (v i)) 32));
+  lemma_reduce_byte_step (to_bv a) (to_bv out) (v i)
+
+let lemma_bit_test (a: u8) (i: u32{v i < 8})
+  : Lemma ((((mk_u8 1 <<! i) &. a) == mk_u8 0) <==> ((to_bv a).[v i] == false)) =
+  logand_commutative (mk_u8 1 <<! i) a;
+  shift_left_bit_select_lemma #U8 #U32 a i
+
+(* Reducing a 32-bit product against the table
+
+   The product is normalised one byte at a time from the top. Each step adds
+   the table entry for a byte back in at a lower position, which changes
+   nothing modulo the polynomial; after two steps the low 16 bits are the
+   normal form, and the two high bytes -- which the implementation leaves
+   standing -- are discarded by the truncating cast to u16. *)
+
+let lemma_norm_lift_any (#k:nat) (x: bv k) (j:nat{j >= k})
+  : Lemma (gf16_norm (lift x j) == gf16_norm x) =
+  lemma_red_lift #16 gf16_poly x j
+
+let lemma_norm_low16 (b: bv 32)
+  : Lemma (gf16_norm b ==
+           gf_add (bv_take b 16) (gf16_norm (poly_mul_x_k (bv_drop b 16) 16))) =
+  lemma_red_split #16 gf16_poly b 16;
+  lemma_red_idem #16 gf16_poly (bv_take b 16)
+
+let lemma_norm_hi_bytes (x: bv 16)
+  : Lemma (gf16_norm (poly_mul_x_k x 16) ==
+           gf_add (red_byte (bv_take x 8)) (gf16_norm (poly_mul_x_k (bv_drop x 8) 24))) =
+  let lo : bv 8 = bv_take x 8 in
+  let hi : bv 8 = bv_drop x 8 in
+  lemma_split x 8;
+  lemma_gf_add_bv_xor (lift lo 16) (poly_mul_x_k hi 8);
+  lemma_mul_x_k_xor (lift lo 16) (poly_mul_x_k hi 8) 16;
+  lemma_red_xor #16 gf16_poly (poly_mul_x_k (lift lo 16) 16)
+                              (poly_mul_x_k (poly_mul_x_k hi 8) 16);
+  bv_eq_intro (poly_mul_x_k (lift lo 16) 16) (lift (poly_mul_x_k lo 16) 32);
+  lemma_norm_lift_any (poly_mul_x_k lo 16) 32;
+  lemma_mul_x_k_compose hi 8 16;
+  lemma_gf_add_bv_xor (red_byte lo) (gf16_norm (poly_mul_x_k hi 24))
+
+let lemma_norm_red_byte_shift (c: bv 8)
+  : Lemma (gf16_norm (poly_mul_x_k (red_byte c) 8) == gf16_norm (poly_mul_x_k c 24)) =
+  lemma_red_shift #16 gf16_poly (poly_mul_x_k c 16) 8;
+  lemma_mul_x_k_compose c 16 8
+
+#push-options "--z3rlimit 50"
+let lemma_poly_reduce_bv (b: bv 32)
+  : Lemma (
+      let c  : bv 8  = bv_drop b 24 in
+      let b1 : bv 32 = gf_add b (lift (poly_mul_x_k (red_byte c) 8) 32) in
+      let d' : bv 8  = bv_take (bv_drop b1 16) 8 in
+      bv_take (gf_add b1 (lift (red_byte d') 32)) 16 == gf16_norm b) =
+  let c  : bv 8  = bv_drop b 24 in
+  let rc : bv 16 = red_byte c in
+  let s  : bv 32 = lift (poly_mul_x_k rc 8) 32 in
+  let b1 : bv 32 = gf_add b s in
+  let h  : bv 16 = bv_drop b1 16 in
+  let d' : bv 8  = bv_take h 8 in
+  let nc : bv 16 = gf16_norm (poly_mul_x_k c 24) in
+  bv_eq_intro (bv_drop h 8) c;
+  lemma_norm_low16 b1;
+  lemma_norm_hi_bytes h;
+  lemma_red_add #16 gf16_poly b s;
+  lemma_norm_lift_any (poly_mul_x_k rc 8) 32;
+  lemma_norm_red_byte_shift c;
+  assert (gf16_norm b1 == gf_add (bv_take b1 16) (gf16_norm (poly_mul_x_k h 16)));
+  assert (gf16_norm (poly_mul_x_k h 16) == gf_add (red_byte d') nc);
+  assert (gf16_norm b1 == gf_add (gf16_norm b) nc);
+  lemma_gf_add_bv_xor (bv_take b1 16) (gf_add (red_byte d') nc);
+  lemma_gf_add_bv_xor (red_byte d') nc;
+  lemma_gf_add_bv_xor (gf16_norm b) nc;
+  let b2 : bv 32 = gf_add b1 (lift (red_byte d') 32) in
+  let aux (i:nat{i < 16}) : Lemma ((bv_take b2 16).[i] == (gf16_norm b).[i]) =
+    assert ((gf16_norm b1).[i] ==
+            bool_xor (b1.[i]) (bool_xor ((red_byte d').[i]) (nc.[i])));
+    assert ((gf16_norm b1).[i] == bool_xor ((gf16_norm b).[i]) (nc.[i]));
+    assert ((bv_take b2 16).[i] == bool_xor (b1.[i]) ((red_byte d').[i]))
+  in
+  Classical.forall_intro aux;
+  bv_eq_intro (bv_take b2 16) (gf16_norm b)
+#pop-options
 
 let gf16_irred : p:bv (16+1){p.[16] /\ gf16_norm p == zero #16} =
   lemma_red_self #16 gf16_poly;

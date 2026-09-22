@@ -528,40 +528,92 @@ mod reduce {
     ///   REDUCE_BYTES[D] -> ef
     /// Since we're mapping every byte to a u16, we take up 512B of space
     /// to do this, and our reduction is just a couple of pipelined shifts/XORs.
-    #[hax_lib::fstar::verification_status(panic_free)]
     #[hax_lib::ensures(|result| fstar!(r#"
         Spec.GF16.(to_bv result == poly_reduce #gf16 (to_bv v))
         "#))]
     pub const fn poly_reduce(v: u32) -> u16 {
         let mut v = v;
+        hax_lib::fstar!(
+            r#"
+            Spec.GF16.lemma_poly_reduce_bv (Spec.GF16.to_bv $v);
+            Spec.GF16.top_byte_index_lemma $v
+        "#
+        );
         let i1 = (v >> 24) as usize;
+        hax_lib::fstar!(
+            r#"
+            Spec.GF16.up_cast_shift_left_lemma (v_REDUCE_BYTES.[ $i1 ] <: u16) (mk_i32 8);
+            Spec.GF16.xor_is_gf_add_lemma $v
+              ((cast (v_REDUCE_BYTES.[ $i1 ] <: u16) <: u32) <<! mk_i32 8 <: u32)
+        "#
+        );
         v ^= (REDUCE_BYTES[i1] as u32) << 8;
+        hax_lib::fstar!("Spec.GF16.mid_byte_index_lemma $v");
         let shifted_v = (v >> 16) as usize;
         let i2 = shifted_v & 0xFF;
         hax_lib::fstar!("logand_lemma $shifted_v (mk_usize 255)");
+        hax_lib::fstar!(
+            r#"
+            Spec.GF16.up_cast_lemma #U16 #U32 (v_REDUCE_BYTES.[ $i2 ] <: u16);
+            Spec.GF16.xor_is_gf_add_lemma $v (cast (v_REDUCE_BYTES.[ $i2 ] <: u16) <: u32)
+        "#
+        );
         v ^= REDUCE_BYTES[i2] as u32;
+        hax_lib::fstar!("Spec.GF16.cast_truncate_lemma #U32 #U16 $v");
         v as u16
     }
 
     /// Compute the u16 reduction associated with u8 `a`.  See the comment
     /// in poly_reduce for more details.
+    #[hax_lib::ensures(|result| fstar!(r#"
+        Spec.GF16.(bv_take (to_bv result) 16 == red_byte (to_bv a))
+        "#))]
     const fn reduce_from_byte(mut a: u8) -> u32 {
+        #[cfg(hax)]
+        let a_init = a;
         let mut out = 0u32;
         let mut i: u32 = 8;
+        hax_lib::fstar!(
+            r#"
+            Spec.GF16.lemma_take_u32_zero ();
+            Spec.GF16.(lemma_add_zero (red_byte (to_bv $a_init)))
+        "#
+        );
         while i > 0 {
-            hax_lib::loop_invariant!(i <= 8);
+            hax_lib::loop_invariant!(fstar!(
+                r#"
+                v i <= 8 /\
+                (forall (j: nat). j >= v i /\ j < 8 ==> Spec.GF16.((to_bv a).[j] == false)) /\
+                Spec.GF16.(gf_add (red_byte (to_bv a)) (bv_take (to_bv out) 16) ==
+                           red_byte (to_bv a_init))
+                "#
+            ));
             hax_lib::loop_decreases!(i);
             i -= 1;
+            hax_lib::fstar!("Spec.GF16.lemma_bit_test $a $i");
             if (1 << i) & a != 0 {
+                hax_lib::fstar!("Spec.GF16.lemma_reduce_step_int $a $out $i");
                 out ^= POLY << i;
                 a ^= ((POLY << i) >> 16) as u8;
             }
         }
+        hax_lib::fstar!(
+            r#"
+            Spec.GF16.(bv_eq_intro (to_bv $a) (zero #8));
+            Spec.GF16.lemma_red_byte_zero ();
+            Spec.GF16.(lemma_add_zero (bv_take (to_bv $out) 16))
+        "#
+        );
         out
     }
 
     /// Compute the u16 reductions for all bytes.  See the comment in
     /// poly_reduce for more details.
+    #[hax_lib::ensures(|result| fstar!(r#"
+        forall (j: usize). v j < 256 ==>
+          Spec.GF16.to_bv (result.[ j ] <: u16) ==
+          Spec.GF16.red_byte (Spec.GF16.to_bv (cast (j <: usize) <: u8))
+        "#))]
     const fn reduce_bytes() -> [u16; 256] {
         let mut out = [0u16; 256];
         let mut i = 0;
@@ -577,6 +629,16 @@ mod reduce {
             out[i] = reduce_from_byte(i as u8) as u16;
             i += 1;
         }
+        hax_lib::fstar!(
+            r#"
+            introduce forall (j: usize). v j < 256 ==>
+              Spec.GF16.to_bv (out.[ j ] <: u16) ==
+              Spec.GF16.red_byte (Spec.GF16.to_bv (cast (j <: usize) <: u8))
+            with introduce _ ==> _
+            with _. Spec.GF16.cast_truncate_lemma #U32 #U16
+                      (reduce_from_byte (cast (j <: usize) <: u8))
+        "#
+        );
         out
     }
 
