@@ -97,6 +97,32 @@ val validate_pk_bytes (pk1 pk2: t_Slice u8)
           (Core_models.Slice.impl__len #u8 pk1 =. mk_usize 64 /\
             Core_models.Slice.impl__len #u8 pk2 =. mk_usize 1152))
 
+/// error2's `j`th coefficient, built from its two stored bytes exactly as
+/// `encapsulate2`'s deserialiser reads them. `from_le_bytes` is left
+/// uninterpreted: what matters is that this and `incremental_mlkem768.rs`'s
+/// range check apply the *same* function to the *same* bytes.
+let error2_coefficient_of (lo hi: u8) : i16 =
+  let l = [lo; hi] in
+  FStar.Pervasives.assert_norm (Prims.eq2 (List.Tot.length l) 2);
+  Core_models.Num.impl_i16__from_le_bytes (Rust_primitives.Hax.array_of_list 2 l)
+
+let error2_coefficient (state: t_Slice u8) (swap: bool) (j: nat{2 * j + 1537 < Seq.length state})
+    : i16 =
+  if swap
+  then error2_coefficient_of (Seq.index state (1537 + 2 * j)) (Seq.index state (1536 + 2 * j))
+  else error2_coefficient_of (Seq.index state (1536 + 2 * j)) (Seq.index state (1537 + 2 * j))
+
+/// `EncapsState::try_from_bytes` reads error2 out of `state[1536..2048]` as 256
+/// raw little-endian i16 lanes with no range check, and `encapsulate2` then
+/// adds a decompressed message value (0 or 1665) to each in i16. A coefficient
+/// above `32767 - 1665` with the matching message bit set overflows. Every
+/// coefficient `encapsulate1` writes is a CBD(eta2 = 2) sample and so lies in
+/// [-2, 2]; this is the precondition that bound has to be carried as.
+let error2_in_range (state: t_Slice u8) (swap: bool) : prop =
+  Seq.length state == 2080 /\
+  (forall (j: nat). j < 256 ==>
+    (let c = error2_coefficient state swap j in v c >= -2 /\ v c <= 2))
+
 /// `encapsulate1(pk1, randomness, state, shared_secret)`
 /// <https://docs.rs/libcrux-ml-kem/0.0.10/libcrux_ml_kem/mlkem768/incremental/fn.encapsulate1.html>
 ///
@@ -136,7 +162,9 @@ val encapsulate1
             Core_models.Result.impl__is_ok
               #(Libcrux_ml_kem.Ind_cca.Incremental.Types.t_Ciphertext1 (mk_usize 960))
               #Libcrux_ml_kem.Ind_cca.Incremental.Types.t_Error
-              res))
+              res) /\
+          (Core_models.Slice.impl__len #u8 state =. mk_usize 2080 ==>
+            error2_in_range state_future false))
 
 /// `encapsulate2(state, public_key_part)`
 /// <https://docs.rs/libcrux-ml-kem/0.0.10/libcrux_ml_kem/mlkem768/incremental/fn.encapsulate2.html>
@@ -146,7 +174,7 @@ val encapsulate1
 /// return type is not a `Result`. The 128-byte size is in the return type.
 val encapsulate2 (state: t_Array u8 (mk_usize 2080)) (public_key_part: t_Array u8 (mk_usize 1152))
     : Prims.Pure (Libcrux_ml_kem.Ind_cca.Incremental.Types.t_Ciphertext2 (mk_usize 128))
-      Prims.l_True
+      (requires error2_in_range state false)
       (fun _ -> Prims.l_True)
 
 /// `decapsulate_compressed_key(private_key, ciphertext1, ciphertext2)`
