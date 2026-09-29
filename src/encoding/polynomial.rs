@@ -302,8 +302,7 @@ impl Poly {
 
     /// Given a set of "complete" points with x values that fully fill the
     /// range [0..pts.len()), return a polynomial that computes those points.
-    #[hax_lib::requires(pts.len() == 0 || pts.len() == 1 || pts.len() == 3 || pts.len() == 5
-    || pts.len() == 30 || pts.len() == 34 || pts.len() == 36)]
+    #[hax_lib::requires(pts.len() <= MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1)]
     #[hax_lib::opaque] // iterators
     fn from_complete_points(pts: &[Pt]) -> Result<Poly, ()> {
         for (i, pt) in pts.iter().enumerate() {

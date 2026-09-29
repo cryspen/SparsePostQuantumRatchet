@@ -196,7 +196,7 @@ impl KeyHistory {
         self.data.clear();
     }
 
-    #[hax_lib::requires(my_array_index <= self.data.len() && _params.trim_size() < 119304647 && self.data.len() <= KeyHistory::KEY_SIZE * _params.trim_size())]
+    #[hax_lib::requires(my_array_index <= self.data.len() && self.data.len() <= usize::MAX - KeyHistory::KEY_SIZE)]
     fn remove(&mut self, mut my_array_index: usize, _params: &pqrpb::ChainParams) {
         if my_array_index + Self::KEY_SIZE < self.data.len() {
             let new_end = self.data.len() - Self::KEY_SIZE;
