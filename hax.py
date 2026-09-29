@@ -60,25 +60,20 @@ class extractAction(argparse.Action):
 
 
 def patch_extraction():
-    """Post-extraction fixups for hax code-generation bugs.
+    """Post-extraction fixups for bugs the F* sources and models cannot avoid.
 
-    Each entry is a bug in what hax emits, not something the F* sources or the
-    models can fix, so it is repaired here -- the same approach libcrux takes in
-    its own `hax.sh`. Keep every patch idempotent and assert that it applied, so
-    a hax upgrade that fixes the bug upstream fails loudly here instead of
-    silently rotting.
+    Keep every patch idempotent and assert that it applied, so a toolchain
+    upgrade that changes the output fails loudly here instead of silently
+    rotting.
     """
     spqr = os.path.join("proofs", "fstar", "extraction", "Spqr.fst")
 
-    # hax emits `include Spqr.Bundle {t_Error as t_Error}` for the re-export of
-    # Spqr.Bundle's own `t_Error` enum. F* resolves that `t_Error` to the
-    # *class* `Core_models.Error.t_Error` -- of which Spqr.Bundle has an
-    # instance, `impl_13'` -- and then looks for the class's superclass
-    # projector qualified to the wrong module, failing with
+    # F* before v2026.09.13 resolves `t_Error` in the selective include
+    # `include Spqr.Bundle {t_Error as t_Error}` to the record of the class
+    # `Core_models.Error.t_Error` and fails with
     #   Definition Spqr.Bundle._super_i0 cannot be found.
-    # A plain abbreviation names the type directly and sidesteps the ambiguity.
-    # The enum's constructors are re-exported on their own `include` lines, so
-    # nothing else is lost.
+    # (FStarLang/FStar#4533). An abbreviation sidesteps the lookup; the enum's
+    # constructors are re-exported on their own `include` lines.
     bad = "include Spqr.Bundle {t_Error as t_Error}"
     good = "unfold let t_Error = Spqr.Bundle.t_Error"
     with open(spqr) as f:
@@ -90,8 +85,7 @@ def patch_extraction():
     elif good not in src:
         raise Exception(
             "Spqr.fst has neither the buggy `{}` nor the patched `{}`. "
-            "Check whether hax changed its output before dropping this "
-            "patch.".format(bad, good)
+            "Check whether hax changed its output.".format(bad, good)
         )
 
 

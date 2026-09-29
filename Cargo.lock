@@ -417,10 +417,10 @@ dependencies = [
 
 [[package]]
 name = "hax-lib"
-version = "0.4.0"
-source = "git+https://github.com/cryspen/hax?branch=fix%2Fwhile-loop-inner-let-rec#abeaeadc173e9ae0e06da72fc9c7f8a60ea3e3ec"
+version = "0.4.1"
+source = "git+https://github.com/cryspen/hax?rev=a3a68b75ffbfb3b0cc72d789aa41f79e021288ff#a3a68b75ffbfb3b0cc72d789aa41f79e021288ff"
 dependencies = [
- "hax-lib-macros 0.4.0",
+ "hax-lib-macros 0.4.1",
  "num-bigint",
  "num-traits",
 ]
@@ -440,10 +440,10 @@ dependencies = [
 
 [[package]]
 name = "hax-lib-macros"
-version = "0.4.0"
-source = "git+https://github.com/cryspen/hax?branch=fix%2Fwhile-loop-inner-let-rec#abeaeadc173e9ae0e06da72fc9c7f8a60ea3e3ec"
+version = "0.4.1"
+source = "git+https://github.com/cryspen/hax?rev=a3a68b75ffbfb3b0cc72d789aa41f79e021288ff#a3a68b75ffbfb3b0cc72d789aa41f79e021288ff"
 dependencies = [
- "hax-lib-macros-types 0.4.0",
+ "hax-lib-macros-types 0.4.1",
  "proc-macro2",
  "quote",
  "syn",
@@ -464,8 +464,8 @@ dependencies = [
 
 [[package]]
 name = "hax-lib-macros-types"
-version = "0.4.0"
-source = "git+https://github.com/cryspen/hax?branch=fix%2Fwhile-loop-inner-let-rec#abeaeadc173e9ae0e06da72fc9c7f8a60ea3e3ec"
+version = "0.4.1"
+source = "git+https://github.com/cryspen/hax?rev=a3a68b75ffbfb3b0cc72d789aa41f79e021288ff#a3a68b75ffbfb3b0cc72d789aa41f79e021288ff"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1239,7 +1239,7 @@ dependencies = [
  "curve25519-dalek",
  "env_logger",
  "galois_field_2pm",
- "hax-lib 0.4.0",
+ "hax-lib 0.4.1",
  "hex",
  "hkdf",
  "hmac",
