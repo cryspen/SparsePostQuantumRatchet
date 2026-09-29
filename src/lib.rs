@@ -331,11 +331,10 @@ pub fn send<R: Rng + CryptoRng>(state: &SerializedState, rng: &mut R) -> Result<
     }
 }
 
-#[hax_lib::ensures(|res| fstar!(r#"
-    match res with
-    | Core_models.Option.Option_Some k ->
-      b2t (Alloc.Vec.impl_1__len k >. mk_usize 0)
-    | _ -> True"#))]
+#[hax_lib::ensures(|res| match res {
+    Some(k) => k.len() > 0,
+    None => true,
+})]
 fn message_key(k: Vec<u8>) -> MessageKey {
     // hax does not like `filter`
     if k.is_empty() {
