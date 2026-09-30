@@ -159,11 +159,9 @@ impl EkSentCt1Received {
                 epoch: epoch + 1,
                 auth,
             },
-            // Field init order matches the struct definition (epoch, secret);
-            // see the note in `send_ct::recv_ek` on the hax ProVerif backend.
             EpochSecret {
-                epoch,
                 secret: ss.to_vec(),
+                epoch,
             },
         ))
     }

@@ -316,7 +316,7 @@ letfun spqr__v1__unchunked__send_ct__Impl__recv_header(
     spqr__v1__unchunked__send_ct__NoHeaderReceived__NoHeaderReceived__auth(self),
     hdr
   ).
-(* src: src/v1/unchunked/send_ct.rs:120:4-141:5 spqr__v1__unchunked__send_ct__Impl_1__send_ct1 *)
+(* src: src/v1/unchunked/send_ct.rs:120:4-139:5 spqr__v1__unchunked__send_ct__Impl_1__send_ct1 *)
 letfun spqr__v1__unchunked__send_ct__Impl_1__send_ct1(self: bitstring, rng: bitstring) =
   let spqr__v1__unchunked__send_ct__HeaderReceived__HeaderReceived(
     epoch: bitstring,
@@ -344,7 +344,7 @@ letfun spqr__v1__unchunked__send_ct__Impl_1__send_ct1(self: bitstring, rng: bits
       spqr__EpochSecret__EpochSecret(epoch, secret_kw_1)
     )
   )) else bitstring_err()) else bitstring_err()) else bitstring_err().
-(* src: src/v1/unchunked/send_ct.rs:147:4-169:5 spqr__v1__unchunked__send_ct__Impl_2__recv_ek *)
+(* src: src/v1/unchunked/send_ct.rs:145:4-162:5 spqr__v1__unchunked__send_ct__Impl_2__recv_ek *)
 letfun spqr__v1__unchunked__send_ct__Impl_2__recv_ek(
   self: bitstring,
   epoch: bitstring,
@@ -376,7 +376,7 @@ letfun spqr__v1__unchunked__send_ct__Impl_2__recv_ek(
       spqr__v1__unchunked__send_ct__Ct1Sent__Ct1Sent__ct1(self)
     )
     else bitstring_err().
-(* src: src/v1/unchunked/send_ct.rs:175:4-193:5 spqr__v1__unchunked__send_ct__Impl_3__send_ct2 *)
+(* src: src/v1/unchunked/send_ct.rs:168:4-186:5 spqr__v1__unchunked__send_ct__Impl_3__send_ct2 *)
 letfun spqr__v1__unchunked__send_ct__Impl_3__send_ct2(self: bitstring) =
   let spqr__v1__unchunked__send_ct__Ct1SentEkReceived__Ct1SentEkReceived(
     epoch: bitstring,
@@ -407,7 +407,7 @@ reduc forall v_0: bitstring, v_1: bitstring;
   spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled__auth(
     spqr__v1__unchunked__send_ek__KeysUnsampled__KeysUnsampled(v_0, v_1)
   ) = v_1.
-(* src: src/v1/unchunked/send_ct.rs:199:4-206:5 spqr__v1__unchunked__send_ct__Impl_4__recv_next_epoch *)
+(* src: src/v1/unchunked/send_ct.rs:192:4-199:5 spqr__v1__unchunked__send_ct__Impl_4__recv_next_epoch *)
 letfun spqr__v1__unchunked__send_ct__Impl_4__recv_next_epoch(
   self: bitstring,
   next_epoch: bitstring
@@ -556,7 +556,7 @@ letfun spqr__v1__unchunked__send_ek__Impl_2__recv_ct1(
     spqr__v1__unchunked__send_ek__EkSent__EkSent__dk(self),
     ct1
   ).
-(* src: src/v1/unchunked/send_ek.rs:139:4-169:5 spqr__v1__unchunked__send_ek__Impl_3__recv_ct2 *)
+(* src: src/v1/unchunked/send_ek.rs:139:4-167:5 spqr__v1__unchunked__send_ek__Impl_3__recv_ct2 *)
 letfun spqr__v1__unchunked__send_ek__Impl_3__recv_ct2(
   self: bitstring,
   ct2: bitstring,

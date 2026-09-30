@@ -134,9 +134,7 @@ impl HeaderReceived {
                 ct1: ct1.clone(),
             },
             ct1,
-            // Field init order matches the struct definition (epoch, secret);
-            // see the note in `recv_ek` on the hax ProVerif backend.
-            EpochSecret { epoch, secret },
+            EpochSecret { secret, epoch },
         )
     }
 }
@@ -151,16 +149,11 @@ impl Ct1Sent {
     ) -> Result<Ct1SentEkReceived, Error> {
         assert_eq!(epoch, self.epoch);
         if incremental_mlkem768::ek_matches_header(&ek, &self.hdr) {
-            // NOTE: field init order matches the struct definition
-            // (epoch, auth, es, ek, ct1). The hax ProVerif backend currently
-            // emits struct construction in source order but destructures via
-            // the definition order, so a mismatched literal order silently
-            // swaps fields in the extracted model.
             Ok(Ct1SentEkReceived {
                 epoch: self.epoch,
                 auth: self.auth,
-                es: self.es,
                 ek,
+                es: self.es,
                 ct1: self.ct1,
             })
         } else {
