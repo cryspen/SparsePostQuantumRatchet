@@ -13,7 +13,7 @@ backend and lives, untouched, in [`../extraction/lib.pvl`](../extraction/lib.pvl
 |---|---|---|
 | `../extraction/lib.pvl` | **generated** by hax | the `spqr::v1::unchunked` state machine (send_ek / send_ct transitions, state structs) — never hand-edited |
 | `handwritten_lib.pvl` | hand-written | symbolic Dolev–Yao crypto (ML-KEM, chaining-MAC authenticator) the generated code calls |
-| `primitives.pvl` | vendored from hax | hax's ProVerif prelude, with local fixes: machine-integer `==`/`!=` decidable and `+1` epoch arithmetic reductive |
+| `primitives.pvl`, `result.pvl` | shipped with hax (`$HAX_HOME/hax-lib/proof-libs/proverif/`) | hax's ProVerif prelude and its default Result model (`Err` ends the trace) |
 | `model.pvl` | hand-written | process model: multi-epoch ping-pong (roles swap each epoch), fixed compromise (KEM keys at epochs 1/3 + a responder authenticator at epoch 4), mirroring `../handwritten/spqr-cka.pv` |
 | `reach.pv` / `conf.pv` / `auth.pv` | hand-written | reachability / confidentiality / authentication queries (one per file; each carries the sound `nounif` block) |
 | `sanity.pv` | hand-written | negative controls: confirm the compromise is non-vacuous (compromised epochs leak, others stay secret) |
@@ -80,10 +80,11 @@ properties verify to NEPOCHS=6 — see "Properties proven" below. The fixed
 compromise lives in epochs 1/3/4; the bound 6 gives two uncompromised successor
 epochs (5,6) that check the ratchet healing after the epoch-4 compromise.
 
-`extract-proverif` requires the hax ProVerif backend checkout (see
-`HAX_PROVERIF_DIR` in `hax.py`, default `~/hax-proverif-backend`); it injects the
-dev `hax-lib` (for the `pv_*` / `proverif::replace` macros) via `cargo --config`
-and restores `Cargo.lock`, so normal builds and CI are unaffected.
+`extract-proverif` uses `cargo-hax` from PATH and the hax checkout named by
+`HAX_HOME` (see `../setup-hax.sh`): it points the `hax-lib` dependency at that
+checkout for the duration of the extraction and restores `Cargo.lock`, so normal
+builds are unaffected. `verify-proverif` and `check-proverif` load the ProVerif
+libraries of the same checkout.
 
 ## Properties proven
 

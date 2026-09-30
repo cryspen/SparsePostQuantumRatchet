@@ -39,7 +39,8 @@ Both the hand-written `spqr-cka.pv` and the extracted model prove reachability,
 confidentiality (FS + PCS), and mutual authentication under a fixed compromise to
 6–7 epochs.
 
-`extract-proverif` needs the pinned hax ProVerif backend; build it with
-[`setup-hax.sh`](setup-hax.sh). For exact toolchain versions, the trust
+`extract-proverif` needs hax with the ProVerif backend, and every ProVerif run
+needs its libraries: install it with [`setup-hax.sh`](setup-hax.sh) and set
+`HAX_HOME` to the checkout. For exact toolchain versions, the trust
 boundary, and a step-by-step (ProVerif-only and full re-extraction) reproduction
 recipe, see [`REPRODUCING.md`](REPRODUCING.md).

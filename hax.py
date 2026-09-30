@@ -67,15 +67,18 @@ class proveAction(argparse.Action):
         return None
 
 
-# Location of the hax checkout that provides the ProVerif (uniform-bitstring)
-# backend and the `pv_*` / `proverif::*` macros. `proofs/proverif/setup-hax.sh`
-# clones and builds it at the pinned commit; override the location with
-# HAX_PROVERIF_DIR. The dev `hax-lib` is injected at extraction time via
-# `cargo --config` (see below) — NOT a committed `[patch.crates-io]` — so normal
-# builds and CI are unaffected.
-HAX_PROVERIF_DIR = os.environ.get(
-    "HAX_PROVERIF_DIR", os.path.expanduser("~/hax-proverif-backend")
-)
+# The hax checkout matching the installed `cargo-hax`: it provides the `hax-lib`
+# the extraction compiles against and the shipped ProVerif libraries.
+def _hax_home():
+    home = os.environ.get("HAX_HOME")
+    if not home:
+        raise Exception(
+            "Set HAX_HOME to the hax checkout matching the installed cargo-hax "
+            "(see proofs/proverif/setup-hax.sh)."
+        )
+    return home
+
+
 PROVERIF_DIR = "proofs/proverif"
 # `extraction/` holds the pure hax output (lib.pvl); `extraction-model/` holds the
 # hand-written composition (crypto idealization, process model, queries).
@@ -100,67 +103,51 @@ PROVERIF_INCLUDE = "-** " + " ".join(
 )
 
 
-def _proverif_env():
-    # Accept either a release or a debug build of the hax backend.
-    for profile in ("release", "debug"):
-        bin_dir = os.path.join(HAX_PROVERIF_DIR, "target", profile)
-        cargo_hax = os.path.join(bin_dir, "cargo-hax")
-        engine = os.path.join(bin_dir, "hax-rust-engine")
-        if os.path.exists(cargo_hax) and os.path.exists(engine):
-            return cargo_hax, {
-                "HAX_RUST_ENGINE_BINARY": engine,
-                "PATH": bin_dir + os.pathsep + os.environ["PATH"],
-            }
-    raise Exception(
-        "hax ProVerif backend not found under {}/target/{{release,debug}}. "
-        "Run proofs/proverif/setup-hax.sh (or set HAX_PROVERIF_DIR).".format(
-            HAX_PROVERIF_DIR
-        )
-    )
+def _proverif_libs():
+    return os.path.abspath(os.path.join(_hax_home(), "hax-lib", "proof-libs", "proverif"))
 
 
 class extractProverifAction(argparse.Action):
 
     def __call__(self, parser, args, values, option_string=None) -> None:
-        cargo_hax, env = _proverif_env()
         include_str = args.include if args.include else PROVERIF_INCLUDE
-        # Redirect hax-lib to the dev checkout (for the pv_* / proverif::replace
-        # macros) via `cargo --config` instead of a committed [patch.crates-io],
-        # so normal builds and CI stay portable. The checkout is version 0.3.6,
-        # matching the crates.io dependency.
-        lib = os.path.join(HAX_PROVERIF_DIR, "hax-lib")
-        patch_flags = []
-        for crate, path in [
-            ("hax-lib", lib),
-            ("hax-lib-macros", os.path.join(lib, "macros")),
-            ("hax-lib-macros-types", os.path.join(lib, "macros", "types")),
-        ]:
-            patch_flags += [
-                "--config",
-                'patch.crates-io."{}".path="{}"'.format(crate, path),
-            ]
-        # The `--config` patch makes cargo rewrite hax-lib's entry in
-        # Cargo.lock to a path dependency. Preserve the committed (crates.io)
-        # lockfile so this dev-only step doesn't dirty the tree / break CI.
-        lock_backup = None
-        if os.path.exists("Cargo.lock"):
-            with open("Cargo.lock", "rb") as f:
-                lock_backup = f.read()
-        # No `--features` needed: the annotations are gated on
-        # `cfg(hax_backend_proverif)`, which hax sets itself for the proverif
-        # backend.
+        # Point the git `hax-lib` dependency at the checkout matching
+        # `cargo-hax`. The patch goes in a temporary `.cargo/config.toml` rather
+        # than `cargo --config`, so that cargo-hax's own dependency resolution
+        # sees it too; `Cargo.lock` is restored afterwards.
+        lib = os.path.join(_hax_home(), "hax-lib")
+        config = os.path.join(".cargo", "config.toml")
+        if os.path.exists(config):
+            raise Exception("{} exists; refusing to overwrite it".format(config))
+        with open("Cargo.lock", "rb") as f:
+            lock_backup = f.read()
+        os.makedirs(".cargo", exist_ok=True)
+        with open(config, "w") as f:
+            f.write("[patch.'https://github.com/cryspen/hax.git']\n")
+            for crate, path in [
+                ("hax-lib", lib),
+                ("hax-lib-macros", os.path.join(lib, "macros")),
+                ("hax-lib-macros-types", os.path.join(lib, "macros", "types")),
+            ]:
+                f.write('{} = {{ path = "{}" }}\n'.format(crate, path))
         try:
+            locked = re.findall(
+                r'name = "hax-lib"\nversion = "([^"]+)"\n'
+                r'source = "git\+https://github\.com/cryspen/hax\.git',
+                lock_backup.decode(),
+            )
+            for version in locked:
+                shell(["cargo", "update", "-p", "hax-lib@" + version], cwd=".")
             shell(
-                [cargo_hax, "hax", "-C"]
-                + patch_flags
-                + [";", "into", "-i", include_str, "proverif"],
+                ["cargo", "hax", "into", "-i", include_str, "proverif"],
                 cwd=".",
-                env=env,
             )
         finally:
-            if lock_backup is not None:
-                with open("Cargo.lock", "wb") as f:
-                    f.write(lock_backup)
+            os.remove(config)
+            if not os.listdir(".cargo"):
+                os.rmdir(".cargo")
+            with open("Cargo.lock", "wb") as f:
+                f.write(lock_backup)
         return None
 
 
@@ -192,19 +179,7 @@ class verifyProverifAction(argparse.Action):
                 )
             print("Set NEPOCHS = {} (nepochs.pvl)".format(epochs))
 
-        # Load order (run from proofs/proverif/): the hand-written composition in
-        # extraction-model/ — `primitives.pvl` (vendored hax prelude with the
-        # machine-int/nat-arithmetic fixes), `handwritten_lib.pvl` (symbolic
-        # crypto) — then the GENERATED `extraction/lib.pvl`, then `nepochs.pvl`
-        # (before model.pvl, which uses max_epoch()) and the `model.pvl` process
-        # model. Each property is a separate query file in extraction-model/.
-        libs = [
-            "-lib", "extraction-model/primitives.pvl",
-            "-lib", "extraction-model/handwritten_lib.pvl",
-            "-lib", "extraction/lib.pvl",
-            "-lib", "extraction-model/nepochs.pvl",
-            "-lib", "extraction-model/model.pvl",
-        ]
+        libs = _extraction_libs()
         for target in targets:
             shell(
                 ["proverif"] + libs + [os.path.join("extraction-model", target)],
@@ -213,25 +188,36 @@ class verifyProverifAction(argparse.Action):
         return None
 
 
+# Load order: hax's shipped prelude and its default (Ok-only) Result library,
+# the symbolic crypto `handwritten_lib.pvl`, the generated `lib.pvl`, then
+# `nepochs.pvl` (before `model.pvl`, which uses `max_epoch()`).
+def _extraction_libs():
+    libs = _proverif_libs()
+    return [
+        "-lib", os.path.join(libs, "primitives.pvl"),
+        "-lib", os.path.join(libs, "result.pvl"),
+        "-lib", "extraction-model/handwritten_lib.pvl",
+        "-lib", "extraction/lib.pvl",
+        "-lib", "extraction-model/nepochs.pvl",
+        "-lib", "extraction-model/model.pvl",
+    ]
+
+
+def _handwritten_libs():
+    return ["-lib", "handwritten/cryptolib.pvl"]
+
+
 # ProVerif check targets: name -> (path under proofs/proverif, ProVerif libs).
 # The generated model loads the extraction libs (its NEPOCHS bound lives in
 # nepochs.pvl); the hand-written models load only cryptolib.pvl and carry their
 # own `max_epoch()` inline.
-_EXTRACTION_LIBS = [
-    "-lib", "extraction-model/primitives.pvl",
-    "-lib", "extraction-model/handwritten_lib.pvl",
-    "-lib", "extraction/lib.pvl",
-    "-lib", "extraction-model/nepochs.pvl",
-    "-lib", "extraction-model/model.pvl",
-]
-_HANDWRITTEN_LIBS = ["-lib", "handwritten/cryptolib.pvl"]
 PROVERIF_CHECK_TARGETS = {
-    "reach.pv":    ("extraction-model/reach.pv",  _EXTRACTION_LIBS),
-    "auth.pv":     ("extraction-model/auth.pv",   _EXTRACTION_LIBS),
-    "conf.pv":     ("extraction-model/conf.pv",   _EXTRACTION_LIBS),
-    "sanity.pv":   ("extraction-model/sanity.pv", _EXTRACTION_LIBS),
-    "spqr-cka.pv": ("handwritten/spqr-cka.pv",    _HANDWRITTEN_LIBS),
-    "spqr-dr.pv":  ("handwritten/spqr-dr.pv",     _HANDWRITTEN_LIBS),
+    "reach.pv":    ("extraction-model/reach.pv",  _extraction_libs),
+    "auth.pv":     ("extraction-model/auth.pv",   _extraction_libs),
+    "conf.pv":     ("extraction-model/conf.pv",   _extraction_libs),
+    "sanity.pv":   ("extraction-model/sanity.pv", _extraction_libs),
+    "spqr-cka.pv": ("handwritten/spqr-cka.pv",    _handwritten_libs),
+    "spqr-dr.pv":  ("handwritten/spqr-dr.pv",     _handwritten_libs),
 }
 # Native ProVerif expected-results block: `(* EXPECTPV <RESULT lines> END *)`
 # (ProVerif manual, section 6.9). The runtime line the manual mentions is
@@ -257,6 +243,26 @@ def _expectpv_result_lines(text):
     if not m:
         return None
     return [ln.strip() for ln in m.group(0).splitlines() if ln.strip().startswith("RESULT")]
+
+
+_IDENT_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9_]*?)(_[0-9]+)?\b")
+
+
+def _canonical_result(line):
+    """`line` with ProVerif's variable numbering replaced by the order of first
+    appearance of each variant of a name, as that numbering shifts with the
+    declarations of the loaded libraries (`x_21`, `y` vs `x_22`, `y_1`)."""
+    variants = {}
+
+    def rename(m):
+        seen = variants.setdefault(m.group(1), {})
+        return "{}#{}".format(m.group(1), seen.setdefault(m.group(0), len(seen)))
+
+    return _IDENT_RE.sub(rename, line)
+
+
+def _same_result(expected, actual):
+    return _canonical_result(expected) == _canonical_result(actual)
 
 
 def _write_expectpv(path, text, result_lines):
@@ -314,6 +320,7 @@ class checkProverifAction(argparse.Action):
             if target not in PROVERIF_CHECK_TARGETS:
                 raise Exception("unknown proverif target: {}".format(target))
             relpath, libs = PROVERIF_CHECK_TARGETS[target]
+            libs = libs()
             path = os.path.join(PROVERIF_DIR, relpath)
             actual = _proverif_result_lines(libs, relpath)
             with open(path, encoding="utf-8") as f:
@@ -329,7 +336,7 @@ class checkProverifAction(argparse.Action):
                 print("  {:<12}  no EXPECTPV block — skipped".format(target))
                 continue
             n = min(len(expected), len(actual))
-            ok = sum(1 for i in range(n) if expected[i] == actual[i])
+            ok = sum(1 for i in range(n) if _same_result(expected[i], actual[i]))
             grand_ok += ok
             grand_total += len(expected)
             file_ok = len(expected) == len(actual) and ok == len(expected)
@@ -348,7 +355,7 @@ class checkProverifAction(argparse.Action):
                 for i in range(max(len(expected), len(actual))):
                     e = expected[i] if i < len(expected) else "(none)"
                     a = actual[i] if i < len(actual) else "(none)"
-                    if e != a:
+                    if not _same_result(e, a):
                         print("      #{} EXPECTPV: {}".format(i + 1, e))
                         print("              got: {}".format(a))
 
@@ -364,8 +371,8 @@ class checkProverifAction(argparse.Action):
 
 
 class setupAction(argparse.Action):
-    """Build the pinned hax ProVerif backend by delegating to
-    proofs/proverif/setup-hax.sh (git clone + cargo build). Optional DEST_DIR."""
+    """Install hax with the ProVerif backend by delegating to
+    proofs/proverif/setup-hax.sh. Optional DEST_DIR."""
 
     def __call__(self, parser, args, values, option_string=None) -> None:
         script = os.path.join(PROVERIF_DIR, "setup-hax.sh")
@@ -382,9 +389,9 @@ def parse_arguments():
 
     setup_parser = subparsers.add_parser(
         "setup",
-        help="Build the pinned hax ProVerif backend into ~/.hax-proverif (or "
-        "DEST_DIR). Delegates to proofs/proverif/setup-hax.sh; run once before "
-        "extract-proverif, or set HAX_PROVERIF_DIR to an existing checkout.",
+        help="Install hax with the ProVerif backend from a checkout in "
+        "./.hax-proverif (or DEST_DIR). Delegates to proofs/proverif/setup-hax.sh; "
+        "run once before extract-proverif, then set HAX_HOME to that checkout.",
     )
     setup_parser.add_argument("setup", nargs="*", action=setupAction)
 

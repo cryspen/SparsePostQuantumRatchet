@@ -86,7 +86,7 @@ backend reproduces the same verdicts as a cross-check.
 ## Reproducing
 
 ```
-# one-time: build the pinned hax ProVerif backend (or set HAX_PROVERIF_DIR)
+# one-time: install hax with the ProVerif backend, then export HAX_HOME
 python3 hax.py setup
 
 python3 hax.py extract-proverif        # Rust -> extraction/lib.pvl
@@ -105,5 +105,3 @@ nightly.
   proved via ProVerif inductive lemmas (Blanchet–Cheval–Cortier) on a faithful
   *abstraction* of the CKA core; lifting this to the extraction-grade model
   (epoch-indexed tables, and the unbounded forward-secrecy-under-compromise case) is open.
-- Minor: three libcrux ML-KEM length functions remain in the (unused, gitignored)
-  `missingdecl` diagnostic; making that file empty is cosmetic.

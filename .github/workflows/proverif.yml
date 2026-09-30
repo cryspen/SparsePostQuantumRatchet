@@ -2,12 +2,12 @@ name: proverif
 
 # Two-tier ProVerif CI:
 #   * verify  (every push/PR): run ProVerif against the COMMITTED extraction
-#     snapshot (proofs/proverif/extraction/lib.pvl) + vendored model files,
-#     asserting each query's `(* EXPECTPV ... *)` verdicts. Fast — no hax engine.
-#   * extract (nightly + manual): rebuild the hax ProVerif backend from
-#     cryspen/hax@proverif-rust-backend, RE-EXTRACT lib.pvl, fail if it drifts
-#     from the committed snapshot, then verify. Catches engine/source drift.
-#     Heavy (builds the OCaml hax-engine + Rust cargo-hax), so it is not per-push.
+#     snapshot (proofs/proverif/extraction/lib.pvl), with the ProVerif libraries
+#     of cryspen/hax@proverif-rust-backend, asserting each query's
+#     `(* EXPECTPV ... *)` verdicts. Fast — hax is checked out, not built.
+#   * extract (nightly + manual): install hax from the same branch, RE-EXTRACT
+#     lib.pvl, fail if it drifts from the committed snapshot, then verify.
+#     Catches engine/source drift. Heavy, so it is not per-push.
 
 on:
   push:
@@ -26,11 +26,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Checkout hax (ProVerif libraries)
+        uses: actions/checkout@v4
+        with:
+          repository: cryspen/hax
+          ref: proverif-rust-backend
+          path: hax-engine
+
       - run: sudo apt-get update && sudo apt-get install -y opam libgtk2.0-dev
       - run: opam init
       - run: opam install -y proverif
 
       - name: proverif proofs (extracted + hand-written; verdicts vs EXPECTPV)
+        env:
+          HAX_HOME: ${{ github.workspace }}/hax-engine
         run: |
           eval $(opam env)
           # `check-proverif` covers all targets: the extracted model
@@ -72,18 +81,18 @@ jobs:
           path: ~/.opam
           key: opam-hax-proverif-${{ runner.os }}-${{ hashFiles('hax-engine/engine/**/dune-project') }}
 
-      - name: Build + install the hax engine into a switch
+      - name: Build + install hax into a switch
         run: |
           opam switch list --short | grep -qx hax-proverif || opam switch create hax-proverif 5.3.0
-          HAX_OPAM_SWITCH=hax-proverif ./hax-engine/setup-local.sh
+          eval $(opam env --switch=hax-proverif)
+          ./hax-engine/setup.sh
 
       - name: Re-extract + drift check + verify
         env:
-          HAX_PROVERIF_DIR: ${{ github.workspace }}/hax-engine
+          HAX_HOME: ${{ github.workspace }}/hax-engine
         run: |
+          eval $(opam env --switch=hax-proverif)
           python3 hax.py extract-proverif
-          shasum -a 256 -c proofs/proverif/extraction/lib.pvl.sha256
           git diff --exit-code -- proofs/proverif/extraction/lib.pvl \
             || { echo "::error::extraction drifted from committed lib.pvl — re-snapshot it"; exit 1; }
-          eval $(opam env --switch=hax-proverif)
           python3 hax.py check-proverif epochs=4

@@ -9,9 +9,9 @@
 (* Dolev-Yao models here. These mirror the hand-written model in   *)
 (* `../handwritten/cryptolib.pvl` / `../handwritten/spqr-cka.pv`.                          *)
 (*                                                                *)
-(* Loaded as:  -lib primitives.pvl -lib handwritten_lib.pvl       *)
-(* (`primitives.pvl` ships with hax and provides `True/False`,     *)
-(*  `bitstring_err`, tuples, the public channel `c`, etc.)         *)
+(* Loaded after hax's `primitives.pvl` and `result.pvl`, which    *)
+(* provide `True/False`, `bitstring_err`, tuples, the public       *)
+(* channel `c`, etc.                                               *)
 (*****************************************************************)
 
 (* ============================================================= *)
