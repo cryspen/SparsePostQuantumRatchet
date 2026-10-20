@@ -485,7 +485,12 @@ pub fn recv(state: &SerializedState, msg: &SerializedMessage) -> Result<Recv, Er
             if let Some(epoch_secret) = key {
                 chain.add_epoch(epoch_secret)?;
             }
-            let msg_key = chain.recv_key(msg_key_epoch, msg.index)?;
+            let msg_key = chain
+                .recv_key(msg_key_epoch, msg.index)
+                .map_err(|e| match e {
+                    Error::EpochOutOfRange(_) => Error::EpochOutOfRange(msg.epoch),
+                    e => e,
+                })?;
 
             Ok(Recv {
                 state: pqrpb::PqRatchetState {
@@ -720,6 +725,50 @@ mod lib_test {
             }
         }
 
+        Ok(())
+    }
+
+    #[test]
+    fn stale_message_reports_its_epoch() -> Result<(), Error> {
+        let mut rng = OsRng.unwrap_err();
+        let version = Version::V1;
+        let mut alex = initial_state(Params {
+            version,
+            min_version: version,
+            direction: Direction::A2B,
+            auth_key: &[41u8; 32],
+            chain_params: ChainParams::default(),
+        })?;
+        let mut blake = initial_state(Params {
+            version,
+            min_version: version,
+            direction: Direction::B2A,
+            auth_key: &[41u8; 32],
+            chain_params: ChainParams::default(),
+        })?;
+
+        let Send {
+            state, msg: first, ..
+        } = send(&alex, &mut rng)?;
+        alex = state;
+        blake = recv(&blake, &first)?.state;
+        assert_eq!(msg_preamble(&first)?.epoch, 1);
+
+        for _ in 0..200 {
+            let Send { state, msg, .. } = send(&alex, &mut rng)?;
+            alex = state;
+            blake = recv(&blake, &msg)?.state;
+            let Send { state, msg, .. } = send(&blake, &mut rng)?;
+            blake = state;
+            alex = recv(&alex, &msg)?.state;
+        }
+        let Send { msg: last, .. } = send(&alex, &mut rng)?;
+        assert!(msg_preamble(&last)?.epoch > 3);
+
+        assert!(matches!(
+            recv(&blake, &first),
+            Err(Error::EpochOutOfRange(1))
+        ));
         Ok(())
     }
 
