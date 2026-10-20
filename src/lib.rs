@@ -553,6 +553,7 @@ fn decode_varint(from: &[u8], at: &mut usize) -> Result<u64, Error> {
     let mut i: usize = 0;
     // Helps prevent return in while loop for Hax
     let mut done = false;
+    let mut overflow = false;
     let start_at: usize = *at;
     if start_at >= from.len() {
         return Err(Error::MsgDecode);
@@ -565,13 +566,15 @@ fn decode_varint(from: &[u8], at: &mut usize) -> Result<u64, Error> {
         hax_lib::loop_decreases!(max_i - i);
 
         let byte = from[start_at + i];
+        // The 10th byte holds only bit 63.
+        overflow = i == MAX_VARINT_BYTES_LEN - 1 && byte > 1;
         out |= ((byte as u64) & 0x7f) << (7 * i as i32);
 
         i += 1;
         done = (byte & 0x80) == 0;
     }
 
-    if done {
+    if done && !overflow {
         *at += i;
         Ok(out)
     } else {

@@ -246,6 +246,17 @@ mod test {
     }
 
     #[test]
+    fn decoding_varint_overflow() {
+        let mut v = vec![0xFF; 9];
+        v.push(0x01);
+        let mut at = 0usize;
+        assert_eq!(u64::MAX, decode_varint(&v, &mut at).unwrap());
+        v[9] = 0x02;
+        let mut at = 0usize;
+        assert!(decode_varint(&v, &mut at).is_err());
+    }
+
+    #[test]
     fn roundtrip_varint() {
         let mut rng = OsRng.unwrap_err();
         for _i in 0..10000 {
