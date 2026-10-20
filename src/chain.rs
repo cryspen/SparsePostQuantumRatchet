@@ -80,7 +80,7 @@ impl ChainParamsPB {
             DEFAULT_CHAIN_PARAMS.max_ooo_keys
         }
     }
-    /// When the size of our key history exceeds this amount, we run a
+    /// When the size of our key history reaches this amount, we run a
     /// garbage collection on it.
     fn trim_size(&self) -> usize {
         let max_ooo = self.max_ooo_keys_or_default();

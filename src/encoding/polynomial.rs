@@ -305,8 +305,8 @@ impl Poly {
         matches!(n, 0 | 1 | 3 | 5 | 30 | 34 | 36)
     }
 
-    /// Given a set of "complete" points with x values that fully fill the
-    /// range [0..pts.len()), return a polynomial that computes those points.
+    /// Given points with x values 0, 1, ..., pts.len() - 1, in that order,
+    /// return a polynomial that computes those points.
     #[hax_lib::requires(pts.len() <= MAX_INTERMEDIATE_POLYNOMIAL_DEGREE_V1)]
     #[hax_lib::opaque] // iterators
     fn from_complete_points(pts: &[Pt]) -> Result<Poly, ()> {
