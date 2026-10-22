@@ -14,9 +14,7 @@ jobs:
       - run: opam init
       - run: opam install -y proverif
 
-      - name: proverif proofs
+      - name: proverif proofs (verdicts vs EXPECTPV)
         run: |
           eval $(opam env)
-          proverif -lib cryptolib.pvl spqr-cka.pv
-          proverif -lib cryptolib.pvl spqr-dr.pv
-        working-directory: ./proofs/proverif
+          python3 hax.py check-proverif
