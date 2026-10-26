@@ -33,15 +33,14 @@ pub struct Authenticator {
 impl Authenticator {
     pub const MACSIZE: usize = 32usize;
     pub fn new(root_key: Vec<u8>, ep: Epoch) -> Self {
-        let mut result = Self {
+        let result = Self {
             root_key: vec![0u8; 32],
             mac_key: vec![0u8; 32],
         };
-        result.update(ep, &root_key);
-        result
+        result.update(ep, &root_key)
     }
 
-    pub fn update(&mut self, ep: Epoch, k: &[u8]) {
+    pub fn update(mut self, ep: Epoch, k: &[u8]) -> Self {
         let ikm = [self.root_key.as_slice(), k].concat();
         let info = [
             b"Signal_PQCKA_V1_MLKEM768:Authenticator Update".as_slice(),
@@ -51,6 +50,7 @@ impl Authenticator {
         let kdf_out = kdf::hkdf_to_vec(&[0u8; 32], &ikm, &info, 64);
         self.root_key = kdf_out.as_slice()[..32].to_vec();
         self.mac_key = kdf_out.as_slice()[32..].to_vec();
+        self
     }
 
     #[hax_lib::requires(expected_mac.len() == Authenticator::MACSIZE)]
