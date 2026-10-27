@@ -17,6 +17,10 @@ pub fn hkdf_to_vec(salt: &[u8], ikm: &[u8], info: &[u8], okm_len: usize) -> Vec<
 }
 
 /// Derive the epoch's SCKA secret from a KEM shared secret.
+#[cfg_attr(
+    hax_backend_proverif,
+    hax_lib::proverif::replace_body("derive_scka_secret_f(kem_ss, epoch)")
+)]
 pub fn derive_scka_secret(kem_ss: &[u8], epoch: Epoch) -> Vec<u8> {
     let info = [
         b"Signal_PQCKA_V1_MLKEM768:SCKA Key".as_slice(),
