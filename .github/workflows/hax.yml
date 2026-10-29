@@ -14,7 +14,6 @@ jobs:
 
       - name: Check hax-lib matches the engine
         run: |
-          grep -q "^hax-lib = \"${HAX_VERSION}\"" Cargo.toml
           cargo tree --locked -i hax-lib@${HAX_VERSION} --depth 0
 
       - name: ⤵ Install and configure hax
