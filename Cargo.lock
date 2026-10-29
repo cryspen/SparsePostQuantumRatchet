@@ -418,7 +418,7 @@ dependencies = [
 [[package]]
 name = "hax-lib"
 version = "0.4.2"
-source = "git+https://github.com/pereq-dev/hax?branch=evit-upstream-28-oct-2026#05fd09a6f8035d35e2f742e93e1479b43583fd9c"
+source = "git+https://github.com/pereq-dev/hax?branch=proverif-err-arm-recovery#3455b7804931c1cb6f43f7a971da7fc720531c9c"
 dependencies = [
  "hax-lib-macros 0.4.2",
  "num-bigint",
@@ -441,7 +441,7 @@ dependencies = [
 [[package]]
 name = "hax-lib-macros"
 version = "0.4.2"
-source = "git+https://github.com/pereq-dev/hax?branch=evit-upstream-28-oct-2026#05fd09a6f8035d35e2f742e93e1479b43583fd9c"
+source = "git+https://github.com/pereq-dev/hax?branch=proverif-err-arm-recovery#3455b7804931c1cb6f43f7a971da7fc720531c9c"
 dependencies = [
  "hax-lib-macros-types 0.4.2",
  "proc-macro2",
@@ -465,7 +465,7 @@ dependencies = [
 [[package]]
 name = "hax-lib-macros-types"
 version = "0.4.2"
-source = "git+https://github.com/pereq-dev/hax?branch=evit-upstream-28-oct-2026#05fd09a6f8035d35e2f742e93e1479b43583fd9c"
+source = "git+https://github.com/pereq-dev/hax?branch=proverif-err-arm-recovery#3455b7804931c1cb6f43f7a971da7fc720531c9c"
 dependencies = [
  "proc-macro2",
  "quote",

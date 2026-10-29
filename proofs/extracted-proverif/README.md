@@ -52,7 +52,7 @@ The model is loaded in this order (see `libs` in the `Makefile`):
 
 ## Running
 
-Needs ProVerif 2.05 and `cargo-hax` built from the `evit-upstream-28-oct-2026`
+Needs ProVerif 2.05 and `cargo-hax` built from the `proverif-err-arm-recovery`
 branch of `pereq-dev/hax`, which `hax-lib` also comes from. From the repository root:
 
 ```

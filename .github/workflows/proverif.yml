@@ -25,7 +25,7 @@ jobs:
     runs-on: "ubuntu-latest"
     env:
       HAX_REPOSITORY: pereq-dev/hax
-      HAX_REFERENCE: evit-upstream-28-oct-2026
+      HAX_REFERENCE: proverif-err-arm-recovery
 
     steps:
       - uses: actions/checkout@v4
