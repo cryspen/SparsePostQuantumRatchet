@@ -1,7 +1,7 @@
 # ProVerif model extracted from the Rust code
 
 The protocol state machine (`spqr::v1::unchunked`) is compiled from the Rust
-source by [hax](https://github.com/cryspen/hax)'s ProVerif backend; only the
+source by [hax](https://github.com/pereq-dev/hax)'s ProVerif backend; only the
 cryptographic primitives are abstracted. [`STATUS.md`](STATUS.md) gives what
 is proved, the assumptions and the limits.
 
@@ -52,8 +52,8 @@ The model is loaded in this order (see `libs` in the `Makefile`):
 
 ## Running
 
-Needs ProVerif 2.05 and `cargo-hax` built from the `evit-upstream-28-oct-2026`
-branch of `pereq-dev/hax`, which `hax-lib` also comes from. From the repository root:
+Needs ProVerif 2.05 and `cargo-hax` 0.5.0, the version of `hax-lib`. From the
+repository root:
 
 ```
 ./hax.py extract-proverif                                  # write extraction/lib.pvl

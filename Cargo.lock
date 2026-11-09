@@ -417,10 +417,11 @@ dependencies = [
 
 [[package]]
 name = "hax-lib"
-version = "0.4.2"
-source = "git+https://github.com/pereq-dev/hax?branch=evit-upstream-28-oct-2026#05fd09a6f8035d35e2f742e93e1479b43583fd9c"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04ce2d088d3d46cb20f1136005ebb161316f766b037aa79f9f6f14a0327105d2"
 dependencies = [
- "hax-lib-macros 0.4.2",
+ "hax-lib-macros 0.5.0",
  "num-bigint",
  "num-traits",
 ]
@@ -440,10 +441,11 @@ dependencies = [
 
 [[package]]
 name = "hax-lib-macros"
-version = "0.4.2"
-source = "git+https://github.com/pereq-dev/hax?branch=evit-upstream-28-oct-2026#05fd09a6f8035d35e2f742e93e1479b43583fd9c"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8b31ce88f4a629cf244df7e086b84c915dcb53251268a5ab2cfe9371c3f352d"
 dependencies = [
- "hax-lib-macros-types 0.4.2",
+ "hax-lib-macros-types 0.5.0",
  "proc-macro2",
  "quote",
  "syn",
@@ -464,8 +466,9 @@ dependencies = [
 
 [[package]]
 name = "hax-lib-macros-types"
-version = "0.4.2"
-source = "git+https://github.com/pereq-dev/hax?branch=evit-upstream-28-oct-2026#05fd09a6f8035d35e2f742e93e1479b43583fd9c"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "611ab31405888422952fdcd3ff4c028efa8162d01d387083d75897a27c1ac686"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1239,7 +1242,7 @@ dependencies = [
  "curve25519-dalek",
  "env_logger",
  "galois_field_2pm",
- "hax-lib 0.4.2",
+ "hax-lib 0.5.0",
  "hex",
  "hkdf",
  "hmac",
